@@ -78,11 +78,7 @@ const handleWithdraw = async () => {
       alertMessage.value = "우정의 숲에서 탈퇴되었습니다.";
       showAlert.value = true;
 
-      console.log("탈퇴 성공! 2초 후 메인 페이지로 이동");
-      
-      setTimeout(() => {
-        router.push(`/forest-detail/${userForestId.value}`);
-      }, 2000);
+      router.push(`/forest-detail/${userForestId.value}`);
     } else {
       throw new Error(`탈퇴 처리 중 오류가 발생했습니다. (${response.status})`);
     }

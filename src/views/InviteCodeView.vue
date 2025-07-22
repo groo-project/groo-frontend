@@ -95,12 +95,12 @@ const handleSubmit = async () => {
       if (response.status >= 200 && response.status < 300) {
         console.log("초대 코드 검증 성공!");
         
-        // 이미 로그인된 사용자는 개인 숲으로 이동
-        if (user.value?.forestId) {
-          console.log("사용자 개인 숲으로 이동:", `/forest-detail/${user.value.forestId}`);
-          router.push(`/forest-detail/${user.value.forestId}`);
+        // 초대 코드 수락 성공 후 해당 우정의 숲으로 이동
+        // API 응답에서 forestId를 가져와야 함
+        if (response.data && response.data.forestId) {
+          const mateForestId = response.data.forestId;
+          router.push(`/forestmate/${mateForestId}`);
         } else {
-          console.log("사용자 정보가 없어서 메인 페이지로 이동");
           router.push("/");
         }
       } else {
