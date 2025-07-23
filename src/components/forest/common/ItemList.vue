@@ -83,30 +83,34 @@ const handleItemCountRestore = (restoredItem) => {
 }
 
 async function fetchItems() {
+  console.log('=== Fetching Items ===');
+  console.log('Category ID:', props.categoryId);
+  console.log('Forest ID:', forestId.value);
+  console.log('Forest ID type:', typeof forestId.value);
+  console.log('Forest ID is valid:', forestId.value !== null && forestId.value !== undefined);
+  console.log('========================');
+  
+  if (!forestId.value) {
+    console.error('Forest ID not available - cannot fetch items');
+    return
+  }
+  
   try {
-    console.log('=== Fetching Items ===');
-    console.log('Category ID:', props.categoryId);
-    console.log('Forest ID:', forestId.value);
-    console.log('Forest ID type:', typeof forestId.value);
-    console.log('Forest ID is valid:', forestId.value !== null && forestId.value !== undefined);
-    console.log('========================');
+    const response = await api.get(`/items/${props.categoryId}/${forestId.value}`)
     
-    if (!forestId.value) {
-      console.error('Forest ID not available - cannot fetch items');
+    // 조각이 있든 없든 정상적으로 처리
+    items.value = response.data || []
+    console.log('Items fetched:', response.data)
+  } catch (error) {
+    // 404는 조각이 없는 정상적인 상황
+    if (error.response?.status === 404) {
+      items.value = []
+      console.log('No items found for this category and forest');
       return
     }
     
-    const apiUrl = `/items/${props.categoryId}/${forestId.value}`;
-    console.log('API URL:', apiUrl);
-    
-    const response = await api.get(apiUrl)
-    items.value = response.data
-    
-    console.log('Items fetched:', response.data)
-  } catch (error) {
-    console.error('Failed to fetch items:', error)
-    console.error('Error response:', error.response?.data)
-    console.error('Error status:', error.response?.status)
+    // 실제 에러만 로깅
+    console.error('Failed to fetch items:', error);
   }
 }
 

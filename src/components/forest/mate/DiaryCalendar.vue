@@ -50,7 +50,14 @@ import { useAuthStore } from '@/stores/auth'
 const authStore = useAuthStore()
 const { user } = authStore;
 const token = user?.accessToken || '';
-const forestId = user?.forestId || '';
+
+// props로 forestId를 받아야함 (우정의 숲 ID)
+const props = defineProps({
+  forestId: {
+    type: [String, Number],
+    required: true
+  }
+});
 
 const emit = defineEmits(['close', 'diary-click'])
 
@@ -105,7 +112,7 @@ async function fetchDiaries() {
   if (!userId) return;
   try {
     const res = await api.get(
-      `/mate/diary/${forestId}/month?year=${year.value}&month=${month.value}`);
+      `/mate/diary/${props.forestId}/month?year=${year.value}&month=${month.value}`);
     diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0])
   } catch (e) {
     diaryDates.value = []
@@ -119,7 +126,7 @@ async function onDiaryClick(date) {
   const dateStr = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
   try {
     const res = await api.get(
-      `/mate/diary/${forestId}/date?date=${dateStr}`
+      `/mate/diary/${props.forestId}/date?date=${dateStr}`
     );
     emit('diary-click', {
       diaries: res.data,

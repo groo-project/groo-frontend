@@ -381,6 +381,7 @@ const handlePlaceFromStorage = (item) => {
         </template>
         <div v-else-if="showDiaryCalendar && !showDiaryDetail" class="calendar-view">
           <DiaryCalendar
+            :forestId="route.params.id"
             @close="closeDiaryCalendar"
             @diary-click="handleDiaryClick"
           />
