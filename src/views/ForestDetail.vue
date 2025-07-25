@@ -262,17 +262,37 @@ onUnmounted(() => {
 const togglePublic = async () => {
   if (!forestData.value) return;
 
-
   try {
-    const res = await api.patch(`emotion-forest/public/${forestData.value[0].forestId}`, {
-    });
+    console.log('=== 공개여부 변경 시작 ===');
+    console.log('Forest ID:', forestData.value[0].forestId);
+    console.log('현재 공개여부:', forestData.value[0].isPublic);
     
-    if (!res.ok) throw new Error('공개여부 변경 실패');
+    const res = await api.patch(`emotion-forest/public/${forestData.value[0].forestId}`, {});
     
-    forestData.value[0].isPublic = !forestData.value[0].isPublic;
+    console.log('=== 공개여부 변경 API 응답 ===');
+    console.log('Response status:', res.status);
+    console.log('Response data:', res.data);
+    console.log('========================');
+    
+    if (res.status >= 200 && res.status < 300) {
+      // 성공 시 공개여부 토글
+      forestData.value[0].isPublic = !forestData.value[0].isPublic;
+      console.log('공개여부 변경 성공:', forestData.value[0].isPublic);
+      
+      alertMessage.value = '공개여부가 변경되었습니다!';
+      showAlertModal.value = true;
+    } else {
+      throw new Error(`공개여부 변경 실패: ${res.status}`);
+    }
   } catch (err) {
-    alert('공개여부 변경에 실패했습니다.');
-    console.error(err);
+    console.error('=== 공개여부 변경 실패 ===');
+    console.error('Error:', err);
+    console.error('Error message:', err.message);
+    console.error('Error response:', err.response?.data);
+    console.error('========================');
+    
+    alertMessage.value = '공개여부 변경에 실패했습니다.';
+    showAlertModal.value = true;
   }
 };
 
