@@ -535,11 +535,9 @@ const handleCompleteRearrange = async () => {
     // 변경된 아이템들 업데이트
     if (changedItems.value.size > 0) {
       const updateData = Array.from(changedItems.value.values());
-      promises.push(
-        api.patch('emotion-forest/placement', {
-          body: JSON.stringify(updateData)
-        })
-      );
+              promises.push(
+          api.patch('emotion-forest/placement', updateData)
+        );
     }
     
     // 회수된 아이템들 삭제
@@ -554,8 +552,15 @@ const handleCompleteRearrange = async () => {
     // 모든 요청 병렬 실행
     const results = await Promise.all(promises);
     
-    // 모든 요청이 성공했는지 확인
-    const allSuccess = results.every(response => response.ok);
+    // 모든 요청이 성공했는지 확인 (Axios 방식)
+    const allSuccess = results.every(response => response.status >= 200 && response.status < 300);
+    
+    console.log('=== 재배치 결과 확인 ===');
+    results.forEach((response, index) => {
+      console.log(`요청 ${index + 1}:`, response.status, response.data);
+    });
+    console.log('모든 요청 성공:', allSuccess);
+    console.log('========================');
     
     if (allSuccess) {
       alertMessage.value = '재배치가 완료되었습니다!';
@@ -599,15 +604,32 @@ const handleCompletePlacement = async () => {
   };
   
   try {
+    console.log('=== 아이템 배치 시작 ===');
+    console.log('Request body:', body);
     
     const res = await api.post('emotion-forest/placement', body);
     
-    alertMessage.value = '배치가 완료되었습니다!';
-    showAlertModal.value = true;
-    await refreshForestData();
-    resetControlPanel();
-    forceUpdate.value++;
+    console.log('=== 배치 API 응답 ===');
+    console.log('Response status:', res.status);
+    console.log('Response data:', res.data);
+    console.log('========================');
+    
+    if (res.status >= 200 && res.status < 300) {
+      alertMessage.value = '배치가 완료되었습니다!';
+      showAlertModal.value = true;
+      await refreshForestData();
+      resetControlPanel();
+      forceUpdate.value++;
+    } else {
+      throw new Error(`배치 실패: ${res.status}`);
+    }
   } catch (err) {
+    console.error('=== 배치 실패 ===');
+    console.error('Error:', err);
+    console.error('Error message:', err.message);
+    console.error('Error response:', err.response?.data);
+    console.error('========================');
+    
     alertMessage.value = '배치에 실패했습니다.';
     showAlertModal.value = true;
   }
