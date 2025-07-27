@@ -33,7 +33,7 @@ const router = useRouter();
 const showAlert = ref(false);
 const alertMessage = ref("");
 const authStore = useAuthStore();
-const forestId = computed(() => authStore.user?.forestId ?? null);
+const userForestId = computed(() => authStore.user?.forestId ?? null);
 
 
 const props = defineProps({
@@ -43,6 +43,9 @@ const props = defineProps({
   },
 });
 
+// props 이름을 AlertModal과 맞춤
+const isOpen = computed(() => props.isOpen);
+
 const emit = defineEmits(["close"]);
 
 const handleAlertClose = () => {
@@ -51,32 +54,46 @@ const handleAlertClose = () => {
 
 const handleWithdraw = async () => {
   try {
-    const forestId = route.params.id || forestId.value;
+    console.log("=== 우정의 숲 탈퇴 시작 ===");
+    
+    // 우정의 숲 ID (route.params.id)를 사용
+    const mateForestId = route.params.id;
+    console.log("Mate Forest ID (탈퇴할 우정의 숲):", mateForestId);
+    console.log("User Forest ID (개인 숲):", userForestId.value);
 
-    if (!forestId) {
-      throw new Error("숲 ID를 찾을 수 없습니다.");
+    if (!mateForestId) {
+      throw new Error("우정의 숲 ID를 찾을 수 없습니다.");
     }
 
-    const response = await api.delete(
-      `mate/quit?forestId=${forestId}`,
-      {body: JSON.stringify({ forestId: forestId }),
-      }
-    );
+    console.log("탈퇴 API 호출:", `/mate/quit?forestId=${mateForestId}`);
+    
+    const response = await api.delete(`/mate/quit?forestId=${mateForestId}`);
 
-    if (response.ok) {
+    console.log("=== 탈퇴 API 응답 ===");
+    console.log("Response:", response);
+    console.log("Response status:", response.status);
+    console.log("Response data:", response.data);
+
+    if (response.status >= 200 && response.status < 300) {
       alertMessage.value = "우정의 숲에서 탈퇴되었습니다.";
       showAlert.value = true;
 
+      console.log("탈퇴 성공! 2초 후 메인 페이지로 이동");
+      
       setTimeout(() => {
-        router.push("/");
+        router.push(`/forest-detail/${userForestId.value}`);
       }, 2000);
     } else {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || "탈퇴 처리 중 오류가 발생했습니다.");
+      throw new Error(`탈퇴 처리 중 오류가 발생했습니다. (${response.status})`);
     }
   } catch (error) {
+    console.error("=== 탈퇴 실패 ===");
     console.error("Error:", error);
-    alertMessage.value = error.message;
+    console.error("Error message:", error.message);
+    console.error("Error response:", error.response?.data);
+    console.error("==========================");
+    
+    alertMessage.value = error.message || "탈퇴 처리 중 오류가 발생했습니다.";
     showAlert.value = true;
   } finally {
     emit("close");

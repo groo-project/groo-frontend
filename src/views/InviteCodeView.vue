@@ -1,6 +1,5 @@
 <template>
   <div class="invite-code-container">
-    <button class="back-button" @click="$router.back()">←</button>
     <div class="floating-items"> </div>
     <div class="invite-code-box">
       <div class="forest-symbol">
@@ -69,8 +68,11 @@ onMounted(() => {
 });
 
 const handleSubmit = async () => {
+  console.log("=== 초대 코드 수락 시작 ===");
   console.log("입력된 초대 코드:", inviteCode.value);
   console.log("초대 코드 길이:", inviteCode.value.length);
+  console.log("토큰 상태:", Token.value ? '있음' : '없음');
+  console.log("사용자 정보:", user.value);
 
   if (inviteCode.value.length === 8) {
 
@@ -81,23 +83,37 @@ const handleSubmit = async () => {
     }
 
     try {
-    
+      console.log("초대 코드 검증 API 호출: mate/accept/${inviteCode.value}");
+      
       // 초대 코드 검증 API 호출
       const response = await api.post(`mate/accept/${inviteCode.value}`);
-      // const response = await api.post(`mate/accept`,  {inviteCode: inviteCode.value});
 
-
+      console.log("=== API 응답 ===");
       console.log("응답 상태:", response.status);
+      console.log("응답 데이터:", response.data);
 
-      if (response.status != 200) {
+      if (response.status >= 200 && response.status < 300) {
+        console.log("초대 코드 검증 성공!");
+        
+        // 이미 로그인된 사용자는 개인 숲으로 이동
+        if (user.value?.forestId) {
+          console.log("사용자 개인 숲으로 이동:", `/forest-detail/${user.value.forestId}`);
+          router.push(`/forest-detail/${user.value.forestId}`);
+        } else {
+          console.log("사용자 정보가 없어서 메인 페이지로 이동");
+          router.push("/");
+        }
+      } else {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      // 성공 시 메인 페이지로 이동
-      router.push("/");
     } catch (error) {
-      console.error("초대 코드 검증 중 상세 오류:", error);
-      alertMessage.value = "초대 코드 검증에 실패했습니다. 다시 시도해주세요.";
+      console.error("=== 초대 코드 검증 실패 ===");
+      console.error("Error:", error);
+      console.error("Error message:", error.message);
+      console.error("Error response:", error.response?.data);
+      console.error("==========================");
+      
+      alertMessage.value = "초대가 만료되었거나 이미 사용된 초대 코드입니다.";
       showAlert.value = true;
     }
   } else {
@@ -465,22 +481,5 @@ const handleSubmit = async () => {
   }
 }
 
-.back-button {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  background: none;
-  border: none;
-  font-size: 28px;
-  color: #3a5a40;
-  cursor: pointer;
-  padding: 10px;
-  transition: transform 0.2s ease;
-  z-index: 10;
-}
 
-.back-button:hover {
-  transform: scale(1.2);
-  cursor: pointer;
-}
 </style>
