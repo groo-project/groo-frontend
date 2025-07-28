@@ -41,7 +41,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import AlertModal from "@/components/common/AlertModal.vue";
 import { useAuthStore } from "@/stores/auth.js";

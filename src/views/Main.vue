@@ -32,9 +32,14 @@ const changeView = (view) => {
 // 초대 링크 모달 열기
 const openInviteLinkModal = async () => {
   try {
-    const pathSegments = route.path.split("/");
-    const forestId = route.params.id || forestId.value; // URL에서 forestId 추출 또는 store에서 가져오기
-    // console.log("forestId:", forestId);
+    console.log("=== 초대 링크 모달 열기 ===");
+    console.log("Route path:", route.path);
+    console.log("Route params:", route.params);
+    
+    // URL에서 forestId 추출
+    const forestId = route.params.id;
+    console.log("forestId:", forestId);
+    console.log("Token:", Token.value ? '있음' : '없음');
 
     if (!forestId) {
       console.error("forestId가 없습니다.");
@@ -52,6 +57,11 @@ const openInviteLinkModal = async () => {
       }
     });
     
+    console.log("=== API 응답 ===");
+    console.log("Response:", response);
+    console.log("Response status:", response.status);
+    console.log("Response data:", response.data);
+    
     if (response.status >= 200 && response.status < 300) {
       // Axios에서는 response.data를 사용
       const data = response.data;
@@ -62,6 +72,7 @@ const openInviteLinkModal = async () => {
         inviteLink.value = data.inviteLink;
         isInviteLinkModalOpen.value = true;
         console.log("초대 링크 설정 완료:", inviteLink.value);
+        console.log("모달 상태:", isInviteLinkModalOpen.value);
       } else {
         console.error("초대 링크가 응답에 없습니다:", data);
       }

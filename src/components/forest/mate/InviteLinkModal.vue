@@ -67,10 +67,20 @@ const shareUrl = computed(() => {
   return `${props.inviteLink}`;
 });
 
-const copyLink = () => {
-  if (linkInput.value) {
-    linkInput.value.select();
-    document.execCommand("copy");
+const copyLink = async () => {
+  try {
+    if (linkInput.value) {
+      linkInput.value.select();
+      await navigator.clipboard.writeText(shareUrl.value);
+      console.log('초대 링크가 클립보드에 복사되었습니다:', shareUrl.value);
+    }
+  } catch (err) {
+    console.error('클립보드 복사 실패:', err);
+    // fallback: 구식 방식
+    if (linkInput.value) {
+      linkInput.value.select();
+      document.execCommand("copy");
+    }
   }
 };
 </script>
