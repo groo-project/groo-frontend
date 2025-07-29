@@ -46,16 +46,28 @@ const openInviteLinkModal = async () => {
       return;
     }
 
-    const response = await api.get(`mate/link`, { params: { forestId } });
-    if (!response.ok) {
+    const response = await api.get(`/mate/link`, {
+      params: {
+        forestId: forestId
+      }
+    });
+    
+    if (response.status >= 200 && response.status < 300) {
+      // Axios에서는 response.data를 사용
+      const data = response.data;
+      console.log("서버 응답 데이터:", data);
+      
+      // 서버 응답 구조에 따라 inviteLink 설정
+      if (data.inviteLink) {
+        inviteLink.value = data.inviteLink;
+        isInviteLinkModalOpen.value = true;
+        console.log("초대 링크 설정 완료:", inviteLink.value);
+      } else {
+        console.error("초대 링크가 응답에 없습니다:", data);
+      }
+    } else {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data = await response.json();
-    console.log("서버 응답 데이터:", data); // 응답 데이터 확인
-
-    // 서버 응답 구조에 따라 inviteLink 설정
-    inviteLink.value = `${data.inviteLink}`;
-    isInviteLinkModalOpen.value = true;
   } catch (error) {
     console.error("초대 링크 요청 실패:", error);
   }
