@@ -48,8 +48,8 @@ import api from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
-const { user } = authStore;
-const token = user?.accessToken || '';
+const { user, accessToken } = authStore;
+const token = accessToken || '';
 
 // props로 forestId를 받아야함 (우정의 숲 ID)
 const props = defineProps({
@@ -99,35 +99,89 @@ function selectMonth(m) {
 }
 
 function getUserIdFromToken() {
+  if (!token) {
+    console.log('Token이 없습니다');
+    return null;
+  }
+  
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    return payload.userId;
+    console.log('Token payload:', payload);
+    
+    // JWT에서 userId는 sub 필드에 있습니다
+    const userId = payload.sub || payload.userId;
+    console.log('Extracted userId:', userId);
+    
+    return userId;
   } catch (e) {
+    console.error('Token 파싱 실패:', e);
     return null;
   }
 }
 
 async function fetchDiaries() {
+  
   const userId = getUserIdFromToken();
-  if (!userId) return;
+  
+  if (!userId) {
+    console.log('UserId가 없어서 함수 종료');
+    return;
+  }
+  
+  if (!props.forestId) {
+    console.log('ForestId가 없어서 함수 종료');
+    return;
+  }
+  
   try {
-    const res = await api.get(
-      `/mate/diary/${props.forestId}/month?year=${year.value}&month=${month.value}`);
-    diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0])
+    const apiUrl = `/mate/diary/${props.forestId}/month?year=${year.value}&month=${month.value}`;
+    console.log('API URL:', apiUrl);
+    
+    const res = await api.get(apiUrl);
+    console.log('API Response:', res);
+    
+    if (res.data && Array.isArray(res.data)) {
+      diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0]);
+      console.log('Diary dates:', diaryDates.value);
+    } else {
+      console.log('Response data is not an array:', res.data);
+      diaryDates.value = [];
+    }
   } catch (e) {
-    diaryDates.value = []
+    console.error('Failed to fetch diaries:', e);
+    console.error('Error response:', e.response?.data);
+    console.error('Error status:', e.response?.status);
+    diaryDates.value = [];
   }
 }
 
 watch([year, month], fetchDiaries)
-onMounted(fetchDiaries)
+
+onMounted(() => {
+  console.log('=== DiaryCalendar Mounted ===');
+  console.log('Props forestId:', props.forestId);
+  console.log('Props forestId type:', typeof props.forestId);
+  console.log('Year:', year.value);
+  console.log('Month:', month.value);
+  console.log('========================');
+  fetchDiaries();
+})
 
 async function onDiaryClick(date) {
+  console.log('=== DiaryCalendar onDiaryClick ===');
+  console.log('Clicked date:', date);
+  console.log('Props forestId:', props.forestId);
+  
   const dateStr = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+  console.log('Date string:', dateStr);
+  
   try {
-    const res = await api.get(
-      `/mate/diary/${props.forestId}/date?date=${dateStr}`
-    );
+    const apiUrl = `/mate/diary/${props.forestId}/date?date=${dateStr}`;
+    console.log('API URL:', apiUrl);
+    
+    const res = await api.get(apiUrl);
+    console.log('API Response:', res);
+    
     emit('diary-click', {
       diaries: res.data,
       year: year.value,
@@ -135,7 +189,9 @@ async function onDiaryClick(date) {
       day: date
     });
   } catch (e) {
-    // 에러 처리
+    console.error('Failed to fetch diary detail:', e);
+    console.error('Error response:', e.response?.data);
+    console.error('Error status:', e.response?.status);
   }
 }
 

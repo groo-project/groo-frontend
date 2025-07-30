@@ -56,6 +56,14 @@
 
     <div v-if="isLoading" class="loading">로딩 중...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
+    
+    <!-- 성공 메시지 -->
+    <div v-if="showSuccessMessage" class="success-message">
+      <div class="success-content">
+        <div class="success-icon">🌿</div>
+        <div class="success-text">배치가 완료되었습니다!</div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -75,6 +83,7 @@ const forestData = ref(null);
 const isLoading = ref(true);
 const error = ref(null);    
 const isWithdrawModalOpen = ref(false);
+const showSuccessMessage = ref(false);
 const { proxy } = getCurrentInstance();
 const selectedPiece = ref(null);
 const dragPos = ref({ x: 50, y: 50 });
@@ -84,7 +93,14 @@ const containerRef = ref(null);
 
 const auth = useAuthStore();
 // 반응형으로 꺼내기
-const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
+const { accessToken, user, isAuthenticated } = storeToRefs(auth);
+
+const showSuccess = () => {
+  showSuccessMessage.value = true;
+  setTimeout(() => {
+    showSuccessMessage.value = false;
+  }, 2000); // 2초 후 자동으로 사라짐
+}; 
 const Token = computed(() => accessToken.value ?? null);
 
 
@@ -224,7 +240,7 @@ const handleCompletePlacement = async () => {
     console.log('========================');
     
     if (res.status >= 200 && res.status < 300) {
-      alert('배치가 완료되었습니다!');
+      showSuccess();
       await fetchForestData();
       selectedPiece.value = null;
     } else {
@@ -385,5 +401,69 @@ const goToHome = () => {
 
 .home-icon:hover {
   transform: scale(1.1);
+}
+
+.success-message {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.success-content {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 20px;
+  padding: 40px 60px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.4s ease-out;
+}
+
+.success-icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+  animation: bounce 0.6s ease-in-out;
+}
+
+.success-text {
+  font-size: 24px;
+  font-weight: 600;
+  color: #2d4632;
+  margin: 0;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  to { 
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
 }
 </style>
