@@ -16,6 +16,29 @@ import CloudyEffects from "../components/CloudyEffects.vue";
 import EditForestName from "../components/EditForestName.vue";
 import AlertModal from "../components/AlertModal.vue";
 
+// ===== 상수 정의 =====
+const ITEM_CONSTANTS = {
+  BASE_SIZE: 60,                    // 기본 아이템 크기
+  DEFAULT_Z_INDEX: 50,              // 기본 zIndex
+  MIN_SCALE: 0.3,                   // 최소 크기 배율
+  MAX_SCALE: 3.0,                   // 최대 크기 배율
+  SCALE_STEP: 0.1,                  // 크기 조절 단위
+  MIN_Z_INDEX: 0,                   // 최소 zIndex
+  MAX_Z_INDEX: 999,                 // 최대 zIndex
+  Z_INDEX_STEP: 10,                 // zIndex 조절 단위
+  DEFAULT_POSITION: { x: 10, y: 20 }, // 기본 배치 위치
+  YELLOW_DUST_OPACITY: 0.7          // 황사 시 투명도
+};
+
+const UI_CONSTANTS = {
+  TOOLTIP_DELAY: 0,                 // 툴팁 표시 지연시간
+  CONTROL_PANEL_WIDTH: 260,         // 컨트롤 패널 최소 너비
+  CONTROL_PANEL_HEIGHT: 500,        // 컨트롤 패널 최소 높이
+  CONTAINER_WIDTH: 800,             // 배치 컨테이너 너비
+  HOME_ICON_SIZE: { width: 120, height: 100 }, // 홈 아이콘 크기
+  BTN_ICON_SIZE: 32                 // 버튼 아이콘 크기
+};
+
 const router = useRouter();
 const showGuestBook = ref(false);
 const showGuestBookDetail = ref(false);
@@ -24,10 +47,9 @@ const bgRef = ref(null); // background 요소 참조
 const containerRef = ref(null); // placement-container 요소 참조
 
 // 크기 관련 변수들을 scale로 통합
-const baseSize = 60; // 기본 크기
+const baseSize = ITEM_CONSTANTS.BASE_SIZE;
 const itemScale = ref(1.0); // 크기 배율 (1.0 = 100%)
-const itemZIndex = ref(50); // 아이템의 기본 zIndex를 0으로 변경
-
+const itemZIndex = ref(ITEM_CONSTANTS.DEFAULT_Z_INDEX);
 const showTooltip = ref(false);
 const forestData = ref(null);
 const currentWeather = ref(null); // 현재 날씨 상태를 저장할 ref 추가
@@ -114,7 +136,7 @@ onMounted(async () => {
   
   proxy.emitter.on('place-item', (piece) => {
     selectedPiece.value = piece;
-    dragPos.value = { x: 10, y: 20 };
+    dragPos.value = { x: ITEM_CONSTANTS.DEFAULT_POSITION.x, y: ITEM_CONSTANTS.DEFAULT_POSITION.y };
     showControlPanel.value = true; // 아이템 선택 시 컨트롤 패널 표시
     console.log('Received piece in ForestDetail:', selectedPiece.value);
   });
@@ -233,7 +255,7 @@ const handleCompletePlacement = async () => {
     showControlPanel.value = false; // 배치 완료 후 컨트롤 패널 숨김
     // 값들을 기본값으로 리셋
     itemScale.value = 1.0;
-    itemZIndex.value = 0;
+    itemZIndex.value = ITEM_CONSTANTS.DEFAULT_Z_INDEX;
     forceUpdate.value++; // 배치 후 강제 리렌더 트리거
   } catch (err) {
     alertMessage.value = '배치에 실패했습니다.';
@@ -294,19 +316,27 @@ const goToHome = () => {
 
 // 크기 및 zIndex 조절 함수들
 const increaseScale = () => {
-  if (itemScale.value < 3.0) itemScale.value += 0.1;
+  if (itemScale.value < ITEM_CONSTANTS.MAX_SCALE) {
+    itemScale.value += ITEM_CONSTANTS.SCALE_STEP;
+  }
 };
 
 const decreaseScale = () => {
-  if (itemScale.value > 0.3) itemScale.value -= 0.1;
+  if (itemScale.value > ITEM_CONSTANTS.MIN_SCALE) {
+    itemScale.value -= ITEM_CONSTANTS.SCALE_STEP;
+  }
 };
 
 const increaseZIndex = () => {
-  if (itemZIndex.value < 999) itemZIndex.value += 10;
+  if (itemZIndex.value < ITEM_CONSTANTS.MAX_Z_INDEX) {
+    itemZIndex.value += ITEM_CONSTANTS.Z_INDEX_STEP;
+  }
 };
 
 const decreaseZIndex = () => {
-  if (itemZIndex.value > 0) itemZIndex.value -= 10;
+  if (itemZIndex.value > ITEM_CONSTANTS.MIN_Z_INDEX) {
+    itemZIndex.value -= ITEM_CONSTANTS.Z_INDEX_STEP;
+  }
 };
 
 const cancelPlacement = () => {
@@ -314,7 +344,7 @@ const cancelPlacement = () => {
   showControlPanel.value = false;
   // 값들을 기본값으로 리셋
   itemScale.value = 1.0;
-  itemZIndex.value = 0;
+  itemZIndex.value = ITEM_CONSTANTS.DEFAULT_Z_INDEX;
 };
 </script>
 
@@ -366,7 +396,6 @@ const cancelPlacement = () => {
         <div class="control-group">
           <label class="control-label">크기 조절</label>
           <div class="scale-display">{{ Math.round(itemScale * 100) }}%</div>
-          <div class="size-info">({{ calculatedWidth }}×{{ calculatedHeight }}px)</div>
           <div class="control-buttons">
             <button @click="decreaseScale" class="control-btn">-</button>
             <button @click="increaseScale" class="control-btn">+</button>
@@ -425,10 +454,10 @@ const cancelPlacement = () => {
           :style="{
             left: `${item.placementPositionX}%`,
             top: `${item.placementPositionY}%`,
-            width: item.placementWidth ? `${item.placementWidth}px` : '60px',
-            height: item.placementHeight ? `${item.placementHeight}px` : '60px',
+            width: item.placementWidth ? `${item.placementWidth}px` : `${ITEM_CONSTANTS.BASE_SIZE}px`,
+            height: item.placementHeight ? `${item.placementHeight}px` : `${ITEM_CONSTANTS.BASE_SIZE}px`,
             zIndex: item.placementZIndex,
-            opacity: showYellowDust ? 0.7 : 1
+            opacity: showYellowDust ? ITEM_CONSTANTS.YELLOW_DUST_OPACITY : 1
           }"
           draggable="false"
         />
@@ -446,7 +475,7 @@ const cancelPlacement = () => {
             height: `${calculatedHeight}px`,
             cursor: isDragging ? 'grabbing' : 'grab',
             zIndex: itemZIndex,
-            opacity: showYellowDust ? 0.7 : 1
+            opacity: showYellowDust ? ITEM_CONSTANTS.YELLOW_DUST_OPACITY : 1
           }"
           @mousedown="onMouseDown"
           @dragstart.prevent
