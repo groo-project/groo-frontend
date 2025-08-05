@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import AlertModal from './AlertModal.vue'
+import AlertModal from '@/components/common/AlertModal.vue'
 
 const router = useRouter()
 

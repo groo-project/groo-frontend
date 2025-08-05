@@ -27,7 +27,7 @@
 
 <script setup>
 import { ref } from "vue";
-import AlertModal from "./AlertModal.vue";
+import AlertModal from "@/components/common/AlertModal.vue";
 
 const props = defineProps({
   currentName: {

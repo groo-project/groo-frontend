@@ -43,7 +43,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import AlertModal from "../components/AlertModal.vue";
+import AlertModal from "@/components/common/AlertModal.vue";
 
 const router = useRouter();
 const route = useRoute();

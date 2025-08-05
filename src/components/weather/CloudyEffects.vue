@@ -16,7 +16,7 @@
   </template>
   
   <script setup>
-  import clouds from '../assets/clouds.jpg';  // 흐린 구름 텍스처
+  import clouds from '@/assets/clouds.jpg';  // 흐린 구름 텍스처
   
   const getImageStyle = (image) => ({
     background: `url(${image}) center center/cover no-repeat transparent`

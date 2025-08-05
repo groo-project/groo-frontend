@@ -88,7 +88,7 @@
 import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import forestImage from "@/icons/forest1.png";
-import AlertModal from "./AlertModal.vue";
+import AlertModal from "@/components/common/AlertModal.vue";
 
 const router = useRouter();
 const props = defineProps({

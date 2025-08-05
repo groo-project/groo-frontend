@@ -48,9 +48,9 @@
   </template>
   
   <script setup>
-  import backPageIcon from '../icons/Back.png'       
-  import backIcon from '../icons/arrow_back.png'
-  import forwardIcon from '../icons/arrow_forward.png'
+  import backPageIcon from '@/icons/Back.png'       
+  import backIcon from '@/icons/arrow_back.png'
+  import forwardIcon from '@/icons/arrow_forward.png'
   
   const emit = defineEmits(['close', 'prev', 'next']);
   

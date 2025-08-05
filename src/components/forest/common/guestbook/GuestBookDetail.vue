@@ -14,7 +14,7 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import previousIcon from '../icons/previous_icon2.png';
+import previousIcon from '@/icons/previous_icon2.png';
 
 const props = defineProps({
   id: {

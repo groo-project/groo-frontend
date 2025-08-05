@@ -1,33 +1,33 @@
 <script setup>
 import { ref, computed, getCurrentInstance } from "vue";
-import buttonIcon_1 from "../icons/diarywrite_icon.png";
-import buttonIcon_2 from "../icons/diaryview_icon.png";
-import buttonIcon_3 from "../icons/forestmate_icon.png";
-import buttonIcon_4 from "../icons/invite_icon.png";
-import buttonIcon_5 from "../icons/myitemview_icon.png";
-import logoutIcon from "../icons/logout_icon.png";
-import previousIcon from "../icons/previous_icon2.png";
+import buttonIcon_1 from "@/icons/diarywrite_icon.png";
+import buttonIcon_2 from "@/icons/diaryview_icon.png";
+import buttonIcon_3 from "@/icons/forestmate_icon.png";
+import buttonIcon_4 from "@/icons/invite_icon.png";
+import buttonIcon_5 from "@/icons/myitemview_icon.png";
+import logoutIcon from "@/icons/logout_icon.png";
+import previousIcon from "@/icons/previous_icon2.png";
 import { useRouter, useRoute } from "vue-router";
-import InviteLinkModal from "./InviteLinkModal.vue";
-import ForestListModal from "./ForestListModal.vue";
-import DiaryCalendar from './DiaryCalendar.vue';
-import DiaryDetail from './DiaryDetail.vue';
-import MyItemView from './MyItemView.vue';
-import CategorySelector from './CategorySelector.vue';
-import WriteDiary from './WriteDiary.vue';
-import LoadingAnimation from './LoadingAnimation.vue';
-import AnalyzeResult from './AnalyzeResult.vue';
-import AlertModal from './AlertModal.vue';
+import InviteLinkModal from "@/components/forest/mate/InviteLinkModal.vue";
+import ForestListModal from "@/components/forest/common/ForestListModal.vue";
+import DiaryCalendar from '@/components/forest/mate/DiaryCalendar.vue';
+import DiaryDetail from '@/components/forest/mate/DiaryDetail.vue';
+import MyItemView from '@/components/forest/common/MyItemView.vue';
+import CategorySelector from '@/components/forest/common/CategorySelector.vue';
+import WriteDiary from '@/components/forest/common/WriteDiary.vue';
+import LoadingAnimation from '@/components/forest/common/LoadingAnimation.vue';
+import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue';
+import AlertModal from '@/components/common/AlertModal.vue';
 
 // Emotion Icons
-import joyIcon from '../icons/joy_icon.png'
-import sadIcon from '../icons/sad_icon.png'
-import peacefulIcon from '../icons/peaceful_icon.png'
-import annoyIcon from '../icons/annoy_icon.png'
-import anxiousIcon from '../icons/anxious_icon.png'
-import melancholyIcon from '../icons/melancholy_icon.png'
-import tiredIcon from '../icons/tired_icon.png'
-import romanceIcon from '../icons/romance_icon.png'
+import joyIcon from '@/icons/joy_icon.png'
+import sadIcon from '@/icons/sad_icon.png'
+import peacefulIcon from '@/icons/peaceful_icon.png'
+import annoyIcon from '@/icons/annoy_icon.png'
+import anxiousIcon from '@/icons/anxious_icon.png'
+import melancholyIcon from '@/icons/melancholy_icon.png'
+import tiredIcon from '@/icons/tired_icon.png'
+import romanceIcon from '@/icons/romance_icon.png'
 
 const { proxy } = getCurrentInstance();
 const route = useRoute();

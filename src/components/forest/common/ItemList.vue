@@ -28,7 +28,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
-import backIcon from '../icons/back.png'
+import backIcon from '@/icons/back.png'
 
 const props = defineProps({
   categoryId: { type: Number, required: true }

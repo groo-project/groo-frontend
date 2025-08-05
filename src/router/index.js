@@ -1,15 +1,15 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 import Main from "../views/Main.vue";
-import ViewDiary from "../components/ViewDiary.vue";
+import ViewDiary from "../components/forest/common/ViewDiary.vue";
 import ForestMate from "../views/ForestMate.vue";
-import ForestView from "../components/ForestView.vue";
-import MyItemView from "../components/MyItemView.vue";
-import Guestbook from "../components/GuestBook.vue";
-import Login from "@/components/Login.vue";
-import Signup from "@/components/Signup.vue";
+import ForestView from "../components/forest/tour/ForestTourView.vue";
+import MyItemView from "../components/forest/common/MyItemView.vue";
+import Guestbook from "../components/forest/common/guestbook/GuestBook.vue";
+import Login from "@/components/auth/Login.vue";
+import Signup from "@/components/auth/Signup.vue";
 import ForestDetail from "@/views/ForestDetail.vue";
-import BackgroundImage2 from "@/components/BackgroundImage2.vue";
+import BackgroundImage from "@/components/BackgroundImage.vue";
 import InviteCodeView from "../views/InviteCodeView.vue";
 import LandingPage from "@/views/LandingPage.vue";
 
@@ -23,7 +23,7 @@ const router = createRouter({
         {
           path: "background-image", // == "/"
           name: "BackgroundImage",
-          component: BackgroundImage2,
+          component: BackgroundImage,
         },
         {
           path: "viewdiary",

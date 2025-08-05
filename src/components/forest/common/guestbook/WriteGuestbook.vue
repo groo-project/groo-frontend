@@ -28,7 +28,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRoute } from 'vue-router'
-import AlertModal from './AlertModal.vue'
+import AlertModal from '@/components/common/AlertModal.vue'
 
 const route = useRoute()
 const currentPath = route.path

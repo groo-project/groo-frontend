@@ -1,20 +1,22 @@
 <script setup>
 import { ref, onMounted, onUnmounted, getCurrentInstance, computed } from "vue";
-import buttonIcon_6 from "../icons/edit_icon.png"
-import buttonIcon_8 from "../icons/is_public_icon.png"
-// import GuestBookList from "../components/GuestBookList.vue";
-import GuestBookDetail from "../components/GuestBookDetail.vue";
+import buttonIcon_6 from "@/icons/edit_icon.png"
+import buttonIcon_8 from "@/icons/is_public_icon.png"
+// import GuestBookList from "@/components/GuestBookList.vue";
+import GuestBookDetail from "@/components/forest/common/guestbook/GuestBookDetail.vue";
 import { useRouter } from 'vue-router';
-import RainEffects from "../components/RainEffects.vue"; // Rain 효과 컴포넌트 불러오기
-import FlowerRainEffect from "../components/FlowerRainEffect.vue";
-// import FogEffect from "../components/FogEffect.vue";
-import FogEffects from "../components/FogEffects.vue";
-import YellowDustEffects from "../components/YellowDustEffects.vue";
-import SnowEffects from "../components/SnowEffects.vue";
-import ThunderEffects from "../components/ThunderEffects.vue";
-import CloudyEffects from "../components/CloudyEffects.vue";
-import EditForestName from "../components/EditForestName.vue";
-import AlertModal from "../components/AlertModal.vue";
+
+import EditForestName from "@/components/forest/common/EditForestName.vue";
+import AlertModal from "@/components/common/AlertModal.vue";
+
+// weather effects
+import RainEffects from "@/components/weather/RainEffects.vue";
+import FlowerRainEffect from "@/components/weather/FlowerRainEffect.vue";
+import FogEffects from "@/components/weather/FogEffects.vue";
+import YellowDustEffects from "@/components/weather/YellowDustEffects.vue";
+import SnowEffects from "@/components/weather/SnowEffects.vue";
+import ThunderEffects from "@/components/weather/ThunderEffects.vue";
+import CloudyEffects from "@/components/weather/CloudyEffects.vue";
 
 // ===== 상수 정의 =====
 const ITEM_CONSTANTS = {

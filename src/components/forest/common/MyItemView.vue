@@ -32,11 +32,11 @@
   
   <script setup>
   import { ref } from 'vue'
-  import backIcon from '../icons/back.png'
-  import plantIcon from '../icons/tree.png'
-  import objectIcon from '../icons/object_icon.png'
-  import etcIcon from '../icons/bird.png'
-  import ItemList from './ItemList.vue'
+  import backIcon from '@/icons/back.png'
+  import plantIcon from '@/icons/tree.png'
+  import objectIcon from '@/icons/object_icon.png'
+  import etcIcon from '@/icons/bird.png'
+  import ItemList from '@/components/forest/common/ItemList.vue'
   
   const emit = defineEmits(['close'])
   const showItemList = ref(false)

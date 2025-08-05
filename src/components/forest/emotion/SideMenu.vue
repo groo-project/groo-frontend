@@ -1,41 +1,41 @@
 <script setup>
 import { ref, computed, onMounted, watch, getCurrentInstance } from "vue";
 import axios from 'axios'
-import MyDiaryCalendar from './MyDiaryCalendar.vue';
-import MyDiaryDetail from './MyDiaryDetail.vue';
+import MyDiaryCalendar from '@/components/forest/emotion/MyDiaryCalendar.vue';
+import MyDiaryDetail from '@/components/forest/emotion/MyDiaryDetail.vue';
 
 // Icons
-import buttonIcon_1 from '../icons/diarywrite_icon.png'
-import buttonIcon_2 from '../icons/diaryview_icon.png'
-import buttonIcon_3 from '../icons/forestmate_icon.png'
-import buttonIcon_4 from '../icons/forestview_icon.png'
-import buttonIcon_5 from '../icons/myitemview_icon.png'
-import buttonIcon_6 from '../icons/mailbox_icon.png'
-import logoutIcon from '../icons/logout_icon.png'
+import buttonIcon_1 from '@/icons/diarywrite_icon.png'
+import buttonIcon_2 from '@/icons/diaryview_icon.png'
+import buttonIcon_3 from '@/icons/forestmate_icon.png'
+import buttonIcon_4 from '@/icons/forestview_icon.png'
+import buttonIcon_5 from '@/icons/myitemview_icon.png'
+import buttonIcon_6 from '@/icons/mailbox_icon.png'
+import logoutIcon from '@/icons/logout_icon.png'
 
 // Emotion Icons
-import joyIcon from '../icons/joy_icon.png'
-import sadIcon from '../icons/sad_icon.png'
-import peacefulIcon from '../icons/peaceful_icon.png'
-import annoyIcon from '../icons/annoy_icon.png'
-import anxiousIcon from '../icons/anxious_icon.png'
-import melancholyIcon from '../icons/melancholy_icon.png'
-import tiredIcon from '../icons/tired_icon.png'
-import romanceIcon from '../icons/romance_icon.png'
+import joyIcon from '@/icons/joy_icon.png'
+import sadIcon from '@/icons/sad_icon.png'
+import peacefulIcon from '@/icons/peaceful_icon.png'
+import annoyIcon from '@/icons/annoy_icon.png'
+import anxiousIcon from '@/icons/anxious_icon.png'
+import melancholyIcon from '@/icons/melancholy_icon.png'
+import tiredIcon from '@/icons/tired_icon.png'
+import romanceIcon from '@/icons/romance_icon.png'
 
 // Components
-import CategorySelector from './CategorySelector.vue'
-import AnalyzeResult from './AnalyzeResult.vue'
-import WriteDiary from './WriteDiary.vue'
-import WriteGuestbook from './WriteGuestbook.vue'
-import LoadingAnimation from './LoadingAnimation.vue'
-import GuestbookList from './GuestbookList.vue'
+import CategorySelector from '@/components/forest/common/CategorySelector.vue'
+import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue'
+import WriteDiary from '@/components/forest/common/WriteDiary.vue'
+import WriteGuestbook from '@/components/forest/common/guestbook/WriteGuestbook.vue'
+import LoadingAnimation from '@/components/forest/common/LoadingAnimation.vue'
+import GuestbookList from '@/components/forest/common/guestbook/GuestbookList.vue'
 import { useRouter, useRoute } from 'vue-router'
-import ConfirmModal from './ConfirmModal.vue'
-import GuestBookDetail from './GuestBookDetail.vue'
-import ForestListModal from "./ForestListModal.vue";
-import MyItemView from './MyItemView.vue'
-import AlertModal from './AlertModal.vue'
+import ConfirmModal from '@/components/forest/common/ConfirmModal.vue'
+import GuestBookDetail from '@/components/forest/common/guestbook/GuestBookDetail.vue'
+import ForestListModal from "@/components/forest/common/ForestListModal.vue";
+import MyItemView from '@/components/forest/common/MyItemView.vue'
+import AlertModal from '@/components/common/AlertModal.vue'
 
 const { proxy } = getCurrentInstance();
 
