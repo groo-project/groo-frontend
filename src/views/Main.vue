@@ -1,11 +1,11 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useRoute } from "vue-router"; // 현재 경로를 가져오기 위해 useRoute 사용
-import SideMenu from "../components/SideMenu.vue";
-import MateSideMenu from "../components/MateSideMenu.vue";
-import InviteLinkModal from "../components/InviteLinkModal.vue";
-import ForestListModal from "../components/ForestListModal.vue";
-import WithdrawModal from "../components/WithdrawModal.vue";
+import SideMenu from "@/components/forest/emotion/SideMenu.vue";
+import MateSideMenu from "@/components/forest/mate/MateSideMenu.vue";
+import InviteLinkModal from "@/components/forest/mate/InviteLinkModal.vue";
+import ForestListModal from "@/components/forest/common/ForestListModal.vue";
+import WithdrawModal from "@/components/forest/mate/WithdrawModal.vue";
 
 const currentView = ref("background"); // 초기 상태: BackgroundImage
 const isInviteLinkModalOpen = ref(false);

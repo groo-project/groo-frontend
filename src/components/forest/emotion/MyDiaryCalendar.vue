@@ -43,8 +43,8 @@
   <script setup>
   import { ref, computed, watch, onMounted } from 'vue'
   import axios from 'axios'
-  import backIcon from '../icons/back.png'
-  import forwardIcon from '../icons/arrow_forward.png'
+  import backIcon from '@/icons/back.png'
+  import forwardIcon from '@/icons/arrow_forward.png'
   const emit = defineEmits(['close', 'diary-click'])
   
   const today = new Date()

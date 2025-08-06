@@ -33,9 +33,9 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
-import editIcon from '../icons/edit_icon.png'
-import previousIcon from '../icons/previous_icon2.png'
-import WriteGuestbook from './WriteGuestbook.vue'
+import editIcon from '@/icons/edit_icon.png'
+import previousIcon from '@/icons/previous_icon2.png'
+import WriteGuestbook from '@/components/forest/common/guestbook/WriteGuestbook.vue'
 
 const emit = defineEmits(['back', 'show-detail']);
 

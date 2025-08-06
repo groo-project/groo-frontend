@@ -62,7 +62,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, getCurrentInstance } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import WithdrawModal from "../components/WithdrawModal.vue";
+import WithdrawModal from "../components/forest/mate/WithdrawModal.vue";
 
 const route = useRoute();
 const router = useRouter();
