@@ -52,9 +52,10 @@ const authStore = useAuthStore()
 
 const categoryTitle = computed(() => categoryTitles[props.categoryId])
 const forestId = computed(() => {
-  console.log('=== ForestId from Props ===');
+  console.log('=== ItemList ForestId ===');
   console.log('Props forestId:', props.forestId);
   console.log('Props forestId type:', typeof props.forestId);
+  console.log('Auth store user forestId:', authStore.user?.forestId);
   console.log('========================');
   return props.forestId;
 })

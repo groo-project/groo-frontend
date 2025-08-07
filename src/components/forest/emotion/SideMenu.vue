@@ -416,6 +416,7 @@ function handlePlaceFromStorage(item) {
         </template>
         <template v-else-if="showMyItemView">
           <MyItemView
+            :forestId="user?.forestId"
             @close="closeMyItemView"
             @placeFromStorage="handlePlaceFromStorage"
           />

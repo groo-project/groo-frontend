@@ -403,7 +403,7 @@ const handlePlaceFromStorage = (item) => {
         </div>
         <div v-else class="myitem-view">
           <MyItemView 
-            :forestId="forestId" 
+            :forestId="route.params.id" 
             @close="closeMyItems" 
             @placeFromStorage="handlePlaceFromStorage"
           />
