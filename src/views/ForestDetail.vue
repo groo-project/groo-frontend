@@ -2,12 +2,11 @@
 import { ref, onMounted, onUnmounted, getCurrentInstance, computed } from "vue";
 import buttonIcon_6 from "@/icons/edit_icon.png"
 import buttonIcon_8 from "@/icons/is_public_icon.png"
-// import GuestBookList from "@/components/GuestBookList.vue";
 import GuestBookDetail from "@/components/forest/common/guestbook/GuestBookDetail.vue";
 import { useRouter } from 'vue-router';
-
 import EditForestName from "@/components/forest/common/EditForestName.vue";
 import AlertModal from "@/components/common/AlertModal.vue";
+import ItemControlPanel from "@/components/forest/common/placement/ItemControlPanel.vue";
 
 // weather effects
 import RainEffects from "@/components/weather/RainEffects.vue";
@@ -20,41 +19,41 @@ import CloudyEffects from "@/components/weather/CloudyEffects.vue";
 
 // ===== 상수 정의 =====
 const ITEM_CONSTANTS = {
-  BASE_SIZE: 60,                    // 기본 아이템 크기
-  DEFAULT_Z_INDEX: 50,              // 기본 zIndex
-  MIN_SCALE: 0.3,                   // 최소 크기 배율
-  MAX_SCALE: 3.0,                   // 최대 크기 배율
-  SCALE_STEP: 0.1,                  // 크기 조절 단위
-  MIN_Z_INDEX: 0,                   // 최소 zIndex
-  MAX_Z_INDEX: 999,                 // 최대 zIndex
-  Z_INDEX_STEP: 10,                 // zIndex 조절 단위
-  DEFAULT_POSITION: { x: 10, y: 20 }, // 기본 배치 위치
-  YELLOW_DUST_OPACITY: 0.7          // 황사 시 투명도
+  BASE_SIZE: 60,
+  DEFAULT_Z_INDEX: 50,
+  MIN_SCALE: 0.3,
+  MAX_SCALE: 3.0,
+  SCALE_STEP: 0.1,
+  MIN_Z_INDEX: 0,
+  MAX_Z_INDEX: 999,
+  Z_INDEX_STEP: 10,
+  DEFAULT_POSITION: { x: 10, y: 20 },
+  YELLOW_DUST_OPACITY: 0.7
 };
 
 const UI_CONSTANTS = {
-  TOOLTIP_DELAY: 0,                 // 툴팁 표시 지연시간
-  CONTROL_PANEL_WIDTH: 260,         // 컨트롤 패널 최소 너비
-  CONTROL_PANEL_HEIGHT: 500,        // 컨트롤 패널 최소 높이
-  CONTAINER_WIDTH: 800,             // 배치 컨테이너 너비
-  HOME_ICON_SIZE: { width: 120, height: 100 }, // 홈 아이콘 크기
-  BTN_ICON_SIZE: 32                 // 버튼 아이콘 크기
+  TOOLTIP_DELAY: 0,
+  CONTROL_PANEL_WIDTH: 260,
+  CONTROL_PANEL_HEIGHT: 500,
+  CONTAINER_WIDTH: 800,
+  HOME_ICON_SIZE: { width: 120, height: 100 },
+  BTN_ICON_SIZE: 32
 };
 
 const router = useRouter();
 const showGuestBook = ref(false);
 const showGuestBookDetail = ref(false);
 const selectedGuestBookId = ref(null);
-const bgRef = ref(null); // background 요소 참조
-const containerRef = ref(null); // placement-container 요소 참조
+const bgRef = ref(null);
+const containerRef = ref(null);
 
 // 크기 관련 변수들을 scale로 통합
 const baseSize = ITEM_CONSTANTS.BASE_SIZE;
-const itemScale = ref(1.0); // 크기 배율 (1.0 = 100%)
+const itemScale = ref(1.0);
 const itemZIndex = ref(ITEM_CONSTANTS.DEFAULT_Z_INDEX);
 const showTooltip = ref(false);
 const forestData = ref(null);
-const currentWeather = ref(null); // 현재 날씨 상태를 저장할 ref 추가
+const currentWeather = ref(null);
 const selectedPiece = ref(null)
 const dragPos = ref({ x: 50, y: 50 })
 const isDragging = ref(false)
@@ -63,7 +62,7 @@ const forceUpdate = ref(0);
 const showEditName = ref(false);
 const showAlertModal = ref(false);
 const alertMessage = ref('');
-const showControlPanel = ref(false); // 컨트롤 패널 표시 여부
+const showControlPanel = ref(false);
 
 const { proxy } = getCurrentInstance();
 
@@ -71,6 +70,7 @@ const { proxy } = getCurrentInstance();
 const calculatedWidth = computed(() => Math.round(baseSize * itemScale.value));
 const calculatedHeight = computed(() => Math.round(baseSize * itemScale.value));
 
+// 날씨 관련 computed들
 const showRain = computed(() => {
   const weather = localStorage.getItem('weather');
   return weather === '비';
@@ -139,11 +139,10 @@ onMounted(async () => {
   proxy.emitter.on('place-item', (piece) => {
     selectedPiece.value = piece;
     dragPos.value = { x: ITEM_CONSTANTS.DEFAULT_POSITION.x, y: ITEM_CONSTANTS.DEFAULT_POSITION.y };
-    showControlPanel.value = true; // 아이템 선택 시 컨트롤 패널 표시
+    showControlPanel.value = true;
     console.log('Received piece in ForestDetail:', selectedPiece.value);
   });
   
-  // 일기 저장 후 날씨 정보를 받는 리스너
   proxy.emitter.on('diary-saved', (response) => {
     console.log('Received diary save response:', response);
     if (response.weather) {
@@ -180,7 +179,7 @@ const togglePublic = async () => {
 };
 
 const onMouseDown = (event) => {
-  event.preventDefault(); // 브라우저 기본 드래그 방지
+  event.preventDefault();
   isDragging.value = true;
   
   const container = containerRef.value;
@@ -218,6 +217,7 @@ const onMouseUp = () => {
   document.removeEventListener('mouseup', onMouseUp);
 };
 
+// 컨트롤 패널 이벤트 핸들러들
 const handleCompletePlacement = async () => {
   const token = localStorage.getItem('accessToken');
   const forestId = localStorage.getItem('myRecentforestId');
@@ -253,16 +253,44 @@ const handleCompletePlacement = async () => {
     alertMessage.value = '배치가 완료되었습니다!';
     showAlertModal.value = true;
     await refreshForestData();
-    selectedPiece.value = null;
-    showControlPanel.value = false; // 배치 완료 후 컨트롤 패널 숨김
-    // 값들을 기본값으로 리셋
-    itemScale.value = 1.0;
-    itemZIndex.value = ITEM_CONSTANTS.DEFAULT_Z_INDEX;
-    forceUpdate.value++; // 배치 후 강제 리렌더 트리거
+    resetControlPanel();
+    forceUpdate.value++;
   } catch (err) {
     alertMessage.value = '배치에 실패했습니다.';
     showAlertModal.value = true;
     console.error(err);
+  }
+};
+
+const resetControlPanel = () => {
+  selectedPiece.value = null;
+  showControlPanel.value = false;
+  itemScale.value = 1.0;
+  itemZIndex.value = ITEM_CONSTANTS.DEFAULT_Z_INDEX;
+};
+
+// 크기 및 zIndex 조절 함수들
+const increaseScale = () => {
+  if (itemScale.value < ITEM_CONSTANTS.MAX_SCALE) {
+    itemScale.value += ITEM_CONSTANTS.SCALE_STEP;
+  }
+};
+
+const decreaseScale = () => {
+  if (itemScale.value > ITEM_CONSTANTS.MIN_SCALE) {
+    itemScale.value -= ITEM_CONSTANTS.SCALE_STEP;
+  }
+};
+
+const increaseZIndex = () => {
+  if (itemZIndex.value < ITEM_CONSTANTS.MAX_Z_INDEX) {
+    itemZIndex.value += ITEM_CONSTANTS.Z_INDEX_STEP;
+  }
+};
+
+const decreaseZIndex = () => {
+  if (itemZIndex.value > ITEM_CONSTANTS.MIN_Z_INDEX) {
+    itemZIndex.value -= ITEM_CONSTANTS.Z_INDEX_STEP;
   }
 };
 
@@ -296,7 +324,6 @@ const handleEmotionWeather = (weather) => {
 
 const sortedPlacementList = computed(() => {
   if (!forestData.value || !forestData.value.length) return [];
-  // Y값(placementPositionY)이 작은 순 → 큰 순으로 정렬
   return [...forestData.value[0].placementList].sort(
     (a, b) => a.placementPositionY - b.placementPositionY
   );
@@ -314,39 +341,6 @@ const handleNameUpdate = (newName) => {
 
 const goToHome = () => {
   router.push('/')
-};
-
-// 크기 및 zIndex 조절 함수들
-const increaseScale = () => {
-  if (itemScale.value < ITEM_CONSTANTS.MAX_SCALE) {
-    itemScale.value += ITEM_CONSTANTS.SCALE_STEP;
-  }
-};
-
-const decreaseScale = () => {
-  if (itemScale.value > ITEM_CONSTANTS.MIN_SCALE) {
-    itemScale.value -= ITEM_CONSTANTS.SCALE_STEP;
-  }
-};
-
-const increaseZIndex = () => {
-  if (itemZIndex.value < ITEM_CONSTANTS.MAX_Z_INDEX) {
-    itemZIndex.value += ITEM_CONSTANTS.Z_INDEX_STEP;
-  }
-};
-
-const decreaseZIndex = () => {
-  if (itemZIndex.value > ITEM_CONSTANTS.MIN_Z_INDEX) {
-    itemZIndex.value -= ITEM_CONSTANTS.Z_INDEX_STEP;
-  }
-};
-
-const cancelPlacement = () => {
-  selectedPiece.value = null;
-  showControlPanel.value = false;
-  // 값들을 기본값으로 리셋
-  itemScale.value = 1.0;
-  itemZIndex.value = ITEM_CONSTANTS.DEFAULT_Z_INDEX;
 };
 </script>
 
@@ -385,39 +379,18 @@ const cancelPlacement = () => {
       </div>
     </div>
 
-    <!-- 아이템 조절 컨트롤 패널 -->
-    <div v-if="showControlPanel && selectedPiece" class="control-panel">
-      <div class="control-section">
-        <h4>아이템 설정</h4>
-        
-        <div class="item-preview">
-          <img :src="selectedPiece.icon" :alt="selectedPiece.label" class="preview-image" />
-          <p class="item-name">{{ selectedPiece.label }}</p>
-        </div>
-        
-        <div class="control-group">
-          <label class="control-label">크기 조절</label>
-          <div class="scale-display">{{ Math.round(itemScale * 100) }}%</div>
-          <div class="control-buttons">
-            <button @click="decreaseScale" class="control-btn">-</button>
-            <button @click="increaseScale" class="control-btn">+</button>
-          </div>
-        </div>
-        
-        <div class="control-group">
-          <label class="control-label">레이어 조절</label>
-          <div class="layer-display">{{ itemZIndex }}</div>
-          <div class="control-buttons">
-            <button @click="decreaseZIndex" class="control-btn">-</button>
-            <button @click="increaseZIndex" class="control-btn">+</button>
-          </div>
-        </div>
-        
-        <div class="control-actions">
-          <button @click="handleCompletePlacement" class="complete-btn-panel">배치 완료</button>
-        </div>
-      </div>
-    </div>
+    <ItemControlPanel
+      v-if="showControlPanel && selectedPiece"
+      :selected-piece="selectedPiece"
+      :item-scale="itemScale"
+      :item-z-index="itemZIndex"
+      :base-size="baseSize"
+      @complete-placement="handleCompletePlacement"
+      @increase-scale="increaseScale"
+      @decrease-scale="decreaseScale"
+      @increase-z-index="increaseZIndex"
+      @decrease-z-index="decreaseZIndex"
+    />
 
     <template v-if="showGuestBook">
       <template v-if="showGuestBookDetail">
@@ -425,13 +398,6 @@ const cancelPlacement = () => {
           :id="selectedGuestBookId"
           @back="handleDetailBack"
         />
-      </template>
-      <template v-else>
-        <!-- GuestBookList 컴포넌트가 주석 처리되어 있으므로 여기에 추가 -->
-        <!-- GuestBookList 
-          @back="handleGuestBookBack"
-          @show-detail="handleShowDetail"
-        /> -->
       </template>
     </template>
 
@@ -445,7 +411,6 @@ const cancelPlacement = () => {
           alt="Green Background"
         />
         
-        <!-- 배치된 아이템들 -->
         <img
           v-if="forestData && forestData.length"
           v-for="item in sortedPlacementList"
@@ -464,7 +429,6 @@ const cancelPlacement = () => {
           draggable="false"
         />
         
-        <!-- 드래그 중인 아이템 -->
         <img
           v-if="selectedPiece"
           class="item draggable"
@@ -616,163 +580,6 @@ const cancelPlacement = () => {
   user-select: none;
   touch-action: none;
   position: absolute;
-}
-
-.control-panel {
-  position: fixed;
-  top: 50%;
-  right: 20px;
-  transform: translateY(-50%);
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1.5px solid rgba(255, 255, 255, 0.25);
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  padding: 32px 28px;
-  z-index: 1000;
-  min-width: 260px;
-  min-height: 500px;
-  display: flex;
-  flex-direction: column;
-}
-
-.control-section {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-.control-section h4 {
-  margin: 0 0 24px 0;
-  color: #fff;
-  font-size: 20px;
-  font-weight: 700;
-  text-align: center;
-  letter-spacing: -0.5px;
-}
-
-.item-preview {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 32px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.preview-image {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  margin-bottom: 12px;
-}
-
-.item-name {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0;
-  text-align: center;
-}
-
-.control-group {
-  margin-bottom: 32px;
-}
-
-.control-label {
-  display: block;
-  margin-bottom: 16px;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 16px;
-  font-weight: 600;
-  text-align: center;
-}
-
-.scale-display, .layer-display {
-  color: #fff;
-  font-size: 24px;
-  font-weight: 700;
-  text-align: center;
-  margin-bottom: 8px;
-}
-
-.size-info {
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.control-buttons {
-  display: flex;
-  gap: 16px;
-  justify-content: center;
-}
-
-.control-btn {
-  width: 48px;
-  height: 48px;
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 20px;
-  font-weight: 700;
-  color: #fff;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.control-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.control-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-.control-actions {
-  margin-top: auto;
-  display: flex;
-  justify-content: center;
-}
-
-.complete-btn-panel {
-  width: 100%;
-  padding: 16px;
-  background: rgba(58, 90, 64, 0.8);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  color: #fff;
-  border: 1.5px solid rgba(58, 90, 64, 0.6);
-  border-radius: 12px;
-  cursor: pointer;
-  font-size: 18px;
-  font-weight: 700;
-  transition: all 0.3s ease;
-  letter-spacing: -0.5px;
-}
-
-.complete-btn-panel:hover {
-  background: rgba(58, 90, 64, 1);
-  border-color: rgba(58, 90, 64, 0.8);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(58, 90, 64, 0.4);
-}
-
-.complete-btn-panel:active {
-  transform: translateY(0);
 }
 
 .forest-detail {

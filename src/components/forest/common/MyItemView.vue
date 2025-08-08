@@ -7,7 +7,7 @@
           class="back-img"
           @click="$emit('close')"
         />
-        <div class="myitem-title">우리의 조각 보기</div>
+        <div class="myitem-title">기록의 조각 보기</div>
         <div class="myitem-subtitle">기록의 조각 유형을 선택해주세요 !</div>
         
         <div class="item-grid">

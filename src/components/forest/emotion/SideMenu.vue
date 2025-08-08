@@ -562,6 +562,7 @@ const handleNextDiary = () => {
   height: 100vh;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
+  overflow-x: hidden; /* 좌우 스크롤 방지 */
 }
 
 .side-menu::-webkit-scrollbar {
