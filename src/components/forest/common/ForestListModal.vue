@@ -32,7 +32,6 @@
           @click="showCreateForestModal = true"
         >
           <div class="add-forest-content">
-            <!-- <div class="plus-icon"></div> -->
             <div class="add-forest-text">새로운 숲 만들기</div>
           </div>
         </div>
@@ -76,7 +75,7 @@
 
 <script setup>
 import { ref, onMounted, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import forestImage from "@/icons/forest1.png";
 import AlertModal from "@/components/common/AlertModal.vue";
 import api from "@/lib/api.js";
@@ -86,6 +85,7 @@ const authStore = useAuthStore();
 const token = authStore.accessToken;
 
 const router = useRouter();
+const route = useRoute();
 const props = defineProps({
   isOpen: {
     type: Boolean,
@@ -163,14 +163,9 @@ const createNewForest = async () => {
 };
 
 const handleForestClick = (forestId) => {
-  console.log("Clicking forest with ID:", forestId);
   
-  // auth store에 forestId 업데이트
-  authStore.$patch((state) => {
-    if (state.user) {
-      state.user.forestId = forestId;
-    }
-  });
+  // auth.user.forestId는 개인 숲 ID이므로 덮어쓰지 않음
+  // 우정의 숲 ID는 route.params.id로 전달됨
   
   emit("close");
   console.log("Navigating to:", `/forestmate/${forestId}`);

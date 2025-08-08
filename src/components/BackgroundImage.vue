@@ -71,8 +71,14 @@ onMounted(async () => {
         return
       }
 
-      forestId = forestList[0].id
-      router.replace(`forest-detail/${forestId}`)
+      // 개인 숲 ID를 사용 (우정의 숲 ID가 아님)
+      const personalForestId = forestList[0].id
+      console.log('=== BackgroundImage ForestId ===');
+      console.log('Personal forest ID from API:', personalForestId);
+      console.log('User forestId from auth:', authStore.user?.forestId);
+      console.log('========================');
+      
+      router.replace(`forest-detail/${personalForestId}`)
       return
     } catch (err) {
       console.error('myforest 호출 실패:', err)

@@ -87,16 +87,17 @@ const auth = useAuthStore();
 const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
 const Token = computed(() => accessToken.value ?? null);
 
-// 간단하게 forestId 설정
+
 const forestId = computed(() => {
-  const id = user.value?.forestId;
   const routeId = route.params.id;
   
-  console.log('ForestId - user.value?.forestId:', id);
-  console.log('ForestId - route.params.id:', routeId);
-  console.log('ForestId - final value:', id || routeId || null);
+  console.log('=== ForestMate ForestId ===');
+  console.log('Route params id (우정의 숲 ID):', routeId);
+  console.log('User forestId (개인 숲 ID):', user.value?.forestId);
+  console.log('Final forestId (우정의 숲 ID):', routeId);
+  console.log('========================');
   
-  return id || routeId || null;
+  return routeId;
 });
 
 const fetchForestData = async () => {
@@ -244,13 +245,13 @@ const handleCompletePlacement = async () => {
 const goToHome = () => {
   console.log('=== Go To Home ===');
   console.log('User:', user.value);
-  console.log('Forest ID:', forestId.value);
+  console.log('Current 우정의 숲 ID:', forestId.value);
+  console.log('User 개인 숲 ID:', user.value?.forestId);
   console.log('========================');
-  forestId.value = user.value?.forestId;
   
-  if (forestId.value) {
-    // 회원의 forestId로 이동
-    router.push(`/forest-detail/${forestId.value}`);
+  if (user.value?.forestId) {
+    // 개인 숲(감정의 숲)으로 이동
+    router.push(`/forest-detail/${user.value.forestId}`);
   } else {
     // forestId가 없으면 기본 홈으로
     router.push('/');
