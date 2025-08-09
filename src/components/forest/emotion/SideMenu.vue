@@ -475,24 +475,26 @@ const handleNextDiary = () => {
               </span>
               우정의 숲 입장하기
             </button>
-            <router-link to="/forestview" class="menu-btn">
-              <span class="icon">
-                <img :src="buttonIcon_4" class="btn-img" />
-              </span>
-              다른 숲 구경가기
-            </router-link>
             <button class="menu-btn" @click="openMyItemView">
               <span class="icon">
                 <img :src="buttonIcon_5" class="btn-img" />
               </span>
               나의 조각 보기
             </button>
+            
+            <!-- 추후 개발 예정 -->
+            <!-- <router-link to="/forestview" class="menu-btn">
+              <span class="icon">
+                <img :src="buttonIcon_4" class="btn-img" />
+              </span>
+              다른 숲 구경가기
+            </router-link>
             <button class="menu-btn" @click="handleGuestbook">
               <span class="icon">
                 <img :src="buttonIcon_6" class="btn-img" />
               </span>
               방명록 확인하기
-            </button>
+            </button> -->
             <ForestListModal
               v-if="showForestListModal"
               :isOpen="showForestListModal"
