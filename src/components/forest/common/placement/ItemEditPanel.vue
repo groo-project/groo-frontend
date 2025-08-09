@@ -41,8 +41,10 @@ const ITEM_CONSTANTS = {
 }
 
 // 계산된 값들
-const calculatedWidth = computed(() => Math.round(props.baseSize * props.itemScale))
-const calculatedHeight = computed(() => Math.round(props.baseSize * props.itemScale))
+const calculatedSize = computed(() => {
+  const size = Math.round(props.baseSize * props.itemScale)
+  return { width: size, height: size }
+})
 
 // 이벤트 핸들러들
 const handleUpdatePlacement = () => {
@@ -95,7 +97,7 @@ const decreaseZIndex = () => {
       <div class="control-group">
         <label class="control-label">크기 조절</label>
         <div class="scale-display">{{ Math.round(itemScale * 100) }}%</div>
-        <div class="size-info">{{ calculatedWidth }}px × {{ calculatedHeight }}px</div>
+        <div class="size-info">{{ calculatedSize.width }}px × {{ calculatedSize.height }}px</div>
         <div class="control-buttons">
           <button @click="decreaseScale" class="control-btn" :disabled="itemScale <= ITEM_CONSTANTS.MIN_SCALE">-</button>
           <button @click="increaseScale" class="control-btn" :disabled="itemScale >= ITEM_CONSTANTS.MAX_SCALE">+</button>
