@@ -86,7 +86,6 @@ const forceUpdate = ref(0);
 const showEditName = ref(false);
 const showAlertModal = ref(false);
 const alertMessage = ref('');
-
 const { proxy } = getCurrentInstance();
 
 // 계산된 크기 값들
@@ -155,9 +154,9 @@ const isWithinBackground = (clientX, clientY) => {
   const bounds = getBackgroundBounds();
   if (!bounds) return false;
   
-  return clientX >= bounds.left && 
-         clientX <= bounds.right && 
-         clientY >= bounds.top && 
+  return clientX >= bounds.left &&
+         clientX <= bounds.right &&
+         clientY >= bounds.top &&
          clientY <= bounds.bottom;
 };
 
@@ -726,59 +725,64 @@ const goToHome = () => {
 
 <template>
   <div class="forest-detail">
-    <img 
-      src="/icon.png"
-      alt="Home"
-      class="home-icon"
-      @click="goToHome"
-    />
-    
-    <div class="top-left-icons">
-      <div class="edit-name-container">
+    <div class="header-icons">
+      <div class="home-icon-container">
         <img 
-          :src="edit_icon"
-          class="btn-img"
-          @click="handleEditNameClick"
-          @mouseenter="showEditNameTooltip = true"
-          @mouseleave="showEditNameTooltip = false"
-        />
-        <div v-if="showEditNameTooltip" class="name-tooltip">
-          숲 이름 변경하기
-        </div>
-        <EditForestName
-          v-if="showEditName"
-          :current-name="forestData?.[0]?.name || ''"
-          @update="handleNameUpdate"
+          src="/icon.png"
+          alt="Home"
+          class="home-icon"
+          @click="goToHome"
         />
       </div>
-      
-      <div class="rearrange-container">
-        <img 
-          :src="rearrange_icon"
-          class="btn-img rearrange-btn"
-          @click="toggleRearrangeMode"
-          @mouseenter="showRearrangeTooltip = true"
-          @mouseleave="showRearrangeTooltip = false"
-          :class="{ active: isRearrangeMode }"
-        />
-        <div v-if="showRearrangeTooltip" class="rearrange-tooltip">
-          아이템 재배치하기
+      <div class="control-icons">
+        <div class="edit-name-container">
+          <img 
+            :src="edit_icon"
+            class="btn-img"
+            @click="handleEditNameClick"
+            @mouseenter="showEditNameTooltip = true"
+            @mouseleave="showEditNameTooltip = false"
+          />
+          <div v-if="showEditNameTooltip" class="name-tooltip">
+            숲 이름 변경하기
+          </div>
+          <EditForestName
+            v-if="showEditName"
+            :current-name="forestData?.[0]?.name || ''"
+            @update="handleNameUpdate"
+          />
         </div>
-      </div>
-      
-      <img
-        :src="is_public_icon"
-        class="btn-img"
-        @mouseenter="showTooltip = true"
-        @mouseleave="showTooltip = false"
-        @click="togglePublic"
-        style="cursor:pointer;"
-      />
-      <div v-if="showTooltip" class="tooltip">
-        <div class="tooltip-title">공개 범위 설정</div>
-        <div class="tooltip-status"
-          :class="forestData && forestData[0].isPublic ? 'public' : 'private'">
-          {{ forestData && forestData[0].isPublic ? '공개중' : '비공개' }}
+        
+        <div class="rearrange-container">
+          <img 
+            :src="rearrange_icon"
+            class="btn-img rearrange-btn"
+            @click="toggleRearrangeMode"
+            @mouseenter="showRearrangeTooltip = true"
+            @mouseleave="showRearrangeTooltip = false"
+            :class="{ active: isRearrangeMode }"
+          />
+          <div v-if="showRearrangeTooltip" class="rearrange-tooltip">
+            아이템 재배치하기
+          </div>
+        </div>
+        
+        <div class="public-icon-container">
+          <img
+            :src="is_public_icon"
+            class="btn-img"
+            @mouseenter="showTooltip = true"
+            @mouseleave="showTooltip = false"
+            @click="togglePublic"
+            style="cursor:pointer;"
+          />
+          <div v-if="showTooltip" class="tooltip">
+            <div class="tooltip-title">공개 범위 설정</div>
+            <div class="tooltip-status"
+              :class="forestData && forestData[0].isPublic ? 'public' : 'private'">
+              {{ forestData && forestData[0].isPublic ? '공개중' : '비공개' }}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -963,17 +967,48 @@ const goToHome = () => {
   position: absolute;
 }
 
-.top-left-icons {
+/* 수직으로 배치된 헤더 아이콘 스타일 */
+.header-icons {
   position: absolute;
-  top: 12.83%;
-  left: 5.07%;
+  top: 15px;
+  left: 40px;
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 16px;
   z-index: 10;
 }
 
-.edit-name-container, .rearrange-container {
+.home-icon-container {
+  display: flex;
+  align-items: center;
+}
+
+.home-icon {
+  width: 120px;
+  height: 100px;
+  cursor: pointer;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.home-icon:hover {
+  transform: scale(1.1);
+}
+
+.control-icons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-left: 8px; /* 홈 아이콘과 약간의 들여쓰기 */
+}
+
+.edit-name-container, 
+.rearrange-container, 
+.public-icon-container {
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .edit-name-container .forest-name-bubble {
@@ -1028,10 +1063,9 @@ const goToHome = () => {
 .tooltip {
   position: absolute;
   bottom: 45px;
-  left: 87%;
+  left: 50%;
   transform: translateX(-50%);
   background: rgba(240, 248, 240, 0.95);
-  opacity: 0.7;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   padding: 12px 24px 16px 24px;
@@ -1041,13 +1075,12 @@ const goToHome = () => {
   font-size: 18px;
   color: #333;
   pointer-events: none;
-  opacity: 1;
 }
 
 .tooltip::after {
   content: '';
   position: absolute;
-  left: 50.5%;
+  left: 50%;
   bottom: -12px;
   transform: translateX(-50%);
   width: 0;
@@ -1085,21 +1118,5 @@ const goToHome = () => {
   width: 100%;
   height: 100vh;
   overflow: hidden;
-}
-
-.home-icon {
-  position: absolute;
-  top: 15px;
-  left: 40px;
-  width: 120px;
-  height: 100px;
-  cursor: pointer;
-  z-index: 2;
-  object-fit: contain;
-  transition: transform 0.2s ease;
-}
-
-.home-icon:hover {
-  transform: scale(1.1);
 }
 </style>
