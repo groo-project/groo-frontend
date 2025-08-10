@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 
 // Props 정의
 const props = defineProps({
@@ -39,6 +39,39 @@ const ITEM_CONSTANTS = {
   MIN_Z_INDEX: 0,
   MAX_Z_INDEX: 999
 }
+
+// 브라우저 높이 반응형 처리
+const windowHeight = ref(window.innerHeight)
+
+const updateWindowHeight = () => {
+  windowHeight.value = window.innerHeight
+}
+
+onMounted(() => {
+  window.addEventListener('resize', updateWindowHeight)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateWindowHeight)
+})
+
+// 화면 높이에 따른 스케일 계산 (너비는 고정)
+const responsiveScale = computed(() => {
+  const height = windowHeight.value
+  
+  // 작은 화면 (768px 이하)
+  if (height <= 768) {
+    return 0.7
+  }
+  // 중간 화면 (769px ~ 1024px) - 기본 크기
+  else if (height <= 1024) {
+    return 0.8
+  }
+  // 큰 화면 (1025px 이상)
+  else {
+    return 1.0
+  }
+})
 
 // 계산된 값들
 const calculatedSize = computed(() => {
@@ -85,7 +118,7 @@ const decreaseZIndex = () => {
 </script>
 
 <template>
-  <div class="control-panel">
+  <div class="control-panel" :style="{ '--scale': responsiveScale }">
     <div class="control-section">
       <h4>아이템 편집</h4>
       
@@ -132,12 +165,12 @@ const decreaseZIndex = () => {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1.5px solid rgba(255, 255, 255, 0.25);
-  border-radius: 20px;
+  border-radius: calc(20px * var(--scale));
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  padding: 32px 28px;
+  padding: calc(32px * var(--scale)) calc(28px * var(--scale));
   z-index: 1000;
-  min-width: 260px;
-  min-height: 500px;
+  min-width: 260px; /* 너비는 고정 */
+  min-height: calc(500px * var(--scale));
   display: flex;
   flex-direction: column;
 }
@@ -149,9 +182,9 @@ const decreaseZIndex = () => {
 }
 
 .control-section h4 {
-  margin: 0 0 24px 0;
+  margin: 0 0 calc(24px * var(--scale)) 0;
   color: #fff;
-  font-size: 20px;
+  font-size: calc(20px * var(--scale));
   font-weight: 700;
   text-align: center;
   letter-spacing: -0.5px;
@@ -161,72 +194,72 @@ const decreaseZIndex = () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 32px;
-  padding: 20px;
+  margin-bottom: calc(32px * var(--scale));
+  padding: calc(20px * var(--scale));
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
+  border-radius: calc(16px * var(--scale));
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .preview-image {
-  width: 64px;
-  height: 64px;
+  width: calc(64px * var(--scale));
+  height: calc(64px * var(--scale));
   object-fit: contain;
-  margin-bottom: 12px;
+  margin-bottom: calc(12px * var(--scale));
 }
 
 .item-name {
   color: rgba(255, 255, 255, 0.9);
-  font-size: 16px;
+  font-size: calc(16px * var(--scale));
   font-weight: 600;
   margin: 0;
   text-align: center;
 }
 
 .control-group {
-  margin-bottom: 32px;
+  margin-bottom: calc(32px * var(--scale));
 }
 
 .control-label {
   display: block;
-  margin-bottom: 16px;
+  margin-bottom: calc(16px * var(--scale));
   color: rgba(255, 255, 255, 0.9);
-  font-size: 16px;
+  font-size: calc(16px * var(--scale));
   font-weight: 600;
   text-align: center;
 }
 
 .scale-display, .layer-display {
   color: #fff;
-  font-size: 24px;
+  font-size: calc(24px * var(--scale));
   font-weight: 700;
   text-align: center;
-  margin-bottom: 8px;
+  margin-bottom: calc(8px * var(--scale));
 }
 
 .size-info {
   color: rgba(255, 255, 255, 0.7);
-  font-size: 14px;
+  font-size: calc(14px * var(--scale));
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: calc(20px * var(--scale));
 }
 
 .control-buttons {
   display: flex;
-  gap: 16px;
+  gap: calc(16px * var(--scale));
   justify-content: center;
 }
 
 .control-btn {
-  width: 48px;
-  height: 48px;
+  width: calc(48px * var(--scale));
+  height: calc(48px * var(--scale));
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1.5px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
+  border-radius: calc(12px * var(--scale));
   cursor: pointer;
-  font-size: 20px;
+  font-size: calc(20px * var(--scale));
   font-weight: 700;
   color: #fff;
   transition: all 0.3s ease;
@@ -256,17 +289,17 @@ const decreaseZIndex = () => {
   margin-top: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: calc(12px * var(--scale));
 }
 
 .update-btn-panel, .remove-btn-panel, .cancel-btn-panel {
   width: 100%;
-  padding: 16px;
+  padding: calc(16px * var(--scale));
   color: #fff;
   border: 1.5px solid;
-  border-radius: 12px;
+  border-radius: calc(12px * var(--scale));
   cursor: pointer;
-  font-size: 18px;
+  font-size: calc(18px * var(--scale));
   font-weight: 700;
   transition: all 0.3s ease;
   letter-spacing: -0.5px;
