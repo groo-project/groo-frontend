@@ -351,6 +351,10 @@ const handleNextDiary = () => {
     currentDiaryIndex.value++;
   }
 };
+
+function handlePlaceFromStorage(item) {
+  emit('placeFromStorage', item);
+}
 </script>
 
 <template>
@@ -393,7 +397,10 @@ const handleNextDiary = () => {
           />
         </template>
         <template v-else-if="showMyItemView">
-          <MyItemView @close="closeMyItemView" />
+          <MyItemView
+            @close="closeMyItemView"
+            @placeFromStorage="handlePlaceFromStorage"
+          />
         </template>
         <template v-else-if="showGuestbookDetail">
           <GuestBookDetail
