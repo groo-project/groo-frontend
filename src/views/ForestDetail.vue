@@ -19,6 +19,7 @@ import YellowDustEffects from "@/components/weather/YellowDustEffects.vue";
 import SnowEffects from "@/components/weather/SnowEffects.vue";
 import ThunderEffects from "@/components/weather/ThunderEffects.vue";
 import CloudyEffects from "@/components/weather/CloudyEffects.vue";
+import StoredItemControlPanel from "@/components/forest/common/placement/StoredItemControlPanel.vue";
 
 // ===== 상수 정의 =====
 const ITEM_CONSTANTS = {
@@ -30,7 +31,7 @@ const ITEM_CONSTANTS = {
   MIN_Z_INDEX: 0,
   MAX_Z_INDEX: 999,
   Z_INDEX_STEP: 10,
-  DEFAULT_POSITION: { x: 10, y: 20 },
+  DEFAULT_POSITION: { x: 10, y: 10 },
   YELLOW_DUST_OPACITY: 0.7
 };
 
@@ -70,6 +71,15 @@ const isEditDragging = ref(false);
 const editDragOffset = ref({ x: 0, y: 0 });
 const showEditPanel = ref(false);
 const showCompletePanel = ref(false);
+
+// 보관된 아이템 배치 관련
+const selectedStoredItem = ref(null);
+const showStoredItemControlPanel = ref(false);
+const storedItemPosition = ref({ x: 10, y: 10 });
+const storedItemScale = ref(1.0);
+const storedItemZIndex = ref(ITEM_CONSTANTS.DEFAULT_Z_INDEX);
+const isStoredItemDragging = ref(false);
+const storedItemDragOffset = ref({ x: 0, y: 0 });
 
 // 변경 사항 추적
 const originalItems = ref(new Map());
@@ -229,11 +239,21 @@ onMounted(async () => {
       console.log('Updated weather:', currentWeather.value);
     }
   });
+
+  proxy.emitter.on('place-from-storage', (item) => {
+    selectedStoredItem.value = item;
+    storedItemPosition.value = { x: 10, y: 10 };
+    storedItemScale.value = 1.0;
+    storedItemZIndex.value = ITEM_CONSTANTS.DEFAULT_Z_INDEX;
+    showStoredItemControlPanel.value = true;
+    console.log('Received stored item for placement:', item);
+  });
 });
 
 onUnmounted(() => {
   proxy.emitter.off('place-item');
   proxy.emitter.off('diary-saved');
+  proxy.emitter.off('place-from-storage');
 });
 
 const togglePublic = async () => {
@@ -721,6 +741,129 @@ const handleNameUpdate = (newName) => {
 const goToHome = () => {
   router.push('/')
 };
+
+// 보관된 아이템 배치 관련
+const completeStoredItemPlacement = async () => {
+  if (!selectedStoredItem.value) return;
+  
+  try {
+    const accessToken = localStorage.getItem('accessToken');
+    
+    const calculatedWidth = Math.round(ITEM_CONSTANTS.BASE_SIZE * storedItemScale.value);
+    const calculatedHeight = Math.round(ITEM_CONSTANTS.BASE_SIZE * storedItemScale.value);
+    
+    const response = await fetch('http://localhost:8080/emotion-forest/placements/from-storage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`
+      },
+      body: JSON.stringify({
+        userItemId: selectedStoredItem.value.id,
+        itemPositionX: storedItemPosition.value.x,
+        itemPositionY: storedItemPosition.value.y,
+        itemWidth: calculatedWidth,
+        itemHeight: calculatedHeight,
+        itemZIndex: storedItemZIndex.value
+      })
+    });
+
+    if (response.ok) {
+      refreshForestData();
+      alertMessage.value = '아이템이 성공적으로 배치되었습니다!';
+      showStoredItemControlPanel.value = false;
+    } else {
+      throw new Error('배치 실패');
+    }
+  } catch (error) {
+    console.error('아이템 배치 실패:', error);
+    showAlert.value = true;
+    alertMessage.value = '아이템 배치에 실패했습니다.';
+  }
+};
+
+const cancelStoredItemPlacement = () => {
+  resetStoredItemPlacement();
+};
+
+const onStoredItemMouseDown = (event) => {
+  event.preventDefault();
+  
+  if (!isWithinBackground(event.clientX, event.clientY)) {
+    return;
+  }
+  
+  isStoredItemDragging.value = true;
+  
+  const bounds = getBackgroundBounds();
+  if (!bounds) return;
+  
+  const itemCenterX = bounds.left + (bounds.width * storedItemPosition.value.x / 100);
+  const itemCenterY = bounds.top + (bounds.height * storedItemPosition.value.y / 100);
+  
+  storedItemDragOffset.value = {
+    x: event.clientX - itemCenterX,
+    y: event.clientY - itemCenterY
+  };
+  
+  document.addEventListener('mousemove', onStoredItemMouseMove);
+  document.addEventListener('mouseup', onStoredItemMouseUp);
+};
+
+const onStoredItemMouseMove = (event) => {
+  if (!isStoredItemDragging.value) return;
+  
+  const newPos = calculatePercentagePosition(
+    event.clientX - storedItemDragOffset.value.x,
+    event.clientY - storedItemDragOffset.value.y
+  );
+  
+  storedItemPosition.value = newPos;
+};
+
+const onStoredItemMouseUp = () => {
+  isStoredItemDragging.value = false;
+  document.removeEventListener('mousemove', onStoredItemMouseMove);
+  document.removeEventListener('mouseup', onStoredItemMouseUp);
+  
+  console.log('Stored item drop completed, final position:', storedItemPosition.value);
+};
+
+const increaseStoredItemScale = () => {
+  if (storedItemScale.value < ITEM_CONSTANTS.MAX_SCALE) {
+    storedItemScale.value += ITEM_CONSTANTS.SCALE_STEP;
+  }
+};
+
+const decreaseStoredItemScale = () => {
+  if (storedItemScale.value > ITEM_CONSTANTS.MIN_SCALE) {
+    storedItemScale.value -= ITEM_CONSTANTS.SCALE_STEP;
+  }
+};
+
+const increaseStoredItemZIndex = () => {
+  if (storedItemZIndex.value < ITEM_CONSTANTS.MAX_Z_INDEX) {
+    storedItemZIndex.value += ITEM_CONSTANTS.Z_INDEX_STEP;
+  }
+};
+
+const decreaseStoredItemZIndex = () => {
+  if (storedItemZIndex.value > ITEM_CONSTANTS.MIN_Z_INDEX) {
+    storedItemZIndex.value -= ITEM_CONSTANTS.Z_INDEX_STEP;
+  }
+};
+
+const resetStoredItemPlacement = () => {
+  selectedStoredItem.value = null;
+  showStoredItemControlPanel.value = false;
+  storedItemScale.value = 1.0;
+  storedItemZIndex.value = ITEM_CONSTANTS.DEFAULT_Z_INDEX;
+  storedItemPosition.value = { x: 10, y: 10 };
+};
+
+// Computed values for stored item
+const storedItemCalculatedWidth = computed(() => Math.round(ITEM_CONSTANTS.BASE_SIZE * storedItemScale.value));
+const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE_SIZE * storedItemScale.value));
 </script>
 
 <template>
@@ -823,6 +966,20 @@ const goToHome = () => {
       @cancel-rearrange="handleCancelRearrange"
     />
 
+    <StoredItemControlPanel
+      v-if="showStoredItemControlPanel && selectedStoredItem"
+      :selectedItem="selectedStoredItem"
+      :itemScale="storedItemScale"
+      :itemZIndex="storedItemZIndex"
+      :baseSize="ITEM_CONSTANTS.BASE_SIZE"
+      @confirm-placement="completeStoredItemPlacement"
+      @cancel-placement="cancelStoredItemPlacement"
+      @increase-scale="increaseStoredItemScale"
+      @decrease-scale="decreaseStoredItemScale"
+      @increase-z-index="increaseStoredItemZIndex"
+      @decrease-z-index="decreaseStoredItemZIndex"
+    />
+
     <template v-if="showGuestBook">
       <template v-if="showGuestBookDetail">
         <GuestBookDetail 
@@ -885,6 +1042,27 @@ const goToHome = () => {
             opacity: showYellowDust ? ITEM_CONSTANTS.YELLOW_DUST_OPACITY : 1
           }"
           @mousedown="onMouseDown"
+          @dragstart.prevent
+          draggable="false"
+        />
+
+        <!-- 배치 중인 아이템 (보관소에서) -->
+        <img
+          v-if="selectedStoredItem && showStoredItemControlPanel"
+          class="item draggable stored-item"
+          :class="{ 'dragging': isStoredItemDragging }"
+          :src="selectedStoredItem.imageUrl"
+          :alt="selectedStoredItem.itemName"
+          :style="{
+            left: `${storedItemPosition.x}%`,
+            top: `${storedItemPosition.y}%`,
+            width: `${storedItemCalculatedWidth}px`,
+            height: `${storedItemCalculatedHeight}px`,
+            cursor: isStoredItemDragging ? 'grabbing' : 'grab',
+            zIndex: storedItemZIndex,
+            opacity: showYellowDust ? ITEM_CONSTANTS.YELLOW_DUST_OPACITY : 1
+          }"
+          @mousedown="onStoredItemMouseDown"
           @dragstart.prevent
           draggable="false"
         />

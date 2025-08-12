@@ -1,6 +1,44 @@
-<!-- ItemEditPanel.vue -->
+<template>
+  <div class="placement-panel" :style="{ '--scale': responsiveScale }">
+    <div class="panel-section">
+      <h4>아이템 배치</h4>
+      
+      <div class="item-preview">
+        <img :src="selectedItem.imageUrl" :alt="selectedItem.itemName" class="preview-image" />
+        <p class="item-name">{{ selectedItem.itemName }}</p>
+      </div>
+      
+      <div class="control-group">
+        <label class="control-label">크기 조절</label>
+        <div class="scale-display">{{ Math.round(itemScale * 100) }}%</div>
+        <div class="size-info">{{ calculatedWidth }}px × {{ calculatedHeight }}px</div>
+        <div class="control-buttons">
+          <button @click="decreaseScale" class="control-btn" :disabled="itemScale <= ITEM_CONSTANTS.MIN_SCALE">-</button>
+          <button @click="increaseScale" class="control-btn" :disabled="itemScale >= ITEM_CONSTANTS.MAX_SCALE">+</button>
+        </div>
+      </div>
+      
+      <div class="control-group">
+        <label class="control-label">레이어 조절</label>
+        <div class="layer-display">{{ itemZIndex }}</div>
+        <div class="control-buttons">
+          <button @click="decreaseZIndex" class="control-btn" :disabled="itemZIndex <= ITEM_CONSTANTS.MIN_Z_INDEX">-</button>
+          <button @click="increaseZIndex" class="control-btn" :disabled="itemZIndex >= ITEM_CONSTANTS.MAX_Z_INDEX">+</button>
+        </div>
+      </div>
+      
+      <div class="control-actions">
+        <button @click="handleConfirmPlacement" class="confirm-btn">배치하기</button>
+        <button @click="handleCancelPlacement" class="cancel-btn">취소하기</button>
+      </div>
+    </div>
+  </div>
+</template>
+
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, getCurrentInstance, ref, onMounted, onUnmounted } from 'vue'
+
+const { proxy } = getCurrentInstance()
 
 // Props 정의
 const props = defineProps({
@@ -24,13 +62,13 @@ const props = defineProps({
 
 // Emits 정의
 const emit = defineEmits([
-  'update-placement',
-  'remove-item',
-  'cancel-selection',
+  'confirm-placement',
+  'cancel-placement',
   'increase-scale',
   'decrease-scale',
   'increase-z-index',
-  'decrease-z-index'
+  'decrease-z-index',
+  'restore-item-count'
 ])
 
 // 상수 정의
@@ -75,22 +113,20 @@ const responsiveScale = computed(() => {
 })
 
 // 계산된 값들
-const calculatedSize = computed(() => {
-  const size = Math.round(props.baseSize * props.itemScale)
-  return { width: size, height: size }
-})
+const calculatedWidth = computed(() => Math.round(props.baseSize * props.itemScale))
+const calculatedHeight = computed(() => Math.round(props.baseSize * props.itemScale))
 
 // 이벤트 핸들러들
-const handleUpdatePlacement = () => {
-  emit('update-placement')
+const handleConfirmPlacement = () => {
+  emit('confirm-placement')
 }
 
-const handleRemoveItem = () => {
-  emit('remove-item')
-}
-
-const handleCancelSelection = () => {
-  emit('cancel-selection')
+const handleCancelPlacement = () => {
+  if (proxy?.emitter && props.selectedItem) {
+    proxy.emitter.emit('restore-item-count', props.selectedItem)
+    console.log(`Restoring count for item: ${props.selectedItem.itemName}`)
+  }
+  emit('cancel-placement')
 }
 
 const increaseScale = () => {
@@ -118,46 +154,8 @@ const decreaseZIndex = () => {
 }
 </script>
 
-<template>
-  <div class="control-panel" :style="{ '--scale': responsiveScale }">
-    <div class="control-section">
-      <h4>아이템 편집</h4>
-      
-      <div class="item-preview">
-        <img :src="selectedItem.itemImageUrl" :alt="selectedItem.itemName" class="preview-image" />
-        <p class="item-name">{{ selectedItem.itemName }}</p>
-      </div>
-      
-      <div class="control-group">
-        <label class="control-label">크기 조절</label>
-        <div class="scale-display">{{ Math.round(itemScale * 100) }}%</div>
-        <div class="size-info">{{ calculatedSize.width }}px × {{ calculatedSize.height }}px</div>
-        <div class="control-buttons">
-          <button @click="decreaseScale" class="control-btn" :disabled="itemScale <= ITEM_CONSTANTS.MIN_SCALE">-</button>
-          <button @click="increaseScale" class="control-btn" :disabled="itemScale >= ITEM_CONSTANTS.MAX_SCALE">+</button>
-        </div>
-      </div>
-      
-      <div class="control-group">
-        <label class="control-label">레이어 조절</label>
-        <div class="layer-display">{{ itemZIndex }}</div>
-        <div class="control-buttons">
-          <button @click="decreaseZIndex" class="control-btn" :disabled="itemZIndex <= ITEM_CONSTANTS.MIN_Z_INDEX">-</button>
-          <button @click="increaseZIndex" class="control-btn" :disabled="itemZIndex >= ITEM_CONSTANTS.MAX_Z_INDEX">+</button>
-        </div>
-      </div>
-      
-      <div class="control-actions">
-        <button @click="handleUpdatePlacement" class="update-btn-panel">변경 적용</button>
-        <button @click="handleRemoveItem" class="remove-btn-panel">회수</button>
-        <button @click="handleCancelSelection" class="cancel-btn-panel">취소</button>
-      </div>
-    </div>
-  </div>
-</template>
-
 <style scoped>
-.control-panel {
+.placement-panel {
   position: fixed;
   top: 50%;
   right: 20px;
@@ -171,18 +169,18 @@ const decreaseZIndex = () => {
   padding: calc(32px * var(--scale)) calc(28px * var(--scale));
   z-index: 1000;
   min-width: 260px; /* 너비는 고정 */
-  min-height: calc(500px * var(--scale));
+  min-height: calc(550px * var(--scale));
   display: flex;
   flex-direction: column;
 }
 
-.control-section {
+.panel-section {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-.control-section h4 {
+.panel-section h4 {
   margin: 0 0 calc(24px * var(--scale)) 0;
   color: #fff;
   font-size: calc(20px * var(--scale));
@@ -213,6 +211,13 @@ const decreaseZIndex = () => {
   color: rgba(255, 255, 255, 0.9);
   font-size: calc(16px * var(--scale));
   font-weight: 600;
+  margin: 0 0 calc(8px * var(--scale)) 0;
+  text-align: center;
+}
+
+.item-available {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: calc(14px * var(--scale));
   margin: 0;
   text-align: center;
 }
@@ -293,7 +298,7 @@ const decreaseZIndex = () => {
   gap: calc(12px * var(--scale));
 }
 
-.update-btn-panel, .remove-btn-panel, .cancel-btn-panel {
+.confirm-btn, .cancel-btn {
   width: 100%;
   padding: calc(16px * var(--scale));
   color: #fff;
@@ -308,43 +313,31 @@ const decreaseZIndex = () => {
   -webkit-backdrop-filter: blur(8px);
 }
 
-.update-btn-panel {
+.confirm-btn {
   background: rgba(58, 90, 64, 0.8);
   border-color: rgba(58, 90, 64, 0.6);
 }
 
-.update-btn-panel:hover {
+.confirm-btn:hover {
   background: rgba(58, 90, 64, 1);
   border-color: rgba(58, 90, 64, 0.8);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(58, 90, 64, 0.4);
 }
 
-.remove-btn-panel {
+.cancel-btn {
   background: rgba(220, 53, 69, 0.8);
   border-color: rgba(220, 53, 69, 0.6);
 }
 
-.remove-btn-panel:hover {
+.cancel-btn:hover {
   background: rgba(220, 53, 69, 1);
   border-color: rgba(220, 53, 69, 0.8);
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(220, 53, 69, 0.4);
 }
 
-.cancel-btn-panel {
-  background: rgba(108, 117, 125, 0.8);
-  border-color: rgba(108, 117, 125, 0.6);
-}
-
-.cancel-btn-panel:hover {
-  background: rgba(108, 117, 125, 1);
-  border-color: rgba(108, 117, 125, 0.8);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
-}
-
-.update-btn-panel:active, .remove-btn-panel:active, .cancel-btn-panel:active {
+.confirm-btn:active, .cancel-btn:active {
   transform: translateY(0);
 }
 </style>

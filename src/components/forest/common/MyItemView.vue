@@ -27,20 +27,22 @@
       v-else 
       :categoryId="selectedCategoryId"
       @close="handleBackFromList"
+      @placeFromStorage="handlePlaceFromStorage"
     />
   </template>
   
   <script setup>
-  import { ref } from 'vue'
+  import { ref, getCurrentInstance } from 'vue'
   import backIcon from '@/icons/back.png'
   import plantIcon from '@/icons/tree.png'
   import objectIcon from '@/icons/object_icon.png'
   import etcIcon from '@/icons/bird.png'
   import ItemList from '@/components/forest/common/ItemList.vue'
   
-  const emit = defineEmits(['close'])
+  const emit = defineEmits(['close', 'placeFromStorage'])
   const showItemList = ref(false)
   const selectedCategoryId = ref(null)
+  const { proxy } = getCurrentInstance()
   
   const categories = [
     { name: '식물', icon: plantIcon, id: 1 },
@@ -56,6 +58,10 @@
   function handleBackFromList() {
     showItemList.value = false
     selectedCategoryId.value = null
+  }
+
+  function handlePlaceFromStorage(item) {
+    proxy.emitter.emit('place-from-storage', item)
   }
   </script>
   

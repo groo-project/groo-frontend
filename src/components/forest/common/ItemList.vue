@@ -14,10 +14,12 @@
         v-for="item in items" 
         :key="item.id"
         class="item-box"
+        :class="{ 'clickable': availableCount(item) > 0 }"
+        @click="handleItemClick(item)"
       >
         <img :src="item.imageUrl" :alt="item.itemName" class="item-image" />
         <div class="item-info">
-            <div class="item-count">{{ item.totalCount - item.placedCount }}/{{ item.totalCount }}</div>
+          <div class="item-count">{{ availableCount(item) }}/{{ item.totalCount }}</div>
           <div class="item-name">{{ item.itemName }}</div>
         </div>
       </div>
@@ -26,7 +28,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, getCurrentInstance } from 'vue'
 import axios from 'axios'
 import backIcon from '@/icons/back.png'
 
@@ -34,7 +36,7 @@ const props = defineProps({
   categoryId: { type: Number, required: true }
 })
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'placeFromStorage'])
 
 const items = ref([])
 const categoryTitles = {
@@ -43,11 +45,32 @@ const categoryTitles = {
   3: '기타'
 }
 
+const { proxy } = getCurrentInstance()
+
 const categoryTitle = computed(() => categoryTitles[props.categoryId])
 const forestId = localStorage.getItem('forestId');
 const totalItems = computed(() => {
   return items.value.reduce((sum, item) => sum + item.totalCount, 0)
 })
+
+const availableCount = (item) => {
+  return item.totalCount - item.placedCount
+}
+
+const handleItemClick = (item) => {
+  if (availableCount(item) > 0) {
+    item.placedCount = (item.placedCount || 0) + 1
+    emit('placeFromStorage', item)
+  }
+}
+
+const handleItemCountRestore = (restoredItem) => {
+  const item = items.value.find(i => i.id === restoredItem.id)
+  if (item && item.placedCount > 0) {
+    item.placedCount -= 1
+    console.log(`Restored item count for ${item.itemName}: ${availableCount(item)}/${item.totalCount}`)
+  }
+}
 
 async function fetchItems() {
   try {
@@ -66,7 +89,18 @@ async function fetchItems() {
   }
 }
 
-onMounted(fetchItems)
+onMounted(() => {
+  fetchItems()
+  if (proxy?.emitter) {
+    proxy.emitter.on('restore-item-count', handleItemCountRestore)
+  }
+})
+
+onUnmounted(() => {
+  if (proxy?.emitter) {
+    proxy.emitter.off('restore-item-count', handleItemCountRestore)
+  }
+})
 </script>
 
 <style scoped>
@@ -128,11 +162,20 @@ onMounted(fetchItems)
   justify-content: center;
   transition: all 0.3s ease;
   aspect-ratio: 1;
+  position: relative;
 }
 
-.item-box:hover {
+.item-box.clickable {
+  cursor: pointer;
+}
+
+.item-box.clickable:hover {
   background: rgba(255, 255, 255, 0.8);
   transform: translateY(-5px);
+}
+
+.item-box:not(.clickable) {
+  opacity: 0.6;
 }
 
 .item-image {
@@ -159,8 +202,21 @@ onMounted(fetchItems)
   opacity: 0.8;
 }
 
-.item-box:hover .item-name,
-.item-box:hover .item-count {
+.item-box.clickable:hover .item-name,
+.item-box.clickable:hover .item-count {
   color: #3a5a40;
 }
-</style> 
+
+.placement-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(58, 90, 64, 0.9);
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+</style>
