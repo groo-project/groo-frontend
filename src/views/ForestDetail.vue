@@ -731,32 +731,44 @@ const completeStoredItemPlacement = async () => {
     const calculatedWidth = Math.round(ITEM_CONSTANTS.BASE_SIZE * storedItemScale.value);
     const calculatedHeight = Math.round(ITEM_CONSTANTS.BASE_SIZE * storedItemScale.value);
     
-    const response = await api.post('emotion-forest/placements/from-storage', {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${Token.value}`
-      },
-      body: JSON.stringify({
-        userItemId: selectedStoredItem.value.id,
-        itemPositionX: storedItemPosition.value.x,
-        itemPositionY: storedItemPosition.value.y,
-        itemWidth: calculatedWidth,
-        itemHeight: calculatedHeight,
-        itemZIndex: storedItemZIndex.value
-      })
-    });
+    const requestBody = {
+      userItemId: selectedStoredItem.value.id,
+      itemPositionX: storedItemPosition.value.x,
+      itemPositionY: storedItemPosition.value.y,
+      itemWidth: calculatedWidth,
+      itemHeight: calculatedHeight,
+      itemZIndex: storedItemZIndex.value
+    };
+    
+    console.log('=== Stored Item Placement Request ===');
+    console.log('Request body:', requestBody);
+    console.log('Token:', Token.value);
+    console.log('========================');
+    
+    const response = await api.post('emotion-forest/placements/from-storage', requestBody);
 
-    if (response.ok) {
+    console.log('=== Stored Item Placement Response ===');
+    console.log('Response status:', response.status);
+    console.log('Response data:', response.data);
+    console.log('========================');
+
+    if (response.status >= 200 && response.status < 300) {
       refreshForestData();
       alertMessage.value = '아이템이 성공적으로 배치되었습니다!';
       showStoredItemControlPanel.value = false;
     } else {
-      throw new Error('배치 실패');
+      throw new Error(`배치 실패: ${response.status}`);
     }
   } catch (error) {
-    console.error('아이템 배치 실패:', error);
-    showAlert.value = true;
-    alertMessage.value = '아이템 배치에 실패했습니다.';
+    console.error('=== 아이템 배치 실패 ===');
+    console.error('Error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error response:', error.response?.data);
+    console.error('Error status:', error.response?.status);
+    console.error('========================');
+    
+    showAlertModal.value = true;
+    alertMessage.value = `아이템 배치에 실패했습니다: ${error.message}`;
   }
 };
 

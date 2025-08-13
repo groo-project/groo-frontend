@@ -29,8 +29,9 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, getCurrentInstance } from 'vue'
-import axios from 'axios'
 import backIcon from '@/icons/back.png'
+import { useAuthStore } from '@/stores/auth'
+import api from '@/lib/api'
 
 const props = defineProps({
   categoryId: { type: Number, required: true }
@@ -46,9 +47,17 @@ const categoryTitles = {
 }
 
 const { proxy } = getCurrentInstance()
+const authStore = useAuthStore()
 
 const categoryTitle = computed(() => categoryTitles[props.categoryId])
-const forestId = localStorage.getItem('forestId');
+const forestId = computed(() => {
+  const id = authStore.user?.forestId;
+  console.log('=== ForestId Computed ===');
+  console.log('authStore.user:', authStore.user);
+  console.log('authStore.user?.forestId:', id);
+  console.log('========================');
+  return id;
+})
 const totalItems = computed(() => {
   return items.value.reduce((sum, item) => sum + item.totalCount, 0)
 })
@@ -74,22 +83,39 @@ const handleItemCountRestore = (restoredItem) => {
 
 async function fetchItems() {
   try {
-    const accessToken = localStorage.getItem('accessToken')
-    const response = await axios.get(
-      `http://localhost:8080/items/${props.categoryId}/${forestId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`
-        }
-      }
-    )
+    console.log('=== Fetching Items ===');
+    console.log('Category ID:', props.categoryId);
+    console.log('Forest ID:', forestId.value);
+    console.log('Forest ID type:', typeof forestId.value);
+    console.log('Forest ID is valid:', forestId.value !== null && forestId.value !== undefined);
+    console.log('========================');
+    
+    if (!forestId.value) {
+      console.error('Forest ID not available - cannot fetch items');
+      return
+    }
+    
+    const apiUrl = `/items/${props.categoryId}/${forestId.value}`;
+    console.log('API URL:', apiUrl);
+    
+    const response = await api.get(apiUrl)
     items.value = response.data
+    
+    console.log('Items fetched:', response.data)
   } catch (error) {
     console.error('Failed to fetch items:', error)
+    console.error('Error response:', error.response?.data)
+    console.error('Error status:', error.response?.status)
   }
 }
 
 onMounted(() => {
+  console.log('=== ItemList Mounted ===');
+  console.log('authStore.user:', authStore.user);
+  console.log('forestId.value:', forestId.value);
+  console.log('props.categoryId:', props.categoryId);
+  console.log('========================');
+  
   fetchItems()
   if (proxy?.emitter) {
     proxy.emitter.on('restore-item-count', handleItemCountRestore)

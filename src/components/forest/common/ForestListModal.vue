@@ -164,7 +164,14 @@ const createNewForest = async () => {
 
 const handleForestClick = (forestId) => {
   console.log("Clicking forest with ID:", forestId);
-  localStorage.setItem("forestId", forestId);
+  
+  // auth store에 forestId 업데이트
+  authStore.$patch((state) => {
+    if (state.user) {
+      state.user.forestId = forestId;
+    }
+  });
+  
   emit("close");
   console.log("Navigating to:", `/forestmate/${forestId}`);
   router.push(`/forestmate/${forestId}`);
