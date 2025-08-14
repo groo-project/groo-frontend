@@ -17,7 +17,7 @@ import CategorySelector from '@/components/forest/common/CategorySelector.vue';
 import WriteDiary from '@/components/forest/common/WriteDiary.vue';
 import LoadingAnimation from '@/components/forest/common/LoadingAnimation.vue';
 import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue';
-import AlertModal from '@/components/common/AlertModal.vue';
+import ConfirmModal from '@/components/forest/common/ConfirmModal.vue';
 import { useAuthStore } from "@/stores/auth";
 
 
@@ -98,8 +98,19 @@ const logout = () => {
   showLogoutModal.value = true;
 };
 
-const handleLogoutConfirm = () => {
-  router.push("/login");
+const handleLogoutConfirm = async () => {
+  try {
+    // 실제 로그아웃 처리
+    await authStore.logout();
+    console.log('로그아웃 완료');
+    
+    // 로그인 페이지로 이동
+    router.push("/login");
+  } catch (error) {
+    console.error('로그아웃 실패:', error);
+    // 에러가 발생해도 로그인 페이지로 이동
+    router.push("/login");
+  }
 };
 
 const handleForestList = () => {
@@ -377,9 +388,10 @@ const handleToStorage = (piece) => {
         </div>
       </div>
     </div>
-    <AlertModal
-      v-if="showLogoutModal"
-      :message="'정말 로그아웃 하시겠습니까?'"
+    <ConfirmModal
+      :is-open="showLogoutModal"
+      title="로그아웃"
+      message="정말 로그아웃 하시겠습니까?"
       @confirm="handleLogoutConfirm"
       @cancel="showLogoutModal = false"
     />

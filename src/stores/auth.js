@@ -50,15 +50,14 @@ export const useAuthStore = defineStore('auth', {
                 state.roles = data.roles || []; // 사용자 역할 저장
             });  
 
-            // auth.accessToken = data.accessToken || ''; // 액세스 토큰 저장
-            // auth.user = data.user || null; // 사용자 정보 저장
-            // auth.roles = data.roles || []; // 사용자 역할 저장  
-            // 로그인 성공 후 필요한 작업 수행
-            // 예: 사용자 정보를 로컬 스토리지에 저장하거나 상태 업데이트 등
-            // 예: 로컬 스토리지에 사용자 정보 저장
-            console.log("로그인 성공 후 사용자 정보:", this.user);  
-            console.log("로그인 성공 후 사용자 숲 ID:", this.user?.forestId);
-            console.log("로그인 성공 후 auth.forestId (getter):", this.forestId);  
+            // 로그인 성공 후 상태 확인
+            console.log("=== 로그인 성공 후 상태 확인 ===");
+            console.log("서버 응답 data:", data);
+            console.log("서버 응답 data.user:", data.user);
+            console.log("서버 응답 data.user.forestId:", data.user?.forestId);
+            console.log("저장된 this.user:", this.user);
+            console.log("저장된 this.user.forestId:", this.user?.forestId);
+            console.log("================================");  
 
             return true; // 로그인 성공
 
@@ -129,9 +128,10 @@ export const useAuthStore = defineStore('auth', {
                 });
                 
                 console.log('=== Refresh - User Restored ===');
-                console.log('this.user:', this.user);
-                console.log('this.user.forestId:', this.user.forestId);
-                console.log('this.forestId (getter):', this.forestId);
+                console.log('서버 응답 response.data.user:', response.data.user);
+                console.log('서버 응답 response.data.user.forestId:', response.data.user?.forestId);
+                console.log('저장된 this.user:', this.user);
+                console.log('저장된 this.user.forestId:', this.user?.forestId);
                 console.log('========================');
             } else {
                 // user 정보가 없으면 JWT에서 기본 정보 추출
@@ -145,12 +145,14 @@ export const useAuthStore = defineStore('auth', {
                         state.user = {
                             userId: parseInt(payload.sub),
                             email: payload.email || 'unknown',
-                            forestId: payload.forestId || null // JWT에서 forestId 추출 시도
+                            forestId: payload.forestId || null, // JWT에서 forestId 추출 시도
+                            nickname: payload.nickname || '여행자' // JWT에서 nickname 추출 시도
                         };
                     });
                     
                     console.log('After $patch - user:', this.user);
                     console.log('After $patch - forestId:', this.user?.forestId);
+                    console.log('After $patch - nickname:', this.user?.nickname);
                     
                     // 강제로 상태 동기화
                     if (!this.user || !this.user.forestId) {
@@ -158,18 +160,39 @@ export const useAuthStore = defineStore('auth', {
                         this.user = {
                             userId: parseInt(payload.sub),
                             email: payload.email || 'unknown',
-                            forestId: payload.forestId || null
+                            forestId: payload.forestId || null,
+                            nickname: payload.nickname || '여행자'
                         };
                         console.log('After force sync - user:', this.user);
                     }
-                    
-                    console.log('========================');
                 } catch (e) {
                     console.error('Failed to extract user info from JWT:', e);
                 }
-                console.log('========================');
             }
             if (response.data.roles) this.roles = response.data.roles;
+            
+            // user 정보가 없거나 불완전하면 서버에서 사용자 정보를 다시 가져오기
+            if (!this.user || !this.user.forestId || !this.user.nickname) {
+                console.log('=== Fetching User Info from Server ===');
+                try {
+                    const userResponse = await api.get('/myforest');
+                    if (userResponse.data && userResponse.data.length > 0) {
+                        const userInfo = userResponse.data[0];
+                        this.$patch((state) => {
+                            state.user = {
+                                userId: this.user?.userId || parseInt(payload?.sub),
+                                email: this.user?.email || 'unknown',
+                                forestId: userInfo.id || this.user?.forestId,
+                                nickname: userInfo.nickname || this.user?.nickname || '여행자'
+                            };
+                        });
+                        console.log('User info restored from server:', this.user);
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch user info from server:', e);
+                }
+                console.log('========================');
+            }
             
             return true;
         } catch (error) {

@@ -7,6 +7,7 @@ import api from '@/lib/api.js'
 import { useAuthStore } from '@/stores/auth.js'
 
 
+
 // Icons
 import buttonIcon_1 from '@/icons/diarywrite_icon.png'
 import buttonIcon_2 from '@/icons/diaryview_icon.png'
@@ -60,6 +61,7 @@ const selectedDiaryData = ref(null)
 const currentDiaryIndex = ref(0)
 const showAlertModal = ref(false)
 const alertMessage = ref('')
+const showLogoutModal = ref(false)
 
 function openSaveModal(selectedPiece) {
   pieceToSave.value = selectedPiece
@@ -85,10 +87,11 @@ const toggleMenu = () => {
 const router = useRouter();
 const route = useRoute();
 
-// const authStore = useAuthStore();
-const { user } = useAuthStore();
-const token = user?.accessToken || '';
-const forestId = user?.forestId || '';
+const authStore = useAuthStore();
+const user = computed(() => authStore.user);
+const token = computed(() => authStore.accessToken || '');
+const forestId = computed(() => authStore.user?.forestId || '');
+const nickname = computed(() => authStore.user?.nickname || "여행자");
 
 const currentForestId = computed(() => {
   // forest-detail/:forestId 경로에서 forestId 추출
@@ -98,6 +101,8 @@ const currentForestId = computed(() => {
   return null;
 });
 
+
+
 // forestId를 localStorage에 저장
 // const updateForestId = () => {
 //   if (currentForestId.value) {
@@ -105,28 +110,35 @@ const currentForestId = computed(() => {
 //   }
 // };
 
-// 컴포넌트 마운트 시 forestId 저장
-// onMounted(() => {
-//   updateForestId();
-// });
+// 컴포넌트 마운트 시 nickname 상태 확인
+onMounted(() => {
+  console.log('=== SideMenu Mounted ===');
+  console.log('authStore:', authStore);
+  console.log('user:', user.value);
+  console.log('닉네임:', nickname.value);
+  console.log('숲 ID:', forestId.value);
+  console.log('token:', token.value);
+  console.log('========================');
+});
 
-// // route가 변경될 때마다 forestId 업데이트
-// watch(
-//   () => route.params.forestId || forestId,
-//   () => {
-//     updateForestId();
-//   }
-// );
-
-// 닉네임 가져오기
-const nickname = localStorage.getItem("userNickname") || "여행자";
 
 const logout = () => {
-  // 로컬 스토리지 비우기
-  // localStorage.removeItem("accessToken");
-  // localStorage.removeItem("userNickname");
-  // localStorage.removeItem("myRecentforestId");
-  router.push("/login");
+  showLogoutModal.value = true;
+};
+
+const handleLogoutConfirm = async () => {
+  try {
+    // 실제 로그아웃 처리
+    await authStore.logout();
+    console.log('로그아웃 완료');
+    
+    // 로그인 페이지로 이동
+    router.push("/login");
+  } catch (error) {
+    console.error('로그아웃 실패:', error);
+    // 에러가 발생해도 로그인 페이지로 이동
+    router.push("/login");
+  }
 };
 
 const handleAnalyze = (category) => {
@@ -154,13 +166,13 @@ async function confirmSaveToStorage() {
     const pieceId     = pieceToSave.value.value;
     // URL · 헤더 · 쿼리 파라미터 수정
     await api.post(
-      `item-storage?itemId=${pieceId}&forestId=${forestId}`,
+      `item-storage?itemId=${pieceId}&forestId=${forestId.value}`,
       {},  // 바디는 빈 객체
-      { headers: { Authorization: `Bearer ${accessToken}` } }
+      { headers: { Authorization: `Bearer ${token.value}` } }
     );
     closeSaveModal();
     // 강제 새로고침 방식으로 이동
-    window.location.href = `/forest-detail/${forestId}`;
+    window.location.href = `/forest-detail/${forestId.value}`;
   } catch (e) {
     console.error(e);
     alertMessage.value = "보관소 저장에 실패했습니다. 다시 시도해주세요."
@@ -532,6 +544,13 @@ function handlePlaceFromStorage(item) {
             :is-open="showAlertModal"
             :message="alertMessage"
             @close="showAlertModal = false"
+          />
+    <ConfirmModal
+            :is-open="showLogoutModal"
+            title="로그아웃"
+            message="정말 로그아웃 하시겠습니까?"
+            @confirm="handleLogoutConfirm"
+            @cancel="showLogoutModal = false"
           />
   </div>
 </template>

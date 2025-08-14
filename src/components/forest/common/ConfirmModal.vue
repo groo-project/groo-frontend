@@ -10,7 +10,7 @@
         </slot>
       </div>
       <div class="modal-actions">
-        <button class="modal-btn" @click="$emit('confirm')">저장</button>
+        <button class="modal-btn" @click="$emit('confirm')">확인</button>
         <button class="modal-btn secondary" @click="$emit('cancel')">취소</button>
       </div>
     </div>
