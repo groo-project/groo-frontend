@@ -256,6 +256,24 @@ const handleToStorage = (piece) => {
   showAnalyzeResult.value = false;
   // 보관소 저장 로직 추가
 };
+
+const handlePlaceFromStorage = (item) => {
+  console.log('=== Place From Storage ===');
+  console.log('Selected item:', item);
+  console.log('Forest ID:', forestId.value);
+  console.log('========================');
+  
+  // 아이템 배치 이벤트 발생
+  if (proxy && proxy.emitter) {
+    proxy.emitter.emit('place-from-storage', item);
+    console.log('Emitted place-from-storage event with:', item);
+  } else {
+    console.error('Emitter not available');
+  }
+  
+  // MyItemView 닫기
+  showMyItems.value = false;
+};
 </script>
 
 <template>
@@ -384,7 +402,11 @@ const handleToStorage = (piece) => {
           />
         </div>
         <div v-else class="myitem-view">
-          <MyItemView @close="closeMyItems" />
+          <MyItemView 
+            :forestId="forestId" 
+            @close="closeMyItems" 
+            @placeFromStorage="handlePlaceFromStorage"
+          />
         </div>
       </div>
     </div>

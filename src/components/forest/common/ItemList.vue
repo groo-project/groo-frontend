@@ -34,7 +34,8 @@ import { useAuthStore } from '@/stores/auth'
 import api from '@/lib/api'
 
 const props = defineProps({
-  categoryId: { type: Number, required: true }
+  categoryId: { type: Number, required: true },
+  forestId: { type: [Number, String], required: true }
 })
 
 const emit = defineEmits(['close', 'placeFromStorage'])
@@ -51,12 +52,11 @@ const authStore = useAuthStore()
 
 const categoryTitle = computed(() => categoryTitles[props.categoryId])
 const forestId = computed(() => {
-  const id = authStore.user?.forestId;
-  console.log('=== ForestId Computed ===');
-  console.log('authStore.user:', authStore.user);
-  console.log('authStore.user?.forestId:', id);
+  console.log('=== ForestId from Props ===');
+  console.log('Props forestId:', props.forestId);
+  console.log('Props forestId type:', typeof props.forestId);
   console.log('========================');
-  return id;
+  return props.forestId;
 })
 const totalItems = computed(() => {
   return items.value.reduce((sum, item) => sum + item.totalCount, 0)

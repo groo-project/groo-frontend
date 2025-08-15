@@ -210,21 +210,51 @@ const handleCompletePlacement = async () => {
     itemId: selectedPiece.value.value
   };
   try {
-    const res = await api.patch('/emotion-forest/placement', {
-      body: JSON.stringify(body)
-    });
-    if (!res.ok) throw new Error('배치 요청 실패');
-    alert('배치가 완료되었습니다!');
-    await fetchForestData();
-    selectedPiece.value = null;
+    console.log('=== Item Placement Request ===');
+    console.log('Request body:', body);
+    console.log('Forest ID:', forestId.value);
+    console.log('========================');
+    
+    const res = await api.post('/emotion-forest/placement', body);
+    
+    console.log('=== Item Placement Response ===');
+    console.log('Response status:', res.status);
+    console.log('Response data:', res.data);
+    console.log('========================');
+    
+    if (res.status >= 200 && res.status < 300) {
+      alert('배치가 완료되었습니다!');
+      await fetchForestData();
+      selectedPiece.value = null;
+    } else {
+      throw new Error(`배치 실패: ${res.status}`);
+    }
   } catch (err) {
+    console.error('=== 아이템 배치 실패 ===');
+    console.error('Error:', err);
+    console.error('Error message:', err.message);
+    console.error('Error response:', err.response?.data);
+    console.error('Error status:', err.response?.status);
+    console.error('========================');
+    
     alert('배치에 실패했습니다.');
-    console.error(err);
   }
 };
 
 const goToHome = () => {
-  router.push('/')
+  console.log('=== Go To Home ===');
+  console.log('User:', user.value);
+  console.log('Forest ID:', forestId.value);
+  console.log('========================');
+  forestId.value = user.value?.forestId;
+  
+  if (forestId.value) {
+    // 회원의 forestId로 이동
+    router.push(`/forest-detail/${forestId.value}`);
+  } else {
+    // forestId가 없으면 기본 홈으로
+    router.push('/');
+  }
 }
 </script>
 

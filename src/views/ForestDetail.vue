@@ -717,7 +717,18 @@ const handleNameUpdate = (newName) => {
 };
 
 const goToHome = () => {
-  router.push('/')
+  console.log('=== Go To Home ===');
+  console.log('User:', user.value);
+  console.log('Current Forest ID:', forestId.value);
+  console.log('========================');
+  
+  if (user.value?.forestId) {
+    // 회원의 forestId로 이동
+    router.push(`/forest-detail/${user.value.forestId}`);
+  } else {
+    // forestId가 없으면 기본 홈으로
+    router.push('/');
+  }
 };
 
 
