@@ -45,6 +45,14 @@
   import axios from 'axios'
   import backIcon from '@/icons/back.png'
   import forwardIcon from '@/icons/arrow_forward.png'
+  import api from '@/lib/api'
+  import { useAuthStore } from '@/stores/auth'  
+
+  const authStore = useAuthStore()
+  const { user } = authStore;
+  const token = user?.accessToken || '';
+  const forestId = user?.forestId || '';
+
   const emit = defineEmits(['close', 'diary-click'])
   
   const today = new Date()
@@ -83,9 +91,8 @@
     month.value = m
     showMonthSelect.value = false
   }
-  
+
   function getUserIdFromToken() {
-    const token = localStorage.getItem('accessToken');
     if (!token) return null;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
@@ -97,40 +104,34 @@
   
   async function fetchDiaries() {
     const userId = getUserIdFromToken();
-    const accessToken = localStorage.getItem('accessToken');
-    const forestId = localStorage.getItem('forestId');
     if (!userId) return;
     try {
-      const res = await axios.get(
-        `http://localhost:8080/diary/${forestId}/month?year=${year.value}&month=${month.value}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        }
-      );
+      const res = await api.get(
+        `diary/${forestId}/month?year=${year.value}&month=${month.value}`);
       diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0])
     } catch (e) {
       diaryDates.value = []
     }
   }
+
+  // watch([year, month], fetchDiaries)
+  // onMounted(fetchDiaries)
+  //       }
+  //     );
+  //     diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0])
+  //   } catch (e) {
+  //     diaryDates.value = []
+  //   }
+  // }
   
   watch([year, month], fetchDiaries)
   onMounted(fetchDiaries)
   
   async function onDiaryClick(date) {
-    const accessToken = localStorage.getItem('accessToken');
-    const forestId = localStorage.getItem('forestId');
     const dateStr = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
     try {
-      const res = await axios.get(
-        `http://localhost:8080/diary/${forestId}/date?date=${dateStr}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        }
-      );
+      const res = await api.get(
+        `diary/${forestId}/date?date=${dateStr}`);
       emit('diary-click', {
         diaries: res.data,
         year: year.value,

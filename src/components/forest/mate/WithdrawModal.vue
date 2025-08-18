@@ -23,13 +23,18 @@
 
 <script setup>
 import { useRouter, useRoute } from "vue-router";
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import AlertModal from "@/components/common/AlertModal.vue";
+import api from "@/lib/api";
+import { useAuthStore } from "@/stores/auth";
 
 const route = useRoute();
 const router = useRouter();
 const showAlert = ref(false);
 const alertMessage = ref("");
+const authStore = useAuthStore();
+const forestId = computed(() => authStore.user?.forestId ?? null);
+
 
 const props = defineProps({
   isOpen: {
@@ -46,29 +51,22 @@ const handleAlertClose = () => {
 
 const handleWithdraw = async () => {
   try {
-    const forestId = route.params.id;
-    const token = localStorage.getItem("accessToken");
+    const forestId = route.params.id || forestId.value;
 
     if (!forestId) {
       throw new Error("숲 ID를 찾을 수 없습니다.");
     }
 
-    const response = await fetch(
-      `http://localhost:8080/mate/quit?forestId=${forestId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ forestId: forestId }),
+    const response = await api.delete(
+      `mate/quit?forestId=${forestId}`,
+      {body: JSON.stringify({ forestId: forestId }),
       }
     );
 
     if (response.ok) {
       alertMessage.value = "우정의 숲에서 탈퇴되었습니다.";
       showAlert.value = true;
-      localStorage.setItem("forestId", "1");
+
       setTimeout(() => {
         router.push("/");
       }, 2000);

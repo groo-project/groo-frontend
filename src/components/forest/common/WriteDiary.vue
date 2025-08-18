@@ -67,7 +67,7 @@ import { ref, computed, onMounted } from 'vue';
 import VueFlatPickr from 'vue-flatpickr-component';
 import 'flatpickr/dist/flatpickr.css';
 import { Korean } from 'flatpickr/dist/l10n/ko.js';
-import { diaryApi } from '../../../services/api';
+import { diaryApi } from '@/lib/api';
 import AlertModal from '@/components/common/AlertModal.vue';
 
 const props = defineProps({

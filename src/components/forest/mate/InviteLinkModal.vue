@@ -40,12 +40,6 @@
             />
             <button @click="copyLink" class="copy-button"> 복사하기 </button>
           </div>
-
-          <!-- <div class="footer-message">
-            <span class="heart"></span>
-            <p>함께라서 더 즐거운 우리의 숲</p>
-            <span class="heart"></span>
-          </div> -->
         </div>
       </div>
     </div>

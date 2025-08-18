@@ -63,12 +63,17 @@
 import { ref, onMounted, onUnmounted, getCurrentInstance } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import WithdrawModal from "../components/forest/mate/WithdrawModal.vue";
+import api from "@/lib/api.js";
+import { useAuthStore } from "@/stores/auth.js";
+import { storeToRefs } from "pinia";
+
+
 
 const route = useRoute();
 const router = useRouter();
 const forestData = ref(null);
 const isLoading = ref(true);
-const error = ref(null);
+const error = ref(null);    
 const isWithdrawModalOpen = ref(false);
 const { proxy } = getCurrentInstance();
 const selectedPiece = ref(null);
@@ -77,30 +82,26 @@ const isDragging = ref(false);
 const dragOffset = ref({ x: 0, y: 0 });
 const containerRef = ref(null);
 
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+const auth = useAuthStore();
+// 반응형으로 꺼내기
+const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
+const Token = computed(() => accessToken.value ?? null);
+const forestId = route.params.id || user.value.get("forestId") || null;
 
 const fetchForestData = async () => {
   try {
     isLoading.value = true;
     error.value = null;
 
-    const forestId = route.params.id;
-    const token = localStorage.getItem("accessToken");
-
     if (!forestId) {
       throw new Error("숲 ID가 없습니다.");
     }
 
-    if (!token) {
+    if (!Token.value) {
       throw new Error("로그인이 필요합니다.");
     }
 
-    const response = await fetch(`${API_BASE_URL}/mate/detail/${forestId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await api.get(`/mate/detail`, {params: {forestId}});
 
     if (!response.ok) {
       throw new Error(`데이터를 불러오는데 실패했습니다. (${response.status})`);
@@ -176,7 +177,7 @@ const onMouseUp = () => {
 };
 
 const handleCompletePlacement = async () => {
-  const token = localStorage.getItem('accessToken');
+
   const forestId = route.params.id;
   if (!selectedPiece.value || !forestId) {
     alert('필수 정보가 없습니다.');
@@ -189,12 +190,7 @@ const handleCompletePlacement = async () => {
     itemId: selectedPiece.value.value
   };
   try {
-    const res = await fetch('http://localhost:8080/emotion-forest/placement', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+    const res = await api.patch('/emotion-forest/placement', {
       body: JSON.stringify(body)
     });
     if (!res.ok) throw new Error('배치 요청 실패');

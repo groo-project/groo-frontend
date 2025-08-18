@@ -6,11 +6,23 @@ import MateSideMenu from "@/components/forest/mate/MateSideMenu.vue";
 import InviteLinkModal from "@/components/forest/mate/InviteLinkModal.vue";
 import ForestListModal from "@/components/forest/common/ForestListModal.vue";
 import WithdrawModal from "@/components/forest/mate/WithdrawModal.vue";
+import { useAuthStore } from "@/stores/auth.js"; 
+import { storeToRefs } from "pinia";
+import api from "@/lib/api.js"; 
 
 const currentView = ref("background"); // 초기 상태: BackgroundImage
 const isInviteLinkModalOpen = ref(false);
 const isForestListModalOpen = ref(false);
 const isWithdrawModalOpen = ref(false);
+
+
+const auth = useAuthStore();
+// 반응형으로 꺼내기
+const { accessToken, user, isAuthenticated } = storeToRefs(auth); // state/getter를 ref로
+const forestId = computed(() => user.value?.forestId ?? null);
+const Token = computed(() => accessToken.value ?? null);
+
+
 const inviteLink = ref("");
 
 const changeView = (view) => {
@@ -21,28 +33,20 @@ const changeView = (view) => {
 const openInviteLinkModal = async () => {
   try {
     const pathSegments = route.path.split("/");
-    const forestId = route.params.id;
-    console.log("forestId:", forestId);
+    const forestId = route.params.id || forestId.value; // URL에서 forestId 추출 또는 store에서 가져오기
+    // console.log("forestId:", forestId);
 
     if (!forestId) {
       console.error("forestId가 없습니다.");
       return;
     }
 
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
+    if (!Token.value) {
       console.error("토큰이 없습니다.");
       return;
     }
 
-    const response = await fetch(
-      `http://localhost:8080/mate/link?forestId=${forestId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await api.get(`mate/link`, { params: { forestId } });
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }

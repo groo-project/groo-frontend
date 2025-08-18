@@ -3,6 +3,9 @@ import { ref, computed, onMounted, watch, getCurrentInstance } from "vue";
 import axios from 'axios'
 import MyDiaryCalendar from '@/components/forest/emotion/MyDiaryCalendar.vue';
 import MyDiaryDetail from '@/components/forest/emotion/MyDiaryDetail.vue';
+import api from '@/lib/api.js'
+import { useAuthStore } from '@/stores/auth.js'
+
 
 // Icons
 import buttonIcon_1 from '@/icons/diarywrite_icon.png'
@@ -82,42 +85,47 @@ const toggleMenu = () => {
 const router = useRouter();
 const route = useRoute();
 
+// const authStore = useAuthStore();
+const { user } = useAuthStore();
+const token = user?.accessToken || '';
+const forestId = user?.forestId || '';
+
 const currentForestId = computed(() => {
   // forest-detail/:forestId 경로에서 forestId 추출
   if (route.name === "ForestDetail") {
-    return route.params.forestId;
+    return route.params.forestId || forestId;
   }
   return null;
 });
 
 // forestId를 localStorage에 저장
-const updateForestId = () => {
-  if (currentForestId.value) {
-    localStorage.setItem("forestId", currentForestId.value);
-  }
-};
+// const updateForestId = () => {
+//   if (currentForestId.value) {
+//     localStorage.setItem("forestId", currentForestId.value);
+//   }
+// };
 
 // 컴포넌트 마운트 시 forestId 저장
-onMounted(() => {
-  updateForestId();
-});
+// onMounted(() => {
+//   updateForestId();
+// });
 
-// route가 변경될 때마다 forestId 업데이트
-watch(
-  () => route.params.forestId,
-  () => {
-    updateForestId();
-  }
-);
+// // route가 변경될 때마다 forestId 업데이트
+// watch(
+//   () => route.params.forestId || forestId,
+//   () => {
+//     updateForestId();
+//   }
+// );
 
 // 닉네임 가져오기
 const nickname = localStorage.getItem("userNickname") || "여행자";
 
 const logout = () => {
   // 로컬 스토리지 비우기
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("userNickname");
-  localStorage.removeItem("myRecentforestId");
+  // localStorage.removeItem("accessToken");
+  // localStorage.removeItem("userNickname");
+  // localStorage.removeItem("myRecentforestId");
   router.push("/login");
 };
 
@@ -143,12 +151,10 @@ async function confirmSaveToStorage() {
     return
   }
   try {
-    const accessToken = localStorage.getItem("accessToken");
-    const forestId    = localStorage.getItem("forestId");
     const pieceId     = pieceToSave.value.value;
     // URL · 헤더 · 쿼리 파라미터 수정
-    await axios.post(
-      `http://localhost:8080/item-storage?itemId=${pieceId}&forestId=${forestId}`,
+    await api.post(
+      `item-storage?itemId=${pieceId}&forestId=${forestId}`,
       {},  // 바디는 빈 객체
       { headers: { Authorization: `Bearer ${accessToken}` } }
     );

@@ -1,109 +1,98 @@
 <script setup>
 import { ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter , useRoute } from "vue-router";
 import AlertModal from "@/components/common/AlertModal.vue";
+import api from "@/lib/api"; // API 호출을 위한 axios 인스턴스
+import { useAuthStore } from "@/stores/auth"; // Pinia 스토어 가져오기
+
+
 
 const email = ref("");
 const password = ref("");
 const router = useRouter();
+const route = useRoute();
 const showAlert = ref(false);
 const alertMessage = ref("");
+const auth = useAuthStore(); 
+const loading = ref(false);           // ✅ 중복 제출 방지
+
 
 const handleLogin = async (e) => {
-  e.preventDefault();
+  if (loading.value) return;          // ✅ 가드
+  loading.value = true;
+  // e.preventDefault();
 
   try {
-    const response = await fetch("http://localhost:8080/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: email.value,
-        password: password.value,
-      }),
-    });
 
-    if (!response.ok) {
-      alertMessage.value = "로그인 정보를 확인해 주세요!";
-      showAlert.value = true;
-      throw new Error("로그인 실패");
-    }
+    // 1) Pinia 스토어 통해 로그인 (RT는 HttpOnly 쿠키, AT는 Pinia 메모리)
+    await auth.login({ email: email.value, password: password.value });
 
-    const data = await response.json();
-
-    // 토큰 저장
-    localStorage.setItem("accessToken", data.accessToken);
-    // 유저 닉네임 저장
-    localStorage.setItem("userNickname", data.userNickname);
-
-    // 로그인 성공 메시지 표시
+    // 2) 성공 메시지
     alertMessage.value = "로그인 성공! 환영합니다.🌿";
     showAlert.value = true;
-
-    // 알림이 표시되고 나서 페이지 이동
-    setTimeout(async () => {
-      const token = localStorage.getItem("accessToken");
-      const authToken = `Bearer ${token}`;
-
-      // 저장된 초대 코드가 있는지 확인
-      const pendingInviteCode = localStorage.getItem("pendingInviteCode");
-      if (pendingInviteCode) {
-        try {
-          const inviteResponse = await fetch(
-            `http://localhost:8080/mate/invite/verify`,
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: authToken,
-              },
-              body: JSON.stringify({
-                inviteCode: pendingInviteCode,
-              }),
-            }
-          );
-
-          if (inviteResponse.ok) {
-            localStorage.removeItem("pendingInviteCode");
-            router.push("/");
-            return;
-          }
-        } catch (error) {
-          console.error("초대 코드 검증 실패:", error);
-        }
-      }
-
-      // 초대 코드가 없거나 검증 실패 시 기존 로직 실행
-      const forestResponse = await fetch("http://localhost:8080/myforest", {
-        method: "GET",
-        headers: {
-          Authorization: authToken,
-        },
-      });
-
-      if (!forestResponse.ok) {
-        throw new Error("숲 정보 불러오기 실패");
-      }
-
-      const forestData = await forestResponse.json();
-      const myRecentforestId = forestData[0]?.id;
-
-      if (!myRecentforestId) {
-        throw new Error("숲이 존재하지 않습니다.");
-      }
-
-      localStorage.setItem("myRecentforestId", myRecentforestId);
-      router.push(`/forest-detail/${myRecentforestId}`);
-    }, 1000); // 알림이 보이고 1초 후에 페이지 이동
-
-  } catch (error) {
-    console.error("에러 발생:", error);
-    if (!showAlert.value) {  // 이미 에러 메시지가 표시되지 않았다면
-      alertMessage.value = "로그인에 실패했습니다.";
-      showAlert.value = true;
+    // 2.5) Pinia 스토어에서 AT 가져오기
+    
+    // 3) 이동 우선순위
+    // (1) 원래 가려던 페이지가 있으면 거기로
+    const redirect = route.query.redirect;
+    if (redirect) {
+      setTimeout(() => router.push(redirect), 600);
+      return;
     }
+
+    // // (2) 보관된 초대코드가 있으면 검증 시도 → 성공 시 홈으로
+    // const pendingInviteCode = localStorage.getItem("pendingInviteCode");
+    // if (pendingInviteCode) {
+    //   try {
+    //     await api.post("/mate/invite/verify");
+    //     // localStorage.removeItem("pendingInviteCode");
+    //     setTimeout(() => router.push("/"), 600); // "/"는 BackgroundImage로 리다이렉트됨
+    //     return;
+    //   } catch (e) {
+    //     console.error("초대 코드 검증 실패:", e);
+    //     // 실패하면 아래 myforest 로직으로 계속 진행
+    //   }
+    // }
+
+    // (3) 내 숲 목록에서 최근 숲으로 이동
+    try {
+      const { data } = await api.get("/myforest");
+      const forestId = data?.[0]?.id || auth.defaultForestId; // 기본 숲 ID도 여기에 포함
+      console.log("내 숲 정보:", data);
+      console.log("이동할 숲 ID:", forestId);
+    
+      // 숲이 있다면 해당 숲으로 이동
+      if (forestId) {
+        setTimeout(
+          () => router.push({ name: "ForestDetail", params: { forestId } }),
+          600
+        );
+        return;
+      } else {
+        // 예시: 홈으로 이동하거나, 안내 메시지 표시
+        setTimeout(() => router.push("/"), 600);
+        // 또는
+        alertMessage.value = "접근 가능한 숲이 없습니다.";
+        showAlert.value = true;
+      }
+          } catch (e) {
+      console.error("숲 정보 불러오기 실패:", e);
+    }
+
+    // (4) 기본 홈
+    setTimeout(() => router.push({ name: "ForestMate", params: { id: forestId } }), 600);
+
+  } catch (e) {
+    alertMessage.value = "아이디 또는 비밀번호를 확인해 주세요.";
+    showAlert.value = true;
   }
+  finally {
+    // 입력 필드 초기화
+    // email.value = "";
+    password.value = "";
+    loading.value = false; 
+  }
+  
 };
 </script>
 

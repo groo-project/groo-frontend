@@ -44,10 +44,20 @@
 import { ref, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import AlertModal from "@/components/common/AlertModal.vue";
+import { useAuthStore } from "@/stores/auth.js";
+import { storeToRefs } from "pinia";
+import api from "@/lib/api.js";
 
 const router = useRouter();
 const route = useRoute();
 const inviteCode = ref("");
+
+
+const auth = useAuthStore();
+// 반응형으로 꺼내기
+const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
+const Token = computed(() => accessToken.value ?? null);
+
 const showAlert = ref(false);
 const alertMessage = ref("");
 
@@ -63,33 +73,19 @@ const handleSubmit = async () => {
   console.log("초대 코드 길이:", inviteCode.value.length);
 
   if (inviteCode.value.length === 8) {
-    // localStorage에서 토큰 확인
-    const token = localStorage.getItem("accessToken");
-    console.log("저장된 토큰:", token);
 
-    if (!token) {
+    if (!Token.value) {
       console.log("토큰이 없습니다. 로그인 페이지로 이동합니다.");
-      localStorage.setItem("pendingInviteCode", inviteCode.value);
       router.push("/login");
       return;
     }
 
     try {
-      console.log("API 호출 시작");
-      const apiUrl = `http://localhost:8080/mate/accept/${inviteCode.value}`;
-      console.log("요청 URL:", apiUrl);
-      console.log("요청 헤더:", {
-        Authorization: `Bearer ${token}`,
-      });
-
+    
       // 초대 코드 검증 API 호출
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.post(`mate/accept/${inviteCode.value}`);
+      // const response = await api.post(`mate/accept`,  {inviteCode: inviteCode.value});
+
 
       console.log("응답 상태:", response.status);
 

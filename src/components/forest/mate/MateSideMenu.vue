@@ -18,6 +18,9 @@ import WriteDiary from '@/components/forest/common/WriteDiary.vue';
 import LoadingAnimation from '@/components/forest/common/LoadingAnimation.vue';
 import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue';
 import AlertModal from '@/components/common/AlertModal.vue';
+import { useAuthStore } from "@/stores/auth";
+
+
 
 // Emotion Icons
 import joyIcon from '@/icons/joy_icon.png'
@@ -81,9 +84,12 @@ const handleShare = () => {
   emit("openShare");
 };
 
+const authStore = useAuthStore();
+const { user } = authStore;
+const forestId = computed(() => user?.forestId ?? null);
 const goBack = () => {
   // router.back();
-  router.push('/forest-detail/' + localStorage.getItem("myRecentforestId"));
+  router.push('/forest-detail/' + forestId.value);
 };
 
 const showLogoutModal = ref(false);
@@ -93,8 +99,6 @@ const logout = () => {
 };
 
 const handleLogoutConfirm = () => {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("userNickname");
   router.push("/login");
 };
 

@@ -2,11 +2,6 @@
   <div v-if="isOpen" class="modal-overlay">
     <div class="modal-content">
       <div class="modal-header">
-        <!-- <div class="header-decoration">
-          <span class="deco-item">🌸</span>
-          <span class="deco-item">🦊</span>
-          <span class="deco-item">🌸</span>
-        </div> -->
         <h2>우정의 숲 목록</h2>
         <button class="close-button" @click="$emit('close')">닫기</button>
       </div>
@@ -48,11 +43,6 @@
   <div v-if="showCreateForestModal" class="modal-overlay">
     <div class="create-forest-modal">
       <div class="modal-header">
-        <!-- <div class="header-decoration">
-          <span class="deco-item">🌱</span>
-          <span class="deco-item">🌳</span>
-          <span class="deco-item">🌱</span>
-        </div> -->
         <h2>새로운 우정의 숲 만들기</h2>
         <button class="close-button" @click="showCreateForestModal = false"
           >닫기</button
@@ -89,6 +79,11 @@ import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import forestImage from "@/icons/forest1.png";
 import AlertModal from "@/components/common/AlertModal.vue";
+import api from "@/lib/api.js";
+import { useAuthStore } from "@/stores/auth.js";
+
+const authStore = useAuthStore();
+const token = authStore.accessToken;
 
 const router = useRouter();
 const props = defineProps({
@@ -107,24 +102,30 @@ const alertMessage = ref("");
 
 const getForestList = async () => {
   try {
-    const token = localStorage.getItem("accessToken");
-    const response = await fetch("http://localhost:8080/mate/forests", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch forest list");
-    }
+    const response = await api.get(`/mate/forests`);
 
-    const data = await response.json();
-    forests.value = data.map((forest) => ({
+    
+    const data = response.data;
+
+    
+    // 서버 응답 형태가 배열이라고 가정
+    const list = Array.isArray(data) ? data
+               : Array.isArray(data?.forests) ? data.forests
+               : [];
+
+
+    
+    forests.value = list.map(forest => ({
       ...forest,
       image: forestImage,
     }));
+
+
+
   } catch (error) {
     console.error("Error fetching forest list:", error);
+    console.log("Error details:", error.response?.data);
     alertMessage.value = "숲 목록을 불러오는데 실패했습니다.";
     showAlert.value = true;
   }
@@ -138,24 +139,14 @@ const createNewForest = async () => {
   }
 
   try {
-    const token = localStorage.getItem("accessToken");
-    const response = await fetch("http://localhost:8080/mate/forests/new", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        forestName: newForestName.value,
-      }),
+    console.log("Creating forest with name:", newForestName.value);
+    
+    const response = await api.post("/mate/forests/new", {
+      forestName: newForestName.value,
     });
 
-    if (!response.ok) {
-      throw new Error("Failed to create forest");
-    }
-
-    const data = await response.json();
-    console.log("New forest created:", data);
+    console.log("API Response:", response);
+    console.log("New forest created:", response.data);
 
     showCreateForestModal.value = false;
     newForestName.value = "";
@@ -165,6 +156,7 @@ const createNewForest = async () => {
     await getForestList();
   } catch (error) {
     console.error("Error creating forest:", error);
+    console.log("Error details:", error.response?.data);
     alertMessage.value = "숲 생성에 실패했습니다. 다시 시도해주세요.";
     showAlert.value = true;
   }

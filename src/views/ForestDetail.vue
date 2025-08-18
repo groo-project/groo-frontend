@@ -4,12 +4,15 @@ import edit_icon from "@/icons/edit_icon.png"
 import is_public_icon from "@/icons/is_public_icon.png"
 import rearrange_icon from "@/icons/rearrange_icon.png"
 import GuestBookDetail from "@/components/forest/common/guestbook/GuestBookDetail.vue";
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import EditForestName from "@/components/forest/common/EditForestName.vue";
 import AlertModal from "@/components/common/AlertModal.vue";
 import ItemControlPanel from "@/components/forest/common/placement/ItemControlPanel.vue";
 import ItemEditPanel from "@/components/forest/common/placement/ItemEditPanel.vue";
 import RearrangeCompletePanel from "@/components/forest/common/placement/RearrangeCompletePanel.vue";
+import api from "@/lib/api.js";
+import { useAuthStore } from "@/stores/auth.js";
+import { storeToRefs } from 'pinia';
 
 // weather effects
 import RainEffects from "@/components/weather/RainEffects.vue";
@@ -20,6 +23,13 @@ import SnowEffects from "@/components/weather/SnowEffects.vue";
 import ThunderEffects from "@/components/weather/ThunderEffects.vue";
 import CloudyEffects from "@/components/weather/CloudyEffects.vue";
 import StoredItemControlPanel from "@/components/forest/common/placement/StoredItemControlPanel.vue";
+
+
+
+const auth = useAuthStore();
+// 반응형으로 꺼내기
+const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
+const Token = computed(() => accessToken.value ?? null);
 
 // ===== 상수 정의 =====
 const ITEM_CONSTANTS = {
@@ -45,6 +55,10 @@ const UI_CONSTANTS = {
 };
 
 const router = useRouter();
+const route = useRoute();
+
+const forestId = computed(() => route.params.forestId);
+
 const showGuestBook = ref(false);
 const showGuestBookDetail = ref(false);
 const selectedGuestBookId = ref(null);
@@ -186,26 +200,15 @@ const calculatePercentagePosition = (clientX, clientY) => {
   return { x, y };
 };
 
+
 const refreshForestData = async () => {
-  const token = localStorage.getItem('accessToken');
-  const forestId = localStorage.getItem("myRecentforestId");
-  if (!forestId) return;
+  if (!forestId.value) return;
   
   try {
-    const response = await fetch(`http://localhost:8080/detail/${forestId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    if (!response.ok) {
-      alert("다시 로그인해 주세요!");
-      router.push('/login');
-      throw new Error('detail 요청 실패');
-    }
-    
-    const data = await response.json();
-    console.log('Raw forest data:', data);
+
+    const response = await api.get(`detail/${forestId.value}`);
+
+    const data = response.data;
     forestData.value = data;
     
     // 원본 아이템 데이터 저장 (재배치 모드용)
@@ -216,9 +219,9 @@ const refreshForestData = async () => {
       });
     }
     
-    console.log('Updated forestData:', forestData.value);
   } catch (error) {
     console.error('숲 정보 불러오기 실패:', error);
+    console.log('Error details:', error.response?.data);
   }
 };
 
@@ -258,14 +261,10 @@ onUnmounted(() => {
 
 const togglePublic = async () => {
   if (!forestData.value) return;
-  
-  const token = localStorage.getItem('accessToken');
+
+
   try {
-    const res = await fetch(`http://localhost:8080/emotion-forest/public/${forestData.value[0].forestId}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
+    const res = await api.patch(`emotion-forest/public/${forestData.value[0].forestId}`, {
     });
     
     if (!res.ok) throw new Error('공개여부 변경 실패');
@@ -528,7 +527,7 @@ const handleCancelSelection = () => {
 
 // 재배치 완료 관련
 const handleCompleteRearrange = async () => {
-  const token = localStorage.getItem('accessToken');
+
   
   try {
     const promises = [];
@@ -537,12 +536,7 @@ const handleCompleteRearrange = async () => {
     if (changedItems.value.size > 0) {
       const updateData = Array.from(changedItems.value.values());
       promises.push(
-        fetch('http://localhost:8080/emotion-forest/placement', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
+        api.patch('emotion-forest/placement', {
           body: JSON.stringify(updateData)
         })
       );
@@ -553,12 +547,7 @@ const handleCompleteRearrange = async () => {
       const placementIds = Array.from(removedItems.value);
       const queryParams = placementIds.map(id => `placementIds=${id}`).join('&');
       promises.push(
-        fetch(`http://localhost:8080/emotion-forest/placement?${queryParams}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
+        api.delete(`emotion-forest/placement?${queryParams}`)
       );
     }
     
@@ -592,17 +581,15 @@ const handleCancelRearrange = () => {
 
 // 기존 아이템 배치 관련 함수들
 const handleCompletePlacement = async () => {
-  const token = localStorage.getItem('accessToken');
-  const forestId = localStorage.getItem('myRecentforestId');
   
-  if (!selectedPiece.value || !forestId) {
+  if (!selectedPiece.value || !forestId.value) {
     alertMessage.value = '필수 정보가 없습니다.';
     showAlertModal.value = true;
     return;
   }
   
   const body = {
-    forestId: Number(forestId),
+          forestId: Number(forestId.value),
     itemPositionX: dragPos.value.x,
     itemPositionY: dragPos.value.y,
     itemId: selectedPiece.value.value,
@@ -612,12 +599,7 @@ const handleCompletePlacement = async () => {
   };
   
   try {
-    const res = await fetch('http://localhost:8080/emotion-forest/placement', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
+    const res = await api.post('emotion-forest/placement', {
       body: JSON.stringify(body)
     });
     
@@ -742,21 +724,21 @@ const goToHome = () => {
   router.push('/')
 };
 
+
 // 보관된 아이템 배치 관련
 const completeStoredItemPlacement = async () => {
   if (!selectedStoredItem.value) return;
   
   try {
-    const accessToken = localStorage.getItem('accessToken');
+
     
     const calculatedWidth = Math.round(ITEM_CONSTANTS.BASE_SIZE * storedItemScale.value);
     const calculatedHeight = Math.round(ITEM_CONSTANTS.BASE_SIZE * storedItemScale.value);
     
-    const response = await fetch('http://localhost:8080/emotion-forest/placements/from-storage', {
-      method: 'POST',
+    const response = await api.post('emotion-forest/placements/from-storage', {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
+        'Authorization': `Bearer ${Token.value}`
       },
       body: JSON.stringify({
         userItemId: selectedStoredItem.value.id,

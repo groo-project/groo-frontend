@@ -13,13 +13,17 @@ import BackgroundImage from "@/components/BackgroundImage.vue";
 import InviteCodeView from "../views/InviteCodeView.vue";
 import LandingPage from "@/views/LandingPage.vue";
 
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: "/",
       component: Main, // Main이 레이아웃 역할
+      meta: { requiresAuth: true }, // 인증이 필요한 페이지로 설정
       children: [
+        { path: "",
+          redirect: { name: "ForestMate" } },
         {
           path: "background-image", // == "/"
           name: "BackgroundImage",
@@ -61,11 +65,13 @@ const router = createRouter({
       path: "/login", // 로그인은 레이아웃(Main) 없이 따로 보여야 함
       name: "Login",
       component: Login,
+      meta: { guestOnly: true }, // 로그인하지 않은 사용자만 접근 가능
     },
     {
       path: "/signup",
       name: "SignUp",
       component: Signup,
+      meta: { guestOnly: true }, // 로그인하지 않은 사용자만 접근 가능
     },
     {
       path: "/mate/invite/:inviteCode", // 초대 코드 입력 화면도 레이아웃 없이 독립적으로 표시
@@ -76,27 +82,64 @@ const router = createRouter({
       path: "/landing",
       name: "LandingPage",
       component: LandingPage,
+      meta: { guestOnly: true }, // 로그인하지 않은 사용자만 접근 가능
     }
   ],
 });
 
 // 라우터 가드 추가
-router.beforeEach((to, _, next) => {
-  const token = localStorage.getItem("accessToken");
-  const forestId = localStorage.getItem("forestId");
+// router.beforeEach(async (to) => {
+//   // Pinia 스토어를 가져오기 위해 createPinia()로 생성한 pinia 인스턴스를 사용
+//   const auth = useAuthStore(pinia);
 
-  // 루트 경로("/")로 접근 시 토큰 여부에 따라 리다이렉트
-  if (to.path === "/") {
-    if (token && forestId) {
-      next({ name: "ForestDetail", params: { forestId: forestId } }); // 기본 ForestDetail로 이동
-    } else {
-      next({ name: "LandingPage" });
-      // alert("로그인이 필요합니다!"); // 로그인 필요 알림
-      // next({ name: "Login" }); // 로그인 페이지로 이동
+//   // 1) 게스트 전용 라우트: 로그인 상태면 홈으로
+//   if (to.matched.some(r => r.meta.guestOnly)) {
+//     if (auth.isAuthenticated) return { name: "BackgroundImage" };
+//     return true;
+//   }
+
+//   // 2) 보호 라우트: 인증 필요하면 체크
+//   if (to.matched.some(r => r.meta.requiresAuth)) {
+//     if (auth.isAuthenticated) return true;
+//     const ok = await auth.tryRefresh();                // RT 쿠키로 1회 복구 시도
+//     if (ok) return true;
+//     return { name: "Login", query: { redirect: to.fullPath } };
+//   }
+
+
+//   // 3) 공개 라우트는 통과
+//   // 인증된 경우 요청한 페이지로 이동
+//   return true;
+// })
+
+
+
+import { useAuthStore } from '@/stores/auth';
+
+export function installGuards(pinia) {
+  router.beforeEach(async (to) => {
+    const auth = useAuthStore(pinia);   // ✅ 여기서 pinia 사용
+
+    // 1) 게스트 전용 라우트: 로그인 상태면 홈으로
+    if (to.matched.some(r => r.meta.guestOnly)) {
+      if (auth.isAuthenticated) return { name: "BackgroundImage" };
+      return true;
     }
-  } else {
-    next(); // 다른 경로는 그대로 진행
-  }
-});
+
+    // 2) 보호 라우트: 인증 필요하면 체크
+    if (to.matched.some(r => r.meta.requiresAuth)) {
+      if (auth.isAuthenticated) return true;
+      const ok = await auth.tryRefresh();                // RT 쿠키로 1회 복구 시도
+      if (ok) return true;
+      return { name: "Login", query: { redirect: to.fullPath } };
+    }
+
+
+    // 3) 공개 라우트는 통과
+    // 인증된 경우 요청한 페이지로 이동
+    return true;
+  });
+}
+
 
 export default router;
