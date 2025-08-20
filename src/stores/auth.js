@@ -8,6 +8,7 @@ export const useAuthStore = defineStore('auth', {
     accessToken: '', // 액세스 토큰
     user: null, // 사용자 정보
     roles: [], // 사용자 역할
+    isRefreshing: false, // ✅ 중복 요청 방지 플래그 추가
   }),
   getters: {
     isAuthenticated: (state) => !!state.accessToken, // 액세스 토큰이 있으면 인증됨
@@ -17,6 +18,19 @@ export const useAuthStore = defineStore('auth', {
   },
   actions: {
     async login(credentials) {
+        // ✅ 이미 갱신 중이면 대기
+        if (this.isRefreshing) {
+            console.log('Token refresh already in progress, waiting...');
+            // 진행 중인 갱신 요청이 완료될 때까지 대기
+            while (this.isRefreshing) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            return true;
+        }
+        
+        this.isRefreshing = true; // ✅ 갱신 시작 플래그
+  
+
         try {
             // 로그인 API 호출
             const { data } = await api.post('/auth/login', {
@@ -54,24 +68,78 @@ export const useAuthStore = defineStore('auth', {
             // console.error('Login failed:', error);
             // throw error; // 에러를 상위로 전달
         }
+        finally {
+            this.isRefreshing = false; // ✅ 갱신 완료 플래그 초기화
+        }
     },
     async tryRefresh() {
+        // 중복 요청 방지
+        if (this.isRefreshing) {
+            console.log('Token refresh already in progress, waiting...');
+            // 진행 중인 갱신 요청이 완료될 때까지 대기
+            while (this.isRefreshing) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            return true;
+        }
+        
+        this.isRefreshing = true;
+        
         try {
+            console.log('Starting token refresh...');
+            
+            // 임시: JWT 토큰 내용 확인
+            const refreshToken = document.cookie.split('; ').find(row => row.startsWith('refreshToken='))?.split('=')[1];
+            if (refreshToken) {
+                try {
+                    const payload = JSON.parse(atob(refreshToken.split('.')[1]));
+                    console.log('JWT Payload:', payload);
+                    console.log('JTI:', payload.jti);
+                    console.log('User ID:', payload.sub);
+                    console.log('Type:', payload.typ);
+                } catch (e) {
+                    console.log('JWT parsing failed:', e);
+                }
+            } else {
+                console.log('No refreshToken cookie found');
+            }
+            
             const response = await api.post('/auth/refresh');
-            // .then(res => console.log('refreshed AT:', res.data.accessToken))
-            // .catch(err => console.error(err));
-            this.accessToken = response.data.accessToken || ''; // 새 액세스 토큰 저장
+            
+            console.log('Refresh response:', response);
+            
+            if (response.data && response.data.accessToken) {
+                this.accessToken = response.data.accessToken;
+                console.log('Token refreshed successfully');
+            } else {
+                console.error('No access token in refresh response');
+                throw new Error('No access token received from refresh');
+            }
+            
             if (response.data.user) this.user = response.data.user;
             if (response.data.roles) this.roles = response.data.roles;
-            return true; // 토큰 갱신 성공
+            
+            return true;
         } catch (error) {
             console.error('Refresh token failed:', error);
-            this.logout(); // 토큰 갱신 실패 시 로그아웃 처리
-            return false; // 토큰 갱신 실패
-            // this.accessToken = '';
-            // this.user = null;
-            // this.roles = [];
-            // return false;
+            console.log('Error response:', error.response?.data);
+            console.log('Error status:', error.response?.status);
+            console.log('Error message:', error.message);
+            
+            // 401 에러인 경우 refresh token이 만료되었거나 유효하지 않음
+            if (error.response && error.response.status === 401) {
+                console.log('Refresh token expired or invalid - user needs to login again');
+                console.log('Server error details:', error.response.data);
+                
+                // 서버에서 보낸 구체적인 에러 메시지 확인
+                if (error.response.data && error.response.data.error) {
+                    console.log('Server error message:', error.response.data.error);
+                }
+            }
+            
+            return false;
+        } finally {
+            this.isRefreshing = false;
         }
     },
     async logout() {
@@ -80,19 +148,24 @@ export const useAuthStore = defineStore('auth', {
             this.accessToken = ''; // 액세스 토큰 초기화
             this.user = null; // 사용자 정보 초기화
             this.roles = []; // 사용자 역할 초기화
-            // 로그아웃 API 호출
-            await api.post('/auth/logout');     // 서버에 로그아웃 요청     
-            // todo : 쿠키에 저장된 토큰을 삭제하는 로직이 필요할 수 있음
-            // 예를 들어, HttpOnly 쿠키를 사용하는 경우 브라우저가 자동으로 삭제함.
-
-            // 이 부분은 서버에서 토큰을 블랙리스트에 추가하거나 쿠키를 삭제하는 등의 작업을 수행할 수 있습니다.
-            // 서버에도 로그아웃 알림 : RT 블랙리스트 / 쿠키 삭제 등
-            // api.post('/auth/logout').catch(() => {});
+            
+            // 서버에 로그아웃 요청 (쿠키에 저장된 토큰을 삭제)
+            await api.post('/auth/logout');
         } catch (error) {
             console.error('Logout failed:', error);
-
+            console.log('Logout error status:', error.response?.status);
+            console.log('Logout error message:', error.response?.data);
+            
+            // 405 에러는 서버에서 POST 메서드를 지원하지 않는 경우
+            if (error.response?.status === 405) {
+                console.log('Server does not support POST for logout, trying GET...');
+                try {
+                    await api.get('/auth/logout');
+                } catch (getError) {
+                    console.log('GET logout also failed:', getError.response?.status);
+                }
+            }
         }
-        
     },
   },
 });
