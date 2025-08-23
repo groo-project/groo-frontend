@@ -12,7 +12,7 @@ export const useAuthStore = defineStore('auth', {
   }),
   getters: {
     isAuthenticated: (state) => !!state.accessToken, // 액세스 토큰이 있으면 인증됨
-    forestId: (state) => state.user?.forestId || null, // 사용자의 숲 ID 반환
+    // forestId getter 제거 - 각 컴포넌트에서 auth.user.forestId 직접 사용
     // getUser: (state) => state.user, // 사용자 정보 반환
     // getRoles: (state) => state.roles, // 사용자 역할 반환
   },
@@ -40,12 +40,15 @@ export const useAuthStore = defineStore('auth', {
 
             // 로그인 성공 시 상태 업데이트
             this.accessToken = data.accessToken || ''; // 액세스 토큰 저장
-            // 근데 data 안에서는 accessToken이 없을텐데
             if (!this.accessToken) {
                 throw new Error('Access token not received');
             }
-            this.user = data.user || null; // 사용자 정보 저장
-            // this.roles = data.roles || []; // 사용자 역할 저장  
+            
+            // 서버 응답 그대로 저장
+            this.$patch((state) => {
+                state.user = data.user || null; // 사용자 정보 저장 (forestId 포함)
+                state.roles = data.roles || []; // 사용자 역할 저장
+            });  
 
             // auth.accessToken = data.accessToken || ''; // 액세스 토큰 저장
             // auth.user = data.user || null; // 사용자 정보 저장
@@ -53,6 +56,10 @@ export const useAuthStore = defineStore('auth', {
             // 로그인 성공 후 필요한 작업 수행
             // 예: 사용자 정보를 로컬 스토리지에 저장하거나 상태 업데이트 등
             // 예: 로컬 스토리지에 사용자 정보 저장
+            console.log("로그인 성공 후 사용자 정보:", this.user);  
+            console.log("로그인 성공 후 사용자 숲 ID:", this.user?.forestId);
+            console.log("로그인 성공 후 auth.forestId (getter):", this.forestId);  
+
             return true; // 로그인 성공
 
         }   
@@ -65,8 +72,7 @@ export const useAuthStore = defineStore('auth', {
                 console.error('로그인 실패:', error);
                 throw new Error('Login failed'); // 기타 에러
             }
-            // console.error('Login failed:', error);
-            // throw error; // 에러를 상위로 전달
+
         }
         finally {
             this.isRefreshing = false; // ✅ 갱신 완료 플래그 초기화
@@ -116,7 +122,57 @@ export const useAuthStore = defineStore('auth', {
                 throw new Error('No access token received from refresh');
             }
             
-            if (response.data.user) this.user = response.data.user;
+            if (response.data.user) {
+                // Pinia 상태를 직접 업데이트
+                this.$patch((state) => {
+                    state.user = response.data.user;
+                });
+                
+                console.log('=== Refresh - User Restored ===');
+                console.log('this.user:', this.user);
+                console.log('this.user.forestId:', this.user.forestId);
+                console.log('this.forestId (getter):', this.forestId);
+                console.log('========================');
+            } else {
+                // user 정보가 없으면 JWT에서 기본 정보 추출
+                console.log('=== Refresh - No User Data, Extracting from JWT ===');
+                try {
+                    const payload = JSON.parse(atob(this.accessToken.split('.')[1]));
+                    console.log('JWT Payload:', payload);
+                    
+                    // Pinia 상태를 직접 업데이트
+                    this.$patch((state) => {
+                        state.user = {
+                            userId: parseInt(payload.sub),
+                            email: payload.email || 'unknown',
+                            forestId: 0 // 기본값
+                        };
+                    });
+                    
+                    // 상태 업데이트 확인
+                    console.log('=== After $patch ===');
+                    console.log('state.user:', this.user);
+                    console.log('this.user.forestId:', this.user.forestId);
+                    console.log('this.forestId (getter):', this.forestId);
+                    
+                    // 강제로 상태 동기화
+                    if (!this.user || !this.user.forestId) {
+                        console.log('=== Force State Sync ===');
+                        this.user = {
+                            userId: parseInt(payload.sub),
+                            email: payload.email || 'unknown',
+                            forestId: 0
+                        };
+                        console.log('After force sync - this.user:', this.user);
+                        console.log('After force sync - this.forestId:', this.forestId);
+                    }
+                    
+                    console.log('========================');
+                } catch (e) {
+                    console.error('Failed to extract user info from JWT:', e);
+                }
+                console.log('========================');
+            }
             if (response.data.roles) this.roles = response.data.roles;
             
             return true;
@@ -137,7 +193,12 @@ export const useAuthStore = defineStore('auth', {
                 }
             }
             
-            return false;
+            // 에러 발생 시 상태 초기화
+            this.accessToken = '';
+            this.user = null;
+            this.roles = [];
+            
+            throw error;
         } finally {
             this.isRefreshing = false;
         }
@@ -148,24 +209,19 @@ export const useAuthStore = defineStore('auth', {
             this.accessToken = ''; // 액세스 토큰 초기화
             this.user = null; // 사용자 정보 초기화
             this.roles = []; // 사용자 역할 초기화
-            
-            // 서버에 로그아웃 요청 (쿠키에 저장된 토큰을 삭제)
-            await api.post('/auth/logout');
+            // 로그아웃 API 호출
+            await api.post('/auth/logout');     // 서버에 로그아웃 요청     
+            // todo : 쿠키에 저장된 토큰을 삭제하는 로직이 필요할 수 있음
+            // 예를 들어, HttpOnly 쿠키를 사용하는 경우 브라우저가 자동으로 삭제함.
+
+            // 이 부분은 서버에서 토큰을 블랙리스트에 추가하거나 쿠키를 삭제하는 등의 작업을 수행할 수 있습니다.
+            // 서버에도 로그아웃 알림 : RT 블랙리스트 / 쿠키 삭제 등
+            // api.post('/auth/logout').catch(() => {});
         } catch (error) {
             console.error('Logout failed:', error);
-            console.log('Logout error status:', error.response?.status);
-            console.log('Logout error message:', error.response?.data);
-            
-            // 405 에러는 서버에서 POST 메서드를 지원하지 않는 경우
-            if (error.response?.status === 405) {
-                console.log('Server does not support POST for logout, trying GET...');
-                try {
-                    await api.get('/auth/logout');
-                } catch (getError) {
-                    console.log('GET logout also failed:', getError.response?.status);
-                }
-            }
+
         }
+        
     },
   },
 });
