@@ -48,10 +48,10 @@
   import api from '@/lib/api'
   import { useAuthStore } from '@/stores/auth'  
 
-  const authStore = useAuthStore()
-  const { user } = authStore;
-  const token = user?.accessToken || '';
-  const forestId = user?.forestId || '';
+  const auth = useAuthStore()
+  const token = auth.accessToken || '';
+  const forestId = auth.user?.forestId || '';
+  
 
   const emit = defineEmits(['close', 'diary-click'])
   
@@ -103,14 +103,28 @@
   }
   
   async function fetchDiaries() {
-    const userId = getUserIdFromToken();
-    if (!userId) return;
+
+    
+    // forestId가 없으면 auth에서 다시 가져오기
+    const currentForestId = forestId || auth.user?.forestId;
+    
+    if (!currentForestId) {
+      console.error('Forest ID not available');
+      diaryDates.value = [];
+      return;
+    }
+    
+    console.log('Using forestId:', currentForestId);
+    
     try {
       const res = await api.get(
-        `diary/${forestId}/month?year=${year.value}&month=${month.value}`);
-      diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0])
+        `diary/${currentForestId}/month?year=${year.value}&month=${month.value}`);
+      diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0]);
+
     } catch (e) {
-      diaryDates.value = []
+      console.error('Failed to fetch diaries:', e);
+      console.error('Error response:', e.response?.data);
+      diaryDates.value = [];
     }
   }
 
@@ -129,9 +143,19 @@
   
   async function onDiaryClick(date) {
     const dateStr = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    
+    // forestId가 없으면 auth에서 다시 가져오기
+    const currentForestId = forestId || auth.user?.forestId;
+    
+    if (!currentForestId) {
+      console.error('Forest ID not available');
+      return;
+    }
+    
     try {
       const res = await api.get(
-        `diary/${forestId}/date?date=${dateStr}`);
+        `diary/${currentForestId}/date?date=${dateStr}`);
+
       emit('diary-click', {
         diaries: res.data,
         year: year.value,
@@ -139,7 +163,8 @@
         day: date
       });
     } catch (e) {
-      // 에러 처리
+      console.error('Failed to fetch diary detail:', e);
+      console.error('Error response:', e.response?.data);
     }
   }
   
