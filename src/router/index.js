@@ -23,7 +23,7 @@ const router = createRouter({
       meta: { requiresAuth: true }, // 인증이 필요한 페이지로 설정
       children: [
         { path: "",
-          redirect: { name: "ForestMate" } },
+          redirect: { name: "LandingPage" } },
         {
           path: "background-image", // == "/"
           name: "BackgroundImage",

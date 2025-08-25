@@ -60,7 +60,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, getCurrentInstance } from "vue";
+import { ref, onMounted, onUnmounted, getCurrentInstance, computed} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import WithdrawModal from "../components/forest/mate/WithdrawModal.vue";
 import api from "@/lib/api.js";
