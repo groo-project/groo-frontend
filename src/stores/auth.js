@@ -145,26 +145,22 @@ export const useAuthStore = defineStore('auth', {
                         state.user = {
                             userId: parseInt(payload.sub),
                             email: payload.email || 'unknown',
-                            forestId: 0 // 기본값
+                            forestId: payload.forestId || null // JWT에서 forestId 추출 시도
                         };
                     });
                     
-                    // 상태 업데이트 확인
-                    console.log('=== After $patch ===');
-                    console.log('state.user:', this.user);
-                    console.log('this.user.forestId:', this.user.forestId);
-                    console.log('this.forestId (getter):', this.forestId);
+                    console.log('After $patch - user:', this.user);
+                    console.log('After $patch - forestId:', this.user?.forestId);
                     
                     // 강제로 상태 동기화
                     if (!this.user || !this.user.forestId) {
-                        console.log('=== Force State Sync ===');
+                        console.log('Force State Sync');
                         this.user = {
                             userId: parseInt(payload.sub),
                             email: payload.email || 'unknown',
-                            forestId: 0
+                            forestId: payload.forestId || null
                         };
-                        console.log('After force sync - this.user:', this.user);
-                        console.log('After force sync - this.forestId:', this.forestId);
+                        console.log('After force sync - user:', this.user);
                     }
                     
                     console.log('========================');

@@ -86,14 +86,28 @@ const auth = useAuthStore();
 // 반응형으로 꺼내기
 const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
 const Token = computed(() => accessToken.value ?? null);
-const forestId = route.params.id || user.value.get("forestId") || null;
+
+// 간단하게 forestId 설정
+const forestId = computed(() => {
+  const id = user.value?.forestId;
+  const routeId = route.params.id;
+  
+  console.log('ForestId - user.value?.forestId:', id);
+  console.log('ForestId - route.params.id:', routeId);
+  console.log('ForestId - final value:', id || routeId || null);
+  
+  return id || routeId || null;
+});
 
 const fetchForestData = async () => {
   try {
     isLoading.value = true;
     error.value = null;
 
-    if (!forestId) {
+    console.log('fetchForestData - forestId:', forestId.value);
+    console.log('fetchForestData - Token:', Token.value);
+
+    if (!forestId.value) {
       throw new Error("숲 ID가 없습니다.");
     }
 
@@ -101,13 +115,15 @@ const fetchForestData = async () => {
       throw new Error("로그인이 필요합니다.");
     }
 
-    const response = await api.get(`/mate/detail`, {params: {forestId}});
+    const apiUrl = `/mate/detail/${forestId.value}`;
+    console.log("API URL:", apiUrl);
+    
+    const response = await api.get(apiUrl);
 
-    if (!response.ok) {
-      throw new Error(`데이터를 불러오는데 실패했습니다. (${response.status})`);
-    }
-
-    const data = await response.json();
+    console.log("API Response:", response);
+    console.log("Forest ID used:", forestId.value);
+    
+    const data = response.data;
     console.log("Received data:", data);
     const validData = Array.isArray(data) ? data[0] : data;
 
@@ -130,6 +146,11 @@ const handleImageError = (e) => {
 };
 
 onMounted(() => {
+  console.log('ForestMate Mounted');
+  console.log('User:', user.value);
+  console.log('Forest ID:', forestId.value);
+  console.log('Token:', Token.value);
+  
   fetchForestData();
   
   proxy.emitter.on('place-item', (piece) => {
@@ -178,13 +199,12 @@ const onMouseUp = () => {
 
 const handleCompletePlacement = async () => {
 
-  const forestId = route.params.id;
-  if (!selectedPiece.value || !forestId) {
+  if (!selectedPiece.value || !forestId.value) {
     alert('필수 정보가 없습니다.');
     return;
   }
   const body = {
-    forestId: Number(forestId),
+    forestId: Number(forestId.value),
     itemPositionX: dragPos.value.x,
     itemPositionY: dragPos.value.y,
     itemId: selectedPiece.value.value
