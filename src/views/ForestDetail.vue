@@ -599,11 +599,8 @@ const handleCompletePlacement = async () => {
   };
   
   try {
-    const res = await api.post('emotion-forest/placement', {
-      body: JSON.stringify(body)
-    });
     
-    if (!res.ok) throw new Error('배치 요청 실패');
+    const res = await api.post('emotion-forest/placement', body);
     
     alertMessage.value = '배치가 완료되었습니다!';
     showAlertModal.value = true;
@@ -613,7 +610,6 @@ const handleCompletePlacement = async () => {
   } catch (err) {
     alertMessage.value = '배치에 실패했습니다.';
     showAlertModal.value = true;
-    console.error(err);
   }
 };
 
