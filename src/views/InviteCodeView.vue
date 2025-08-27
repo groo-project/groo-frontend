@@ -106,7 +106,6 @@ const handleSubmit = async () => {
               inviteCode: inviteCode.value,
               timestamp: new Date().toISOString()
             });
-            console.log('초대 수락 이벤트 발생:', mateForestId);
           }
           
           router.push(`/forestmate/${mateForestId}`);

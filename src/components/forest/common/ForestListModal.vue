@@ -21,9 +21,9 @@
             <div class="forest-name">{{ forest.forestName }}</div>
             <div class="forest-members">
               <span class="member-icon">👥</span>
-              <!-- <span class="member-count"
-                >{{ forest.length() }}명의 친구들</span
-              > -->
+              <span class="member-count">
+                {{ forest.memberCount }}명의 친구들
+              </span>
             </div>
           </div>
         </div>
@@ -119,6 +119,7 @@ const getForestList = async () => {
     forests.value = list.map(forest => ({
       ...forest,
       image: forestImage,
+      memberCount: forest.memberCount || 0
     }));
 
 
@@ -160,6 +161,11 @@ const createNewForest = async () => {
     alertMessage.value = "숲 생성에 실패했습니다. 다시 시도해주세요.";
     showAlert.value = true;
   }
+};
+
+// 멤버 수 요청 함수
+const requestMemberCount = (forestId) => {
+  emit("getMemberCount", forestId);
 };
 
 const handleForestClick = (forestId) => {

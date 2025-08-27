@@ -49,7 +49,16 @@
       </div>
     </div>
 
-    <h1 class="title">{{ forestData?.name || "숲 이름 없음" }}</h1>
+    <div class="title-section">
+      <h1 class="title">{{ forestData?.name || "숲 이름 없음" }}</h1>
+      <img 
+        src="@/icons/edit_icon.png" 
+        alt="Edit" 
+        class="edit-name-btn" 
+        @click="openEditNameModal"
+        title="숲 이름 수정"
+      />
+    </div>
     <div class="nickname-list">
       함께하는 친구👥 : {{ forestData?.nicknames?.join(", ") || "없음" }}
     </div>
@@ -64,6 +73,16 @@
         <div class="success-text">배치가 완료되었습니다!</div>
       </div>
     </div>
+    
+    <!-- 숲 이름 수정 모달 -->
+    <EditMateForestNameModal
+      v-if="isEditNameModalOpen"
+      :isOpen="isEditNameModalOpen"
+      :currentName="forestData?.name || ''"
+      :forestId="forestId"
+      @close="closeEditNameModal"
+      @update="handleNameUpdated"
+    />
   </div>
 </template>
 
@@ -71,9 +90,11 @@
 import { ref, onMounted, onUnmounted, getCurrentInstance, computed} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import WithdrawModal from "../components/forest/mate/WithdrawModal.vue";
+import EditMateForestNameModal from "../components/forest/mate/EditMateForestNameModal.vue";
 import api from "@/lib/api.js";
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from "pinia";
+
 
 
 
@@ -84,6 +105,7 @@ const isLoading = ref(true);
 const error = ref(null);    
 const isWithdrawModalOpen = ref(false);
 const showSuccessMessage = ref(false);
+const isEditNameModalOpen = ref(false);
 const { proxy } = getCurrentInstance();
 const selectedPiece = ref(null);
 const dragPos = ref({ x: 50, y: 50 });
@@ -198,6 +220,14 @@ onMounted(() => {
     }
   });
   
+  // 숲 이름 업데이트 이벤트 감지
+  proxy.emitter.on('forest-name-updated', (data) => {
+    if (data.forestId === forestId.value) {
+      console.log('현재 우정의 숲 이름이 업데이트됨 - 데이터 즉시 업데이트');
+      fetchForestData();
+    }
+  });
+  
   proxy.emitter.on('place-item', (piece) => {
     selectedPiece.value = piece;
     dragPos.value = { x: 10, y: 20 };
@@ -215,6 +245,7 @@ onUnmounted(() => {
   proxy.emitter.off('invite-accepted');
   proxy.emitter.off('item-placed');
   proxy.emitter.off('user-withdrawn');
+  proxy.emitter.off('forest-name-updated');
 });
 
 const onMouseDown = (event) => {
@@ -306,6 +337,32 @@ const handleCompletePlacement = async () => {
   }
 };
 
+const openEditNameModal = () => {
+  isEditNameModalOpen.value = true;
+};
+
+const closeEditNameModal = () => {
+  isEditNameModalOpen.value = false;
+};
+
+const handleNameUpdated = async (newName) => {
+  console.log('숲 이름이 업데이트됨:', newName);
+  closeEditNameModal();
+  
+  // 숲 이름 업데이트 이벤트 발생 (다른 사용자들의 화면 업데이트)
+  if (proxy?.emitter) {
+    proxy.emitter.emit('forest-name-updated', {
+      forestId: forestId.value,
+      newName: newName,
+      timestamp: new Date().toISOString()
+    });
+    console.log('숲 이름 업데이트 이벤트 발생:', forestId.value);
+  }
+  
+  // 데이터 새로고침
+  await fetchForestData();
+};
+
 const goToHome = () => {
   console.log('=== Go To Home ===');
   console.log('User:', user.value);
@@ -384,21 +441,41 @@ const goToHome = () => {
   background: #2d4632;
 }
 
-.title {
+.title-section {
   position: absolute;
   top: 12.83%;
   left: 5.07%;
-  color: white;
-  font-size: 24px;
-  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 10;
+}
+
+.title {
+  color: rgb(68, 116, 77);
+  font-size: 32px;
+  font-weight: 600;
   margin: 0;
+  padding-top: 15px;
+}
+
+.edit-name-btn {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  filter: brightness(0) invert(1); /* 흰색으로 변경 */
+}
+
+.edit-name-btn:hover {
+  opacity: 0.8;
 }
 
 .nickname-list {
   position: absolute;
-  top: 16%;
+  top: 20%;
   left: 5.07%;
-  color: white;
+  color: rgb(58, 90, 64);
   font-size: 18px;
   margin: 0;
   text-align: left;
