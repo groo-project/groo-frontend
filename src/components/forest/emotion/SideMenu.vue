@@ -14,7 +14,6 @@ import ConfirmModal from '@/components/forest/common/ConfirmModal.vue'
 import GuestBookDetail from '@/components/forest/common/guestbook/GuestBookDetail.vue'
 import ForestListModal from "@/components/forest/common/ForestListModal.vue";
 import MyItemView from '@/components/forest/common/MyItemView.vue'
-import AlertModal from '@/components/common/AlertModal.vue'
 import buttonIcon_1 from '@/icons/diarywrite_icon.png'
 import buttonIcon_2 from '@/icons/diaryview_icon.png'
 import buttonIcon_3 from '@/icons/forestmate_icon.png'
@@ -30,6 +29,11 @@ import anxiousIcon from '@/icons/anxious_icon.png'
 import melancholyIcon from '@/icons/melancholy_icon.png'
 import tiredIcon from '@/icons/tired_icon.png'
 import romanceIcon from '@/icons/romance_icon.png'
+
+const router = useRouter();
+const route = useRoute();
+const emit = defineEmits(["openForestList", "showAlert"]);
+const { proxy } = getCurrentInstance();
 
 // 상수들
 const nickname = localStorage.getItem("userNickname") || "여행자";
@@ -58,19 +62,12 @@ const dummyAnalysisResult = {
   ],
 };
 
-// 훅 호출
-const { proxy } = getCurrentInstance();
-const router = useRouter();
-const route = useRoute();
-const emit = defineEmits(["openForestList"])
-
 // reactive 상태들
 const isMenuOpen = ref(true)
 const categoryLoading = ref(false)
 
-// 모든 뷰 상태를 하나의 객체로 통합
 const viewState = ref({
-  currentView: 'main', // 'main', 'category', 'analyze', 'writeDiary', 'guestbookList', 'guestbookDetail', 'myItemView', 'myDiaryCalendar', 'myDiaryDetail'
+  currentView: 'main',
   data: {
     selectedCategory: null,
     selectedGuestbookId: null,
@@ -80,12 +77,9 @@ const viewState = ref({
   }
 })
 
-// 모달 상태들
 const modalState = ref({
   showSaveModal: false,
   showForestListModal: false,
-  showAlertModal: false,
-  alertMessage: ''
 })
 
 // computed 속성들
@@ -104,11 +98,8 @@ const selectedDiaryData = computed(() => viewState.value.data.selectedDiaryData)
 const currentDiaryIndex = computed(() => viewState.value.data.currentDiaryIndex)
 const pieceToSave = computed(() => viewState.value.data.pieceToSave)
 
-// 모달 관련 computed
 const showSaveModal = computed(() => modalState.value.showSaveModal)
 const showForestListModal = computed(() => modalState.value.showForestListModal)
-const showAlertModal = computed(() => modalState.value.showAlertModal)
-const alertMessage = computed(() => modalState.value.alertMessage)
 
 const sidebarWidth = computed(() => {
   const expandedViews = ['category', 'analyze', 'writeDiary', 'guestbookList', 'guestbookDetail', 'myItemView', 'myDiaryCalendar', 'myDiaryDetail']
@@ -166,8 +157,7 @@ const handlePlace = (selectedPiece) => {
 
 async function confirmSaveToStorage() {
   if (!viewState.value.data.pieceToSave) {
-    modalState.value.alertMessage = "저장할 조각 정보가 없습니다."
-    modalState.value.showAlertModal = true
+    emit('showAlert', "저장할 조각 정보가 없습니다.")
     return
   }
   try {
@@ -183,8 +173,7 @@ async function confirmSaveToStorage() {
     window.location.href = `/forest-detail/${forestId}`;
   } catch (e) {
     console.error(e);
-    modalState.value.alertMessage = "보관소 저장에 실패했습니다. 다시 시도해주세요."
-    modalState.value.showAlertModal = true
+    emit('showAlert', "보관소 저장에 실패했습니다. 다시 시도해주세요.")
   }
 }
 
@@ -203,15 +192,13 @@ const toggleCategorySelector = async () => {
         });
       
         if (response.data === true) {
-            modalState.value.alertMessage = "오늘 일기는 이미 작성 하셨네요! 내일 또 봬요!"
-            modalState.value.showAlertModal = true
+            emit('showAlert', "오늘 일기는 이미 작성 하셨네요! 내일 또 봬요!")
         } else {
             switchView('category')
         }
     } catch (error) {
         console.error('일기 작성 여부 확인 실패:', error)
-        modalState.value.alertMessage = "일기 작성 여부 확인에 실패했습니다. 다시 시도해주세요."
-        modalState.value.showAlertModal = true
+        emit('showAlert', "일기 작성 여부 확인에 실패했습니다. 다시 시도해주세요.")
     }
   }
 };
@@ -469,6 +456,20 @@ watch(
               나의 조각 보기
             </button>
             
+            <!-- 추후 개발 예정 -->
+            <!-- <router-link to="/forestview" class="menu-btn">
+              <span class="icon">
+                <img :src="buttonIcon_4" class="btn-img" />
+              </span>
+              다른 숲 구경가기
+            </router-link>
+            <button class="menu-btn" @click="handleGuestbook">
+              <span class="icon">
+                <img :src="buttonIcon_6" class="btn-img" />
+              </span>
+              방명록 확인하기
+            </button> -->
+            
             <ForestListModal
               v-if="showForestListModal"
               :isOpen="showForestListModal"
@@ -488,11 +489,6 @@ watch(
             message="정말로 이 조각을 보관소에 저장하시겠습니까?"
             @confirm="confirmSaveToStorage"
             @cancel="closeSaveModal"
-          />
-    <AlertModal
-            :is-open="showAlertModal"
-            :message="alertMessage"
-            @close="modalState.showAlertModal = false"
           />
   </div>
 </template>

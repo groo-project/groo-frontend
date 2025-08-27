@@ -6,7 +6,6 @@ import rearrange_icon from "@/icons/rearrange_icon.png"
 import GuestBookDetail from "@/components/forest/common/guestbook/GuestBookDetail.vue";
 import { useRouter } from 'vue-router';
 import EditForestName from "@/components/forest/common/EditForestName.vue";
-import AlertModal from "@/components/common/AlertModal.vue";
 import ItemControlPanel from "@/components/forest/common/placement/ItemControlPanel.vue";
 import ItemEditPanel from "@/components/forest/common/placement/ItemEditPanel.vue";
 import RearrangeCompletePanel from "@/components/forest/common/placement/RearrangeCompletePanel.vue";
@@ -50,6 +49,7 @@ const showGuestBookDetail = ref(false);
 const selectedGuestBookId = ref(null);
 const bgRef = ref(null);
 const containerRef = ref(null);
+const emit = defineEmits(["showAlert"]);
 
 // 기존 아이템 배치 관련
 const baseSize = ITEM_CONSTANTS.BASE_SIZE;
@@ -94,8 +94,6 @@ const forestData = ref(null);
 const currentWeather = ref(null);
 const forceUpdate = ref(0);
 const showEditName = ref(false);
-const showAlertModal = ref(false);
-const alertMessage = ref('');
 const { proxy } = getCurrentInstance();
 
 // 계산된 크기 값들
@@ -569,8 +567,7 @@ const handleCompleteRearrange = async () => {
     const allSuccess = results.every(response => response.ok);
     
     if (allSuccess) {
-      alertMessage.value = '재배치가 완료되었습니다!';
-      showAlertModal.value = true;
+      emit('showAlert', "재배치가 완료되었습니다!")
       await refreshForestData();
       exitRearrangeMode();
     } else {
@@ -578,8 +575,7 @@ const handleCompleteRearrange = async () => {
     }
     
   } catch (err) {
-    alertMessage.value = '재배치에 실패했습니다.';
-    showAlertModal.value = true;
+    emit('showAlert', "재배치에 실패했습니다.");
     console.error(err);
   }
 };
@@ -596,8 +592,7 @@ const handleCompletePlacement = async () => {
   const forestId = localStorage.getItem('myRecentforestId');
   
   if (!selectedPiece.value || !forestId) {
-    alertMessage.value = '필수 정보가 없습니다.';
-    showAlertModal.value = true;
+    emit('showAlert', "필수 정보가 없습니다.")
     return;
   }
   
@@ -623,14 +618,12 @@ const handleCompletePlacement = async () => {
     
     if (!res.ok) throw new Error('배치 요청 실패');
     
-    alertMessage.value = '배치가 완료되었습니다!';
-    showAlertModal.value = true;
+    emit('showAlert', "배치가 완료되었습니다!")
     await refreshForestData();
     resetControlPanel();
     forceUpdate.value++;
   } catch (err) {
-    alertMessage.value = '배치에 실패했습니다.';
-    showAlertModal.value = true;
+    emit('showAlert', "배치에 실패했습니다.");
     console.error(err);
   }
 };
@@ -691,10 +684,6 @@ const decreaseEditZIndex = () => {
   if (editItemZIndex.value > ITEM_CONSTANTS.MIN_Z_INDEX) {
     editItemZIndex.value -= ITEM_CONSTANTS.Z_INDEX_STEP;
   }
-};
-
-const closeAlertModal = () => {
-  showAlertModal.value = false;
 };
 
 const handleShowDetail = (id) => {
@@ -770,15 +759,14 @@ const completeStoredItemPlacement = async () => {
 
     if (response.ok) {
       refreshForestData();
-      alertMessage.value = '아이템이 성공적으로 배치되었습니다!';
+      emit('showAlert', "아이템이 성공적으로 배치되었습니다!")
       showStoredItemControlPanel.value = false;
     } else {
       throw new Error('배치 실패');
     }
   } catch (error) {
     console.error('아이템 배치 실패:', error);
-    showAlert.value = true;
-    alertMessage.value = '아이템 배치에 실패했습니다.';
+    emit('showAlert', "아이템 배치에 실패했습니다.")
   }
 };
 
@@ -1077,12 +1065,6 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
     <SnowEffects v-if="showSnow" />
     <ThunderEffects v-if="showThunder" />
     <CloudyEffects v-if="showCloudy" />
-    
-    <AlertModal 
-      v-if="showAlertModal"
-      :message="alertMessage"
-      @close="closeAlertModal"
-    />
   </div>
 </template>
 
