@@ -10,10 +10,11 @@
   },
   "dependencies": {
     "@lottiefiles/dotlottie-vue": "^0.6.3",
-    "axios": "^1.9.0",
+    "axios": "^1.11.0",
     "flatpickr": "^4.6.13",
     "lottie": "^0.0.1",
     "mitt": "^3.0.1",
+    "pinia": "^3.0.3",
     "three": "^0.176.0",
     "vue": "^3.5.13",
     "vue-flatpickr-component": "^12.0.0",

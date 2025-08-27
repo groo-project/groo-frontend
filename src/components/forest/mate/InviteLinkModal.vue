@@ -40,12 +40,6 @@
             />
             <button @click="copyLink" class="copy-button"> 복사하기 </button>
           </div>
-
-          <!-- <div class="footer-message">
-            <span class="heart"></span>
-            <p>함께라서 더 즐거운 우리의 숲</p>
-            <span class="heart"></span>
-          </div> -->
         </div>
       </div>
     </div>
@@ -73,10 +67,20 @@ const shareUrl = computed(() => {
   return `${props.inviteLink}`;
 });
 
-const copyLink = () => {
-  if (linkInput.value) {
-    linkInput.value.select();
-    document.execCommand("copy");
+const copyLink = async () => {
+  try {
+    if (linkInput.value) {
+      linkInput.value.select();
+      await navigator.clipboard.writeText(shareUrl.value);
+      console.log('초대 링크가 클립보드에 복사되었습니다:', shareUrl.value);
+    }
+  } catch (err) {
+    console.error('클립보드 복사 실패:', err);
+    // fallback: 구식 방식
+    if (linkInput.value) {
+      linkInput.value.select();
+      document.execCommand("copy");
+    }
   }
 };
 </script>

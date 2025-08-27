@@ -45,6 +45,14 @@
   import axios from 'axios'
   import backIcon from '@/icons/back.png'
   import forwardIcon from '@/icons/arrow_forward.png'
+  import api from '@/lib/api'
+  import { useAuthStore } from '@/stores/auth'  
+
+  const auth = useAuthStore()
+  const token = auth.accessToken || '';
+  const forestId = auth.user?.forestId || '';
+  
+
   const emit = defineEmits(['close', 'diary-click'])
   
   const today = new Date()
@@ -83,9 +91,8 @@
     month.value = m
     showMonthSelect.value = false
   }
-  
+
   function getUserIdFromToken() {
-    const token = localStorage.getItem('accessToken');
     if (!token) return null;
     try {
       const payload = JSON.parse(atob(token.split('.')[1]));
@@ -96,41 +103,59 @@
   }
   
   async function fetchDiaries() {
-    const userId = getUserIdFromToken();
-    const accessToken = localStorage.getItem('accessToken');
-    const forestId = localStorage.getItem('forestId');
-    if (!userId) return;
+
+    
+    // forestId가 없으면 auth에서 다시 가져오기
+    const currentForestId = forestId || auth.user?.forestId;
+    
+    if (!currentForestId) {
+      console.error('Forest ID not available');
+      diaryDates.value = [];
+      return;
+    }
+    
+    console.log('Using forestId:', currentForestId);
+    
     try {
-      const res = await axios.get(
-        `http://localhost:8080/diary/${forestId}/month?year=${year.value}&month=${month.value}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        }
-      );
-      diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0])
+      const res = await api.get(
+        `diary/${currentForestId}/month?year=${year.value}&month=${month.value}`);
+      diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0]);
+
     } catch (e) {
-      diaryDates.value = []
+      console.error('Failed to fetch diaries:', e);
+      console.error('Error response:', e.response?.data);
+      diaryDates.value = [];
     }
   }
+
+  // watch([year, month], fetchDiaries)
+  // onMounted(fetchDiaries)
+  //       }
+  //     );
+  //     diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0])
+  //   } catch (e) {
+  //     diaryDates.value = []
+  //   }
+  // }
   
   watch([year, month], fetchDiaries)
   onMounted(fetchDiaries)
   
   async function onDiaryClick(date) {
-    const accessToken = localStorage.getItem('accessToken');
-    const forestId = localStorage.getItem('forestId');
     const dateStr = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    
+    // forestId가 없으면 auth에서 다시 가져오기
+    const currentForestId = forestId || auth.user?.forestId;
+    
+    if (!currentForestId) {
+      console.error('Forest ID not available');
+      return;
+    }
+    
     try {
-      const res = await axios.get(
-        `http://localhost:8080/diary/${forestId}/date?date=${dateStr}`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`
-          }
-        }
-      );
+      const res = await api.get(
+        `diary/${currentForestId}/date?date=${dateStr}`);
+
       emit('diary-click', {
         diaries: res.data,
         year: year.value,
@@ -138,7 +163,8 @@
         day: date
       });
     } catch (e) {
-      // 에러 처리
+      console.error('Failed to fetch diary detail:', e);
+      console.error('Error response:', e.response?.data);
     }
   }
   

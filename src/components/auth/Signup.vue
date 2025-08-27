@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import AlertModal from '@/components/common/AlertModal.vue'
+import api from '@/lib/api.js'
 
 const router = useRouter()
 
@@ -30,20 +31,25 @@ const showAlertModal = (message, type = 'info') => {
 const sendVerification = async () => {
   loadingVerification.value = true
   try {
-    const response = await fetch('http://localhost:8080/mails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ email: email.value }),
+    const response = await api.post('/mails', {
+      email: email.value,
     })
-    if (!response.ok) {
+    
+    console.log('=== Verification Email Response ===');
+    console.log('Response status:', response.status);
+    console.log('Response data:', response.data);
+    console.log('========================');
+    
+    if (response.status >= 200 && response.status < 300) {
+      verificationSent.value = true
+      showAlertModal('인증번호가 전송되었습니다.', 'success')
+    } else {
       showAlertModal('인증번호 전송에 실패했습니다.', 'error')
       throw new Error('전송 실패')
     }
-    verificationSent.value = true
   } catch (error) {
     console.error('에러 발생:', error)
+    showAlertModal('인증번호 전송에 실패했습니다.', 'error')
   } finally {
     loadingVerification.value = false
   }
@@ -54,26 +60,28 @@ const verifyCode = async () => {
   verificationCheckMessage.value = ''
   loadingVerificationCheck.value = true
   try {
-    const response = await fetch('http://localhost:8080/mails/verification', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: email.value,
-        authNum: verificationCode.value,
-      }),
+    const response = await api.post('/mails/verification', {
+      email: email.value,
+      authNum: verificationCode.value,
     })
 
-    const message = await response.text();
-    if (!response.ok) {
+    console.log('=== Code Verification Response ===');
+    console.log('Response status:', response.status);
+    console.log('Response data:', response.data);
+    console.log('========================');
+
+    if (response.status >= 200 && response.status < 300) {
+      verificationCheckMessage.value = '인증이 완료되었습니다.'
+      showAlertModal('인증이 완료되었습니다.', 'success')
+    } else {
       verificationCheckMessage.value = '인증에 실패했습니다.'
-      showAlertModal(message, 'error')
+      showAlertModal(response.data?.message || '인증에 실패했습니다.', 'error')
       throw new Error('인증 실패')
     }
-    verificationCheckMessage.value = '인증이 완료되었습니다.'
   } catch (error) {
     console.error('인증 에러:', error)
+    verificationCheckMessage.value = '인증에 실패했습니다.'
+    showAlertModal('인증에 실패했습니다.', 'error')
   } finally {
     loadingVerificationCheck.value = false
   }
@@ -83,27 +91,24 @@ const handleSignUp = async (e) => {
   e.preventDefault()
 
   try {
-    const response = await fetch('http://localhost:8080/auth/signup', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: email.value,
-        password: password.value,
-        nickname: nickname.value,
-      }),
+    const response = await api.post('/auth/signup', {
+      email: email.value,
+      password: password.value,
+      nickname: nickname.value,
     })
 
-    const message = await response.text();
+    console.log('=== Signup Response ===');
+    console.log('Response status:', response.status);
+    console.log('Response data:', response.data);
+    console.log('========================');
 
-    if (!response.ok) {
-      showAlertModal(message || '회원가입 정보를 확인해 주세요!', 'error')
+    if (response.status >= 200 && response.status < 300) {
+      showAlertModal('회원가입 성공! 환영합니다. 🌿', 'success')
+      router.push('/login')
+    } else {
+      showAlertModal(response.data?.message || '회원가입 정보를 확인해 주세요!', 'error')
       throw new Error('회원가입 실패')
     }
-
-    showAlertModal('회원가입 성공! 환영합니다. 🌿', 'success')
-    router.push('/login')
   } catch (error) {
     console.error('에러 발생:', error)
     showAlertModal('회원가입 실패', 'error')

@@ -4,12 +4,15 @@ import edit_icon from "@/icons/edit_icon.png"
 import is_public_icon from "@/icons/is_public_icon.png"
 import rearrange_icon from "@/icons/rearrange_icon.png"
 import GuestBookDetail from "@/components/forest/common/guestbook/GuestBookDetail.vue";
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import EditForestName from "@/components/forest/common/EditForestName.vue";
 import AlertModal from "@/components/common/AlertModal.vue";
 import ItemControlPanel from "@/components/forest/common/placement/ItemControlPanel.vue";
 import ItemEditPanel from "@/components/forest/common/placement/ItemEditPanel.vue";
 import RearrangeCompletePanel from "@/components/forest/common/placement/RearrangeCompletePanel.vue";
+import api from "@/lib/api.js";
+import { useAuthStore } from "@/stores/auth.js";
+import { storeToRefs } from 'pinia';
 
 // weather effects
 import RainEffects from "@/components/weather/RainEffects.vue";
@@ -20,6 +23,13 @@ import SnowEffects from "@/components/weather/SnowEffects.vue";
 import ThunderEffects from "@/components/weather/ThunderEffects.vue";
 import CloudyEffects from "@/components/weather/CloudyEffects.vue";
 import StoredItemControlPanel from "@/components/forest/common/placement/StoredItemControlPanel.vue";
+
+
+
+const auth = useAuthStore();
+// 반응형으로 꺼내기
+const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
+const Token = computed(() => accessToken.value ?? null);
 
 // ===== 상수 정의 =====
 const ITEM_CONSTANTS = {
@@ -45,6 +55,10 @@ const UI_CONSTANTS = {
 };
 
 const router = useRouter();
+const route = useRoute();
+
+const forestId = computed(() => route.params.forestId);
+
 const showGuestBook = ref(false);
 const showGuestBookDetail = ref(false);
 const selectedGuestBookId = ref(null);
@@ -186,26 +200,15 @@ const calculatePercentagePosition = (clientX, clientY) => {
   return { x, y };
 };
 
+
 const refreshForestData = async () => {
-  const token = localStorage.getItem('accessToken');
-  const forestId = localStorage.getItem("myRecentforestId");
-  if (!forestId) return;
+  if (!forestId.value) return;
   
   try {
-    const response = await fetch(`http://localhost:8080/detail/${forestId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    if (!response.ok) {
-      alert("다시 로그인해 주세요!");
-      router.push('/login');
-      throw new Error('detail 요청 실패');
-    }
-    
-    const data = await response.json();
-    console.log('Raw forest data:', data);
+
+    const response = await api.get(`detail/${forestId.value}`);
+
+    const data = response.data;
     forestData.value = data;
     
     // 원본 아이템 데이터 저장 (재배치 모드용)
@@ -216,9 +219,9 @@ const refreshForestData = async () => {
       });
     }
     
-    console.log('Updated forestData:', forestData.value);
   } catch (error) {
     console.error('숲 정보 불러오기 실패:', error);
+    console.log('Error details:', error.response?.data);
   }
 };
 
@@ -258,22 +261,38 @@ onUnmounted(() => {
 
 const togglePublic = async () => {
   if (!forestData.value) return;
-  
-  const token = localStorage.getItem('accessToken');
+
   try {
-    const res = await fetch(`http://localhost:8080/emotion-forest/public/${forestData.value[0].forestId}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    console.log('=== 공개여부 변경 시작 ===');
+    console.log('Forest ID:', forestData.value[0].forestId);
+    console.log('현재 공개여부:', forestData.value[0].isPublic);
     
-    if (!res.ok) throw new Error('공개여부 변경 실패');
+    const res = await api.patch(`emotion-forest/public/${forestData.value[0].forestId}`, {});
     
-    forestData.value[0].isPublic = !forestData.value[0].isPublic;
+    console.log('=== 공개여부 변경 API 응답 ===');
+    console.log('Response status:', res.status);
+    console.log('Response data:', res.data);
+    console.log('========================');
+    
+    if (res.status >= 200 && res.status < 300) {
+      // 성공 시 공개여부 토글
+      forestData.value[0].isPublic = !forestData.value[0].isPublic;
+      console.log('공개여부 변경 성공:', forestData.value[0].isPublic);
+      
+      alertMessage.value = '공개여부가 변경되었습니다!';
+      showAlertModal.value = true;
+    } else {
+      throw new Error(`공개여부 변경 실패: ${res.status}`);
+    }
   } catch (err) {
-    alert('공개여부 변경에 실패했습니다.');
-    console.error(err);
+    console.error('=== 공개여부 변경 실패 ===');
+    console.error('Error:', err);
+    console.error('Error message:', err.message);
+    console.error('Error response:', err.response?.data);
+    console.error('========================');
+    
+    alertMessage.value = '공개여부 변경에 실패했습니다.';
+    showAlertModal.value = true;
   }
 };
 
@@ -528,7 +547,7 @@ const handleCancelSelection = () => {
 
 // 재배치 완료 관련
 const handleCompleteRearrange = async () => {
-  const token = localStorage.getItem('accessToken');
+
   
   try {
     const promises = [];
@@ -536,16 +555,9 @@ const handleCompleteRearrange = async () => {
     // 변경된 아이템들 업데이트
     if (changedItems.value.size > 0) {
       const updateData = Array.from(changedItems.value.values());
-      promises.push(
-        fetch('http://localhost:8080/emotion-forest/placement', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify(updateData)
-        })
-      );
+              promises.push(
+          api.patch('emotion-forest/placement', updateData)
+        );
     }
     
     // 회수된 아이템들 삭제
@@ -553,20 +565,22 @@ const handleCompleteRearrange = async () => {
       const placementIds = Array.from(removedItems.value);
       const queryParams = placementIds.map(id => `placementIds=${id}`).join('&');
       promises.push(
-        fetch(`http://localhost:8080/emotion-forest/placement?${queryParams}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        })
+        api.delete(`emotion-forest/placement?${queryParams}`)
       );
     }
     
     // 모든 요청 병렬 실행
     const results = await Promise.all(promises);
     
-    // 모든 요청이 성공했는지 확인
-    const allSuccess = results.every(response => response.ok);
+    // 모든 요청이 성공했는지 확인 (Axios 방식)
+    const allSuccess = results.every(response => response.status >= 200 && response.status < 300);
+    
+    console.log('=== 재배치 결과 확인 ===');
+    results.forEach((response, index) => {
+      console.log(`요청 ${index + 1}:`, response.status, response.data);
+    });
+    console.log('모든 요청 성공:', allSuccess);
+    console.log('========================');
     
     if (allSuccess) {
       alertMessage.value = '재배치가 완료되었습니다!';
@@ -592,17 +606,15 @@ const handleCancelRearrange = () => {
 
 // 기존 아이템 배치 관련 함수들
 const handleCompletePlacement = async () => {
-  const token = localStorage.getItem('accessToken');
-  const forestId = localStorage.getItem('myRecentforestId');
   
-  if (!selectedPiece.value || !forestId) {
+  if (!selectedPiece.value || !forestId.value) {
     alertMessage.value = '필수 정보가 없습니다.';
     showAlertModal.value = true;
     return;
   }
   
   const body = {
-    forestId: Number(forestId),
+          forestId: Number(forestId.value),
     itemPositionX: dragPos.value.x,
     itemPositionY: dragPos.value.y,
     itemId: selectedPiece.value.value,
@@ -612,26 +624,34 @@ const handleCompletePlacement = async () => {
   };
   
   try {
-    const res = await fetch('http://localhost:8080/emotion-forest/placement', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(body)
-    });
+    console.log('=== 아이템 배치 시작 ===');
+    console.log('Request body:', body);
     
-    if (!res.ok) throw new Error('배치 요청 실패');
+    const res = await api.post('emotion-forest/placement', body);
     
-    alertMessage.value = '배치가 완료되었습니다!';
-    showAlertModal.value = true;
-    await refreshForestData();
-    resetControlPanel();
-    forceUpdate.value++;
+    console.log('=== 배치 API 응답 ===');
+    console.log('Response status:', res.status);
+    console.log('Response data:', res.data);
+    console.log('========================');
+    
+    if (res.status >= 200 && res.status < 300) {
+      alertMessage.value = '배치가 완료되었습니다!';
+      showAlertModal.value = true;
+      await refreshForestData();
+      resetControlPanel();
+      forceUpdate.value++;
+    } else {
+      throw new Error(`배치 실패: ${res.status}`);
+    }
   } catch (err) {
+    console.error('=== 배치 실패 ===');
+    console.error('Error:', err);
+    console.error('Error message:', err.message);
+    console.error('Error response:', err.response?.data);
+    console.error('========================');
+    
     alertMessage.value = '배치에 실패했습니다.';
     showAlertModal.value = true;
-    console.error(err);
   }
 };
 
@@ -739,46 +759,69 @@ const handleNameUpdate = (newName) => {
 };
 
 const goToHome = () => {
-  router.push('/')
+  console.log('=== Go To Home ===');
+  console.log('User:', user.value);
+  console.log('Current Forest ID:', forestId.value);
+  console.log('========================');
+  
+  if (user.value?.forestId) {
+    // 회원의 forestId로 이동
+    router.push(`/forest-detail/${user.value.forestId}`);
+  } else {
+    // forestId가 없으면 기본 홈으로
+    router.push('/');
+  }
 };
+
 
 // 보관된 아이템 배치 관련
 const completeStoredItemPlacement = async () => {
   if (!selectedStoredItem.value) return;
   
   try {
-    const accessToken = localStorage.getItem('accessToken');
+
     
     const calculatedWidth = Math.round(ITEM_CONSTANTS.BASE_SIZE * storedItemScale.value);
     const calculatedHeight = Math.round(ITEM_CONSTANTS.BASE_SIZE * storedItemScale.value);
     
-    const response = await fetch('http://localhost:8080/emotion-forest/placements/from-storage', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`
-      },
-      body: JSON.stringify({
-        userItemId: selectedStoredItem.value.id,
-        itemPositionX: storedItemPosition.value.x,
-        itemPositionY: storedItemPosition.value.y,
-        itemWidth: calculatedWidth,
-        itemHeight: calculatedHeight,
-        itemZIndex: storedItemZIndex.value
-      })
-    });
+    const requestBody = {
+      userItemId: selectedStoredItem.value.id,
+      itemPositionX: storedItemPosition.value.x,
+      itemPositionY: storedItemPosition.value.y,
+      itemWidth: calculatedWidth,
+      itemHeight: calculatedHeight,
+      itemZIndex: storedItemZIndex.value
+    };
+    
+    console.log('=== Stored Item Placement Request ===');
+    console.log('Request body:', requestBody);
+    console.log('Token:', Token.value);
+    console.log('========================');
+    
+    const response = await api.post('emotion-forest/placements/from-storage', requestBody);
 
-    if (response.ok) {
+    console.log('=== Stored Item Placement Response ===');
+    console.log('Response status:', response.status);
+    console.log('Response data:', response.data);
+    console.log('========================');
+
+    if (response.status >= 200 && response.status < 300) {
       refreshForestData();
       alertMessage.value = '아이템이 성공적으로 배치되었습니다!';
       showStoredItemControlPanel.value = false;
     } else {
-      throw new Error('배치 실패');
+      throw new Error(`배치 실패: ${response.status}`);
     }
   } catch (error) {
-    console.error('아이템 배치 실패:', error);
-    showAlert.value = true;
-    alertMessage.value = '아이템 배치에 실패했습니다.';
+    console.error('=== 아이템 배치 실패 ===');
+    console.error('Error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error response:', error.response?.data);
+    console.error('Error status:', error.response?.status);
+    console.error('========================');
+    
+    showAlertModal.value = true;
+    alertMessage.value = `아이템 배치에 실패했습니다: ${error.message}`;
   }
 };
 

@@ -4,6 +4,12 @@ import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import MyDiaryCalendar from '@/components/forest/emotion/MyDiaryCalendar.vue';
 import MyDiaryDetail from '@/components/forest/emotion/MyDiaryDetail.vue';
+import api from '@/lib/api.js'
+import { useAuthStore } from '@/stores/auth.js'
+
+
+
+// Icons
 import CategorySelector from '@/components/forest/common/CategorySelector.vue'
 import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue'
 import WriteDiary from '@/components/forest/common/WriteDiary.vue'
@@ -15,6 +21,7 @@ import GuestBookDetail from '@/components/forest/common/guestbook/GuestBookDetai
 import ForestListModal from "@/components/forest/common/ForestListModal.vue";
 import MyItemView from '@/components/forest/common/MyItemView.vue'
 import AlertModal from '@/components/common/AlertModal.vue'
+
 import buttonIcon_1 from '@/icons/diarywrite_icon.png'
 import buttonIcon_2 from '@/icons/diaryview_icon.png'
 import buttonIcon_3 from '@/icons/forestmate_icon.png'
@@ -67,6 +74,18 @@ const emit = defineEmits(["openForestList"])
 // reactive 상태들
 const isMenuOpen = ref(true)
 const categoryLoading = ref(false)
+const selectedCategory = ref(null)
+const showSaveModal = ref(false)
+const pieceToSave = ref(null)
+const showMyItemView = ref(false)
+const showMyDiaryCalendar = ref(false)
+const showMyDiaryDetail = ref(false)
+const selectedDiaryData = ref(null)
+const currentDiaryIndex = ref(0)
+const showAlertModal = ref(false)
+const alertMessage = ref('')
+const showLogoutModal = ref(false)
+
 
 // 모든 뷰 상태를 하나의 객체로 통합
 const viewState = ref({
@@ -138,17 +157,63 @@ const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
 };
 
-const updateForestId = () => {
-  if (currentForestId.value) {
-    localStorage.setItem("forestId", currentForestId.value);
+
+const router = useRouter();
+const route = useRoute();
+
+const authStore = useAuthStore();
+const user = computed(() => authStore.user);
+const token = computed(() => authStore.accessToken || '');
+const forestId = computed(() => authStore.user?.forestId || '');
+const nickname = computed(() => authStore.user?.nickname || "여행자");
+
+const currentForestId = computed(() => {
+  // forest-detail/:forestId 경로에서 forestId 추출
+  if (route.name === "ForestDetail") {
+    return route.params.forestId || forestId;
   }
-};
+  return null;
+});
+
+
+
+// forestId를 localStorage에 저장
+// const updateForestId = () => {
+//   if (currentForestId.value) {
+//     localStorage.setItem("forestId", currentForestId.value);
+//   }
+// };
+
+// 컴포넌트 마운트 시 nickname 상태 확인
+onMounted(() => {
+  console.log('=== SideMenu Mounted ===');
+  console.log('authStore:', authStore);
+  console.log('user:', user.value);
+  console.log('닉네임:', nickname.value);
+  console.log('숲 ID:', forestId.value);
+  console.log('token:', token.value);
+  console.log('========================');
+});
+
 
 const logout = () => {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("userNickname");
-  localStorage.removeItem("myRecentforestId");
-  router.push("/login");
+  showLogoutModal.value = true;
+};
+
+const handleLogoutConfirm = async () => {
+  try {
+    // 실제 로그아웃 처리
+    await authStore.logout();
+    console.log('로그아웃 완료');
+    
+    // 로그인 페이지로 이동
+    router.push("/login");
+  } catch (error) {
+    console.error('로그아웃 실패:', error);
+    // 에러가 발생해도 로그인 페이지로 이동
+    router.push("/login");
+  }
+
 };
 
 const handleAnalyze = (category) => {
@@ -171,16 +236,17 @@ async function confirmSaveToStorage() {
     return
   }
   try {
-    const accessToken = localStorage.getItem("accessToken");
-    const forestId    = localStorage.getItem("forestId");
-    const pieceId     = viewState.value.data.pieceToSave.value;
-    await axios.post(
-      `http://localhost:8080/item-storage?itemId=${pieceId}&forestId=${forestId}`,
-      {},
-      { headers: { Authorization: `Bearer ${accessToken}` } }
+    const pieceId     = pieceToSave.value.value;
+    // URL · 헤더 · 쿼리 파라미터 수정
+    await api.post(
+      `item-storage?itemId=${pieceId}&forestId=${forestId.value}`,
+      {},  // 바디는 빈 객체
+      { headers: { Authorization: `Bearer ${token.value}` } }
     );
     closeSaveModal();
-    window.location.href = `/forest-detail/${forestId}`;
+    // 강제 새로고침 방식으로 이동
+    window.location.href = `/forest-detail/${forestId.value}`;
+
   } catch (e) {
     console.error(e);
     modalState.value.alertMessage = "보관소 저장에 실패했습니다. 다시 시도해주세요."
@@ -378,6 +444,7 @@ watch(
         </template>
         <template v-else-if="showMyItemView">
           <MyItemView
+            :forestId="user?.forestId"
             @close="closeMyItemView"
             @placeFromStorage="handlePlaceFromStorage"
           />
@@ -493,6 +560,13 @@ watch(
             :is-open="showAlertModal"
             :message="alertMessage"
             @close="modalState.showAlertModal = false"
+          />
+    <ConfirmModal
+            :is-open="showLogoutModal"
+            title="로그아웃"
+            message="정말 로그아웃 하시겠습니까?"
+            @confirm="handleLogoutConfirm"
+            @cancel="showLogoutModal = false"
           />
   </div>
 </template>

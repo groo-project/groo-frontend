@@ -23,13 +23,19 @@
 
 <script setup>
 import { useRouter, useRoute } from "vue-router";
-import { ref } from "vue";
+import { ref, computed, getCurrentInstance } from "vue";
 import AlertModal from "@/components/common/AlertModal.vue";
+import api from "@/lib/api";
+import { useAuthStore } from "@/stores/auth";
 
 const route = useRoute();
 const router = useRouter();
 const showAlert = ref(false);
 const alertMessage = ref("");
+const authStore = useAuthStore();
+const userForestId = computed(() => authStore.user?.forestId ?? null);
+const { proxy } = getCurrentInstance();
+
 
 const props = defineProps({
   isOpen: {
@@ -37,6 +43,9 @@ const props = defineProps({
     required: true,
   },
 });
+
+// props 이름을 AlertModal과 맞춤
+const isOpen = computed(() => props.isOpen);
 
 const emit = defineEmits(["close"]);
 
@@ -46,39 +55,53 @@ const handleAlertClose = () => {
 
 const handleWithdraw = async () => {
   try {
-    const forestId = route.params.id;
-    const token = localStorage.getItem("accessToken");
+    console.log("=== 우정의 숲 탈퇴 시작 ===");
+    
+    // 우정의 숲 ID (route.params.id)를 사용
+    const mateForestId = route.params.id;
+    console.log("Mate Forest ID (탈퇴할 우정의 숲):", mateForestId);
+    console.log("User Forest ID (개인 숲):", userForestId.value);
 
-    if (!forestId) {
-      throw new Error("숲 ID를 찾을 수 없습니다.");
+    if (!mateForestId) {
+      throw new Error("우정의 숲 ID를 찾을 수 없습니다.");
     }
 
-    const response = await fetch(
-      `http://localhost:8080/mate/quit?forestId=${forestId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ forestId: forestId }),
-      }
-    );
+    console.log("탈퇴 API 호출:", `/mate/quit?forestId=${mateForestId}`);
+    
+    const response = await api.delete(`/mate/quit?forestId=${mateForestId}`);
 
-    if (response.ok) {
+    console.log("=== 탈퇴 API 응답 ===");
+    console.log("Response:", response);
+    console.log("Response status:", response.status);
+    console.log("Response data:", response.data);
+
+    if (response.status >= 200 && response.status < 300) {
       alertMessage.value = "우정의 숲에서 탈퇴되었습니다.";
       showAlert.value = true;
-      localStorage.setItem("forestId", "1");
-      setTimeout(() => {
-        router.push("/");
-      }, 2000);
+
+      // 탈퇴 성공 이벤트 발생 (다른 사용자들의 화면 업데이트)
+      if (proxy?.emitter) {
+        proxy.emitter.emit('user-withdrawn', {
+          forestId: mateForestId,
+          userId: authStore.user?.userId,
+          nickname: authStore.user?.nickname,
+          timestamp: new Date().toISOString()
+        });
+        console.log('사용자 탈퇴 이벤트 발생:', mateForestId);
+      }
+
+      router.push(`/forest-detail/${userForestId.value}`);
     } else {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || "탈퇴 처리 중 오류가 발생했습니다.");
+      throw new Error(`탈퇴 처리 중 오류가 발생했습니다. (${response.status})`);
     }
   } catch (error) {
+    console.error("=== 탈퇴 실패 ===");
     console.error("Error:", error);
-    alertMessage.value = error.message;
+    console.error("Error message:", error.message);
+    console.error("Error response:", error.response?.data);
+    console.error("==========================");
+    
+    alertMessage.value = error.message || "탈퇴 처리 중 오류가 발생했습니다.";
     showAlert.value = true;
   } finally {
     emit("close");

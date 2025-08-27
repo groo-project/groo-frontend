@@ -67,8 +67,11 @@ import { ref, computed, onMounted } from 'vue';
 import VueFlatPickr from 'vue-flatpickr-component';
 import 'flatpickr/dist/flatpickr.css';
 import { Korean } from 'flatpickr/dist/l10n/ko.js';
-import { diaryApi } from '../../../services/api';
+import { diaryApi } from '@/lib/api';
 import AlertModal from '@/components/common/AlertModal.vue';
+import { useAuthStore } from '@/stores/auth';
+
+const auth = useAuthStore();
 
 const props = defineProps({
   categoryId: {
@@ -127,15 +130,10 @@ const saveDraft = () => {
 };
 
 const loadDraft = () => {
-  const draft = localStorage.getItem('diaryDraft');
-  if (draft) {
-    const { content, date } = JSON.parse(draft);
-    diaryContent.value = content;
-    selectedDate.value = new Date(date);
-    updateCharCount();
-  } else {
-    showAlertModal('저장된 임시글이 없습니다.');
-  }
+  // localStorage 대신 auth 스토어에서 필요한 정보 가져오기
+  // 임시저장 기능이 필요하다면 auth 스토어에 추가하거나 다른 방식으로 구현
+  console.log('Load draft - no localStorage usage');
+  showAlertModal('임시저장 기능은 현재 사용할 수 없습니다.');
 };
 
 const emit = defineEmits(['save', 'loading']);
@@ -161,10 +159,29 @@ const saveDiary = async () => {
     const day = String(date.getDate()).padStart(2, '0');
     const createdAt = `${year}-${month}-${day}T00:00:00`;
 
+    // auth 스토어 상태 상세 확인
+    console.log('=== SaveDiary - Auth Store State ===');
+    console.log('auth.user:', auth.user);
+    console.log('auth.user.forestId:', auth.user?.forestId);
+    console.log('========================');
+    
+    // forestId를 auth.user에서 직접 가져오기 (getter 사용 안함)
+    const forestId = auth.user?.forestId;
+    console.log('Retrieved forestId from auth.user:', forestId);
+    console.log('forestId type:', typeof forestId);
+    console.log('forestId is valid:', forestId !== null && forestId !== undefined);
+    
+    // forestId가 null이나 undefined가 아닌지 확인 (0도 유효한 값으로 처리)
+    if (forestId === null || forestId === undefined) {
+      console.error('Invalid forestId:', forestId);
+      showAlertModal('숲 정보를 찾을 수 없습니다. 다시 로그인해주세요.', 'error');
+      return;
+    }
+    
     const requestData = {
       content: diaryContent.value,
       categoryId: props.categoryId,
-      forestId: Number(localStorage.getItem('myRecentforestId')),
+      forestId: forestId,
       createdAt: createdAt
     };
 
@@ -177,10 +194,19 @@ const saveDiary = async () => {
     }
 
     console.log('API Response:', response);
-    localStorage.setItem('weather', response.weather);
-    const test = localStorage.getItem('userNickname')
-    localStorage.setItem(test, localStorage.getItem('userNickname'));
-    localStorage.removeItem('diaryDraft');
+    
+    // localStorage 대신 auth 스토어 활용
+    if (response.weather) {
+      // weather 정보를 auth 스토어에 저장하거나 다른 방식으로 처리
+      console.log('Weather info received:', response.weather);
+    }
+    
+    // userNickname 관련 localStorage 제거
+    // localStorage.setItem('userNickname', ...) 제거
+    
+    // diaryDraft 제거 (이미 auth 기반으로 처리됨)
+    // localStorage.removeItem('diaryDraft'); 제거
+    
     emit('save', response);
   } catch (error) {
     console.error('일기 저장 실패:', error);
@@ -190,15 +216,40 @@ const saveDiary = async () => {
   }
 };
 
-// 컴포넌트 마운트 시 임시저장 데이터 불러오기
+// 컴포넌트 마운트 시 임시저장 데이터 불러오기 및 auth 상태 확인
 onMounted(() => {
-  const draft = localStorage.getItem('diaryDraft');
-  if (draft) {
-    const { content, date } = JSON.parse(draft);
-    diaryContent.value = content;
-    selectedDate.value = new Date(date);
-    updateCharCount();
+  // auth 스토어 전체 상태 확인
+  console.log('=== Auth Store State ===');
+  console.log('auth.user:', auth.user);
+  console.log('auth.user.forestId:', auth.user?.forestId);
+  console.log('auth.isAuthenticated:', auth.isAuthenticated);
+  console.log('auth.accessToken:', auth.accessToken);
+  console.log('========================');
+  
+  // forestId 상태 확인 (auth.user에서 직접)
+  const forestId = auth.user?.forestId;
+  console.log('Component mounted - forestId from auth.user:', forestId);
+  
+  if (forestId === null || forestId === undefined) {
+    console.warn('Warning: Invalid forestId on component mount:', forestId);
+  } else {
+    console.log('ForestId is valid:', forestId);
+    
+    // 사용자의 forest 목록 확인
+    console.log('=== User Forest Info ===');
+    console.log('User ID:', auth.user?.userId);
+    console.log('User Email:', auth.user?.email);
+    console.log('Assigned Forest ID:', auth.user?.forestId);
+    console.log('========================');
   }
+  
+  // localStorage 대신 auth 스토어에서 필요한 정보 가져오기
+  // 임시저장 기능이 필요하다면 auth 스토어에 추가하거나 다른 방식으로 구현
+  console.log('Component mounted - no localStorage usage');
+  
+  // 기본값 설정
+  selectedDate.value = new Date();
+  updateCharCount();
 });
 </script>
 
