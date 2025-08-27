@@ -23,7 +23,7 @@
 
 <script setup>
 import { useRouter, useRoute } from "vue-router";
-import { ref, computed } from "vue";
+import { ref, computed, getCurrentInstance } from "vue";
 import AlertModal from "@/components/common/AlertModal.vue";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
@@ -34,6 +34,7 @@ const showAlert = ref(false);
 const alertMessage = ref("");
 const authStore = useAuthStore();
 const userForestId = computed(() => authStore.user?.forestId ?? null);
+const { proxy } = getCurrentInstance();
 
 
 const props = defineProps({
@@ -77,6 +78,17 @@ const handleWithdraw = async () => {
     if (response.status >= 200 && response.status < 300) {
       alertMessage.value = "우정의 숲에서 탈퇴되었습니다.";
       showAlert.value = true;
+
+      // 탈퇴 성공 이벤트 발생 (다른 사용자들의 화면 업데이트)
+      if (proxy?.emitter) {
+        proxy.emitter.emit('user-withdrawn', {
+          forestId: mateForestId,
+          userId: authStore.user?.userId,
+          nickname: authStore.user?.nickname,
+          timestamp: new Date().toISOString()
+        });
+        console.log('사용자 탈퇴 이벤트 발생:', mateForestId);
+      }
 
       router.push(`/forest-detail/${userForestId.value}`);
     } else {

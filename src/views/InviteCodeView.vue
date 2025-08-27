@@ -40,7 +40,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, getCurrentInstance } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import AlertModal from "@/components/common/AlertModal.vue";
 import { useAuthStore } from "@/stores/auth.js";
@@ -50,6 +50,7 @@ import api from "@/lib/api.js";
 const router = useRouter();
 const route = useRoute();
 const inviteCode = ref("");
+const { proxy } = getCurrentInstance();
 
 
 const auth = useAuthStore();
@@ -95,10 +96,19 @@ const handleSubmit = async () => {
       if (response.status >= 200 && response.status < 300) {
         console.log("초대 코드 검증 성공!");
         
-        // 초대 코드 수락 성공 후 해당 우정의 숲으로 이동
-        // API 응답에서 forestId를 가져와야 함
         if (response.data && response.data.forestId) {
           const mateForestId = response.data.forestId;
+          
+          // 초대 수락 성공 이벤트 발생 (다른 컴포넌트에서 감지)
+          if (proxy?.emitter) {
+            proxy.emitter.emit('invite-accepted', {
+              forestId: mateForestId,
+              inviteCode: inviteCode.value,
+              timestamp: new Date().toISOString()
+            });
+            console.log('초대 수락 이벤트 발생:', mateForestId);
+          }
+          
           router.push(`/forestmate/${mateForestId}`);
         } else {
           router.push("/");

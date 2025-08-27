@@ -170,15 +170,51 @@ onMounted(() => {
   
   fetchForestData();
   
+  // 실시간 업데이트를 위한 주기적 폴링 (5초마다)
+  const updateInterval = setInterval(() => {
+    if (forestId.value && Token.value) {
+      fetchForestData();
+    }
+  }, 5000);
+  
+  // 초대 수락 이벤트 감지
+  proxy.emitter.on('invite-accepted', (data) => {
+    if (data.forestId === forestId.value) {
+      fetchForestData();
+    }
+  });
+  
+  // 아이템 배치 완료 이벤트 감지
+  proxy.emitter.on('item-placed', (data) => {
+    if (data.forestId === forestId.value) {
+      fetchForestData();
+    }
+  });
+  
+  // 사용자 탈퇴 이벤트 감지
+  proxy.emitter.on('user-withdrawn', (data) => {
+    if (data.forestId === forestId.value) {
+      fetchForestData();
+    }
+  });
+  
   proxy.emitter.on('place-item', (piece) => {
     selectedPiece.value = piece;
     dragPos.value = { x: 10, y: 20 };
     console.log('Received piece in ForestMate:', selectedPiece.value);
   });
+  
+  // 컴포넌트 언마운트 시 인터벌 정리
+  onUnmounted(() => {
+    clearInterval(updateInterval);
+  });
 });
 
 onUnmounted(() => {
   proxy.emitter.off('place-item');
+  proxy.emitter.off('invite-accepted');
+  proxy.emitter.off('item-placed');
+  proxy.emitter.off('user-withdrawn');
 });
 
 const onMouseDown = (event) => {
@@ -241,6 +277,18 @@ const handleCompletePlacement = async () => {
     
     if (res.status >= 200 && res.status < 300) {
       showSuccess();
+      
+      // 아이템 배치 완료 이벤트 발생 (다른 사용자들의 화면 업데이트)
+      if (proxy?.emitter) {
+        proxy.emitter.emit('item-placed', {
+          forestId: forestId.value,
+          itemId: selectedPiece.value.value,
+          position: { x: dragPos.value.x, y: dragPos.value.y },
+          timestamp: new Date().toISOString()
+        });
+        console.log('아이템 배치 완료 이벤트 발생:', forestId.value);
+      }
+      
       await fetchForestData();
       selectedPiece.value = null;
     } else {
