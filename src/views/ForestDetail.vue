@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, getCurrentInstance, computed } from "vue";
+import { ref, onMounted, onUnmounted, getCurrentInstance, computed, watch } from "vue";
 import edit_icon from "@/icons/edit_icon.png"
 import is_public_icon from "@/icons/is_public_icon.png"
 import rearrange_icon from "@/icons/rearrange_icon.png"
@@ -220,6 +220,13 @@ const refreshForestData = async () => {
   } catch (error) {
     console.error('숲 정보 불러오기 실패:', error);
     console.log('Error details:', error.response?.data);
+
+    // 자신의 숲이 아닐 때
+    if (error.response?.data.code === "F002") {
+      emit('showAlert', "해당 숲에는 방문할 수 없어요.")
+      console.log(forestId.value);
+      router.replace(`/forest-detail/${auth.user.forestId}`)
+    }
   }
 };
 
@@ -257,6 +264,12 @@ onUnmounted(() => {
   proxy.emitter.off('place-from-storage');
 });
 
+watch(forestId, async (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    await refreshForestData();
+  }
+})
+
 const togglePublic = async () => {
   if (!forestData.value) return;
 
@@ -277,8 +290,7 @@ const togglePublic = async () => {
       forestData.value[0].isPublic = !forestData.value[0].isPublic;
       console.log('공개여부 변경 성공:', forestData.value[0].isPublic);
       
-      alertMessage.value = '공개여부가 변경되었습니다!';
-      showAlertModal.value = true;
+      emit('showAlert', "공개여부가 변경되었습니다!");
     } else {
       throw new Error(`공개여부 변경 실패: ${res.status}`);
     }
@@ -289,8 +301,7 @@ const togglePublic = async () => {
     console.error('Error response:', err.response?.data);
     console.error('========================');
     
-    alertMessage.value = '공개여부 변경에 실패했습니다.';
-    showAlertModal.value = true;
+    emit('showAlert', "공개여부 변경에 실패했습니다.");
   }
 };
 

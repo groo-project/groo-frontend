@@ -12,7 +12,7 @@ import { useAuthStore } from '@/stores/auth.js'
 // Icons
 import CategorySelector from '@/components/forest/common/CategorySelector.vue'
 import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue'
-import WriteDiary from '@/components/forest/common/WriteDiary.vue'
+import WriteDiary from '@/components/forest/emotion/WriteDiary.vue'
 import WriteGuestbook from '@/components/forest/common/guestbook/WriteGuestbook.vue'
 import LoadingAnimation from '@/components/forest/common/LoadingAnimation.vue'
 import GuestbookList from '@/components/forest/common/guestbook/GuestbookList.vue'
