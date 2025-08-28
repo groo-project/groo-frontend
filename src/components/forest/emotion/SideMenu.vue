@@ -253,11 +253,11 @@ const toggleCategorySelector = async () => {
     try {
         const response = await api.get('diaries/today/written')
       
-        if (response.data === true) {
-            emit('showAlert', "오늘 일기는 이미 작성 하셨네요! 내일 또 봬요!")
-        } else {
+        // if (response.data === true) {
+        //     emit('showAlert', "오늘 일기는 이미 작성 하셨네요! 내일 또 봬요!")
+        // } else {
             switchView('category')
-        }
+        // }
     } catch (error) {
         console.error('일기 작성 여부 확인 실패:', error)
         emit('showAlert', "일기 작성 여부 확인에 실패했습니다. 다시 시도해주세요.")
