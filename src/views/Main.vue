@@ -1,16 +1,20 @@
+<!--Main-->
 <script setup>
-import { ref, computed } from "vue";
-import { useRoute } from "vue-router"; // 현재 경로를 가져오기 위해 useRoute 사용
+import { ref } from "vue";
+import { useRoute } from "vue-router";
 import SideMenu from "@/components/forest/emotion/SideMenu.vue";
 import MateSideMenu from "@/components/forest/mate/MateSideMenu.vue";
 import InviteLinkModal from "@/components/forest/mate/InviteLinkModal.vue";
 import ForestListModal from "@/components/forest/common/ForestListModal.vue";
 import WithdrawModal from "@/components/forest/mate/WithdrawModal.vue";
+import AlertModal from "@/components/common/AlertModal.vue";
 import { useAuthStore } from "@/stores/auth.js"; 
 import { storeToRefs } from "pinia";
 import api from "@/lib/api.js"; 
 
-const currentView = ref("background"); // 초기 상태: BackgroundImage
+const route = useRoute();
+
+const currentView = ref("background");
 const isInviteLinkModalOpen = ref(false);
 const isForestListModalOpen = ref(false);
 const isWithdrawModalOpen = ref(false);
@@ -24,14 +28,27 @@ const Token = computed(() => accessToken.value ?? null);
 
 
 const inviteLink = ref("");
+const showAlertModal = ref(false);
+const alertMessage = ref('');
 
 const changeView = (view) => {
   currentView.value = view;
 };
 
-// 초대 링크 모달 열기
+const showAlert = (message) => {
+  alertMessage.value = message;
+  showAlertModal.value = true;
+};
+
+const closeAlert = () => {
+  showAlertModal.value = false;
+  alertMessage.value = '';
+};
+
 const openInviteLinkModal = async () => {
   try {
+    const pathSegments = window.location.pathname.split("/");
+    const forestId = pathSegments[pathSegments.length - 1];
     console.log("=== 초대 링크 모달 열기 ===");
     console.log("Route path:", route.path);
     console.log("Route params:", route.params);
@@ -88,7 +105,6 @@ const closeInviteLinkModal = () => {
   isInviteLinkModalOpen.value = false;
 };
 
-// 숲 목록 모달 열기
 const openForestListModal = () => {
   isForestListModalOpen.value = true;
 };
@@ -97,7 +113,6 @@ const closeForestListModal = () => {
   isForestListModalOpen.value = false;
 };
 
-// 탈퇴 모달 열기
 const openWithdrawModal = () => {
   isWithdrawModalOpen.value = true;
 };
@@ -105,44 +120,53 @@ const openWithdrawModal = () => {
 const closeWithdrawModal = () => {
   isWithdrawModalOpen.value = false;
 };
-
-const route = useRoute(); // 현재 경로 가져오기
 </script>
 
 <template>
   <div class="container">
     <div class="main-area">
-      <router-view />
+      <router-view 
+      @showAlert="showAlert"/>
     </div>
-    <!-- 로그인 페이지가 아닐 때 -->
+    
     <template v-if="route.path !== '/login'">
-      <!-- forestmate 페이지일 때는 MateSideMenu를, 그 외에는 일반 SideMenu를 보여줌 -->
       <MateSideMenu
         v-if="route.name === 'ForestMate'"
         @openShare="openInviteLinkModal"
         @openForestList="openForestListModal"
         @openWithdraw="openWithdrawModal"
+        @showAlert="showAlert"
       />
       <SideMenu
         v-else
         @change-view="changeView"
         @openForestList="openForestListModal"
+        @showAlert="showAlert"
       />
     </template>
+    
     <InviteLinkModal
       :is-open="isInviteLinkModalOpen"
       :invite-link="inviteLink"
       @close="closeInviteLinkModal"
     />
+    
     <ForestListModal
       v-if="isForestListModalOpen"
       :isOpen="isForestListModalOpen"
       @close="closeForestListModal"
     />
+    
     <WithdrawModal
       v-if="isWithdrawModalOpen"
       :is-open="isWithdrawModalOpen"
       @close="closeWithdrawModal"
+    />
+    
+    <AlertModal
+      v-if="showAlertModal"
+      :message="alertMessage"
+      @close="closeAlert"
     />
   </div>
 </template>
