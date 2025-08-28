@@ -1,6 +1,6 @@
 <!--Main-->
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRoute } from "vue-router";
 import SideMenu from "@/components/forest/emotion/SideMenu.vue";
 import MateSideMenu from "@/components/forest/mate/MateSideMenu.vue";
@@ -47,8 +47,6 @@ const closeAlert = () => {
 
 const openInviteLinkModal = async () => {
   try {
-    const pathSegments = window.location.pathname.split("/");
-    const forestId = pathSegments[pathSegments.length - 1];
     console.log("=== 초대 링크 모달 열기 ===");
     console.log("Route path:", route.path);
     console.log("Route params:", route.params);
