@@ -189,6 +189,11 @@ const logout = () => {
 
 const handleLogoutConfirm = async () => {
   try {
+
+    
+    // 로그아웃 모달 닫기
+    showLogoutModal.value = false;
+    
     // 실제 로그아웃 처리
     await authStore.logout();
     console.log('로그아웃 완료');
@@ -197,10 +202,16 @@ const handleLogoutConfirm = async () => {
     router.push("/login");
   } catch (error) {
     console.error('로그아웃 실패:', error);
+    
     // 에러가 발생해도 로그인 페이지로 이동
-    router.push("/login");
+    try {
+      router.push("/login");
+    } catch (routerError) {
+      console.error('라우터 이동 실패:', routerError);
+      // 라우터 이동이 실패하면 페이지 새로고침
+      window.location.href = "/login";
+    }
   }
-
 };
 
 const handleAnalyze = (category) => {
@@ -385,7 +396,7 @@ const handleDiarySave = (analysisResult) => {
 
 // 라이프사이클 훅들
 onMounted(() => {
-  updateForestId();
+  console.log('SideMenu 마운트됨');
 });
 
 watch(

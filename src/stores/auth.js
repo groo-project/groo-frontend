@@ -127,12 +127,6 @@ export const useAuthStore = defineStore('auth', {
                     state.user = response.data.user;
                 });
                 
-                console.log('=== Refresh - User Restored ===');
-                console.log('서버 응답 response.data.user:', response.data.user);
-                console.log('서버 응답 response.data.user.forestId:', response.data.user?.forestId);
-                console.log('저장된 this.user:', this.user);
-                console.log('저장된 this.user.forestId:', this.user?.forestId);
-                console.log('========================');
             } else {
                 // user 정보가 없으면 JWT에서 기본 정보 추출
                 console.log('=== Refresh - No User Data, Extracting from JWT ===');
