@@ -26,8 +26,22 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import AlertModal from "@/components/common/AlertModal.vue";
+import { useAuthStore } from "@/stores/auth";
+import api from "@/lib/api";
+
+const auth = useAuthStore();
+
+// computed를 사용하여 반응형으로 만들기
+const user = computed(() => auth.user);
+const forestId = computed(() => auth.user?.forestId);
+
+// user가 undefined인지 확인
+console.log('Auth store:', auth);
+console.log('Auth user:', auth.user);
+console.log('Auth user value:', user.value);
+console.log('Forest ID computed:', forestId.value);
 
 const props = defineProps({
   currentName: {
@@ -64,29 +78,35 @@ const handleSubmit = async () => {
   }
 
   try {
-    const token = localStorage.getItem("accessToken");
-    const forestId = localStorage.getItem("myRecentforestId");
 
-    const response = await fetch(
-      `http://localhost:8080/emotion-forest/${forestId}/name`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          name: editingName.value,
-        }),
-      }
-    );
-
-    if (!response.ok) throw new Error("숲 이름 수정 실패");
-
-    emit("update", editingName.value);
-    isEditing.value = false;
+    if (!forestId.value) {
+      throw new Error('사용자 정보 또는 숲 ID를 찾을 수 없습니다.');
+    }
+    
+    const currentForestId = forestId.value;
+    console.log('Forest ID:', currentForestId);
+    console.log('새로운 이름:', editingName.value);
+    
+    // API 요청 본문을 올바르게 전송
+    const response = await api.patch(`emotion-forest/${currentForestId}/name`, {
+      name: editingName.value
+    });
+    
+    if (response.status >= 200 && response.status < 300) {
+      console.log('숲 이름 수정 성공!');
+      
+      emit("update", editingName.value);
+      isEditing.value = false;
+    } else {
+      throw new Error(`숲 이름 수정 실패: ${response.status}`);
+    }
   } catch (error) {
-    console.error("숲 이름 수정 중 오류 발생:", error);
+    console.error("=== 숲 이름 수정 실패 ===");
+    console.error("Error:", error);
+    console.error("Error message:", error.message);
+    console.error("Error response:", error.response?.data);
+    console.error("==========================");
+    
     alertMessage.value = "숲 이름 수정에 실패했습니다.";
     showAlert.value = true;
     cancelEdit();

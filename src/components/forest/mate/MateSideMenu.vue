@@ -17,7 +17,10 @@ import CategorySelector from '@/components/forest/common/CategorySelector.vue';
 import WriteDiary from '@/components/forest/common/WriteDiary.vue';
 import LoadingAnimation from '@/components/forest/common/LoadingAnimation.vue';
 import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue';
-import AlertModal from '@/components/common/AlertModal.vue';
+import ConfirmModal from '@/components/forest/common/ConfirmModal.vue';
+import { useAuthStore } from "@/stores/auth";
+
+
 
 // Emotion Icons
 import joyIcon from '@/icons/joy_icon.png'
@@ -81,9 +84,12 @@ const handleShare = () => {
   emit("openShare");
 };
 
+const authStore = useAuthStore();
+const { user } = authStore;
+const forestId = computed(() => user?.forestId ?? null);
 const goBack = () => {
   // router.back();
-  router.push('/forest-detail/' + localStorage.getItem("myRecentforestId"));
+  router.push('/forest-detail/' + forestId.value);
 };
 
 const showLogoutModal = ref(false);
@@ -92,10 +98,19 @@ const logout = () => {
   showLogoutModal.value = true;
 };
 
-const handleLogoutConfirm = () => {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("userNickname");
-  router.push("/login");
+const handleLogoutConfirm = async () => {
+  try {
+    // 실제 로그아웃 처리
+    await authStore.logout();
+    console.log('로그아웃 완료');
+    
+    // 로그인 페이지로 이동
+    router.push("/login");
+  } catch (error) {
+    console.error('로그아웃 실패:', error);
+    // 에러가 발생해도 로그인 페이지로 이동
+    router.push("/login");
+  }
 };
 
 const handleForestList = () => {
@@ -241,6 +256,24 @@ const handleToStorage = (piece) => {
   showAnalyzeResult.value = false;
   // 보관소 저장 로직 추가
 };
+
+const handlePlaceFromStorage = (item) => {
+  console.log('=== Place From Storage ===');
+  console.log('Selected item:', item);
+  console.log('Forest ID:', forestId.value);
+  console.log('========================');
+  
+  // 아이템 배치 이벤트 발생
+  if (proxy && proxy.emitter) {
+    proxy.emitter.emit('place-from-storage', item);
+    console.log('Emitted place-from-storage event with:', item);
+  } else {
+    console.error('Emitter not available');
+  }
+  
+  // MyItemView 닫기
+  showMyItems.value = false;
+};
 </script>
 
 <template>
@@ -348,6 +381,7 @@ const handleToStorage = (piece) => {
         </template>
         <div v-else-if="showDiaryCalendar && !showDiaryDetail" class="calendar-view">
           <DiaryCalendar
+            :forestId="route.params.id"
             @close="closeDiaryCalendar"
             @diary-click="handleDiaryClick"
           />
@@ -369,13 +403,18 @@ const handleToStorage = (piece) => {
           />
         </div>
         <div v-else class="myitem-view">
-          <MyItemView @close="closeMyItems" />
+          <MyItemView 
+            :forestId="route.params.id" 
+            @close="closeMyItems" 
+            @placeFromStorage="handlePlaceFromStorage"
+          />
         </div>
       </div>
     </div>
-    <AlertModal
-      v-if="showLogoutModal"
-      :message="'정말 로그아웃 하시겠습니까?'"
+    <ConfirmModal
+      :is-open="showLogoutModal"
+      title="로그아웃"
+      message="정말 로그아웃 하시겠습니까?"
       @confirm="handleLogoutConfirm"
       @cancel="showLogoutModal = false"
     />

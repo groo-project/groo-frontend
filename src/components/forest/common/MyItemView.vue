@@ -26,6 +26,7 @@
     <ItemList 
       v-else 
       :categoryId="selectedCategoryId"
+      :forestId="props.forestId"
       @close="handleBackFromList"
       @placeFromStorage="handlePlaceFromStorage"
     />
@@ -38,6 +39,13 @@
   import objectIcon from '@/icons/object_icon.png'
   import etcIcon from '@/icons/bird.png'
   import ItemList from '@/components/forest/common/ItemList.vue'
+  
+  const props = defineProps({
+    forestId: {
+      type: [Number, String],
+      required: true
+    }
+  })
   
   const emit = defineEmits(['close', 'placeFromStorage'])
   const showItemList = ref(false)

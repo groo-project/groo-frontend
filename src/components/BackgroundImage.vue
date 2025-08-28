@@ -5,6 +5,17 @@ import buttonIcon_6 from "@/icons/edit_icon.png"
 import buttonIcon_7 from "@/icons/External_icon.png"
 import buttonIcon_8 from "@/icons/is_public_icon.png"
 import AlertModal from '@/components/common/AlertModal.vue'
+import { useAuthStore } from "@/stores/auth.js";
+import { storeToRefs } from 'pinia';
+import api from '@/lib/api.js'
+
+const auth = useAuthStore();
+
+// 반응형으로 꺼내기
+const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
+
+const forestId = computed(() => user.value?.forestId ?? null);
+
 
 const props = defineProps({
   isSidebarOpen: {
@@ -42,17 +53,12 @@ const route = useRoute()
 const router = useRouter()
 
 onMounted(async () => {
-  const token = localStorage.getItem('accessToken')
 
   let forestId = route.params.forestId
 
   if (!forestId) {
     try {
-      const res = await fetch('http://localhost:8080/myforest', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const res = await api.get('myforest')
 
       if (!res.ok) throw new Error('myforest 요청 실패')
 
@@ -65,19 +71,21 @@ onMounted(async () => {
         return
       }
 
-      forestId = forestList[0].id
-      router.replace(`/forest-detail/${forestId}`)
+      // 개인 숲 ID를 사용 (우정의 숲 ID가 아님)
+      const personalForestId = forestList[0].id
+      console.log('=== BackgroundImage ForestId ===');
+      console.log('Personal forest ID from API:', personalForestId);
+      console.log('User forestId from auth:', authStore.user?.forestId);
+      console.log('========================');
+      
+      router.replace(`forest-detail/${personalForestId}`)
       return
     } catch (err) {
       console.error('myforest 호출 실패:', err)
     }
   } else {
     try {
-      const response = await fetch(`http://localhost:8080/detail/${forestId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await api.get(`detail/${forestId}`)
 
       if (!response.ok) {
         alertMessage.value = "다시 로그인해 주세요!"
@@ -97,15 +105,8 @@ onMounted(async () => {
 const togglePublic = async () => {
   if (!forestData.value) return;
   const forestId = route.params.forestId;
-  const token = localStorage.getItem('accessToken');
-
   try {
-    const res = await fetch(`http://localhost:8080/emotion-forest/public/${forestId}`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
+    const res = await api.patch(`emotion-forest/public/${forestId}`);
 
     const text = await res.text();
     if (!res.ok) throw new Error('공개여부 변경 실패');

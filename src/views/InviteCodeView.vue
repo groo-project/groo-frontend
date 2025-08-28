@@ -1,6 +1,5 @@
 <template>
   <div class="invite-code-container">
-    <button class="back-button" @click="$router.back()">←</button>
     <div class="floating-items"> </div>
     <div class="invite-code-box">
       <div class="forest-symbol">
@@ -41,13 +40,24 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed, getCurrentInstance } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import AlertModal from "@/components/common/AlertModal.vue";
+import { useAuthStore } from "@/stores/auth.js";
+import { storeToRefs } from "pinia";
+import api from "@/lib/api.js";
 
 const router = useRouter();
 const route = useRoute();
 const inviteCode = ref("");
+const { proxy } = getCurrentInstance();
+
+
+const auth = useAuthStore();
+// 반응형으로 꺼내기
+const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
+const Token = computed(() => accessToken.value ?? null);
+
 const showAlert = ref(false);
 const alertMessage = ref("");
 
@@ -59,49 +69,60 @@ onMounted(() => {
 });
 
 const handleSubmit = async () => {
+  console.log("=== 초대 코드 수락 시작 ===");
   console.log("입력된 초대 코드:", inviteCode.value);
   console.log("초대 코드 길이:", inviteCode.value.length);
+  console.log("토큰 상태:", Token.value ? '있음' : '없음');
+  console.log("사용자 정보:", user.value);
 
   if (inviteCode.value.length === 8) {
-    // localStorage에서 토큰 확인
-    const token = localStorage.getItem("accessToken");
-    console.log("저장된 토큰:", token);
 
-    if (!token) {
+    if (!Token.value) {
       console.log("토큰이 없습니다. 로그인 페이지로 이동합니다.");
-      localStorage.setItem("pendingInviteCode", inviteCode.value);
       router.push("/login");
       return;
     }
 
     try {
-      console.log("API 호출 시작");
-      const apiUrl = `http://localhost:8080/mate/accept/${inviteCode.value}`;
-      console.log("요청 URL:", apiUrl);
-      console.log("요청 헤더:", {
-        Authorization: `Bearer ${token}`,
-      });
-
+      console.log("초대 코드 검증 API 호출: mate/accept/${inviteCode.value}");
+      
       // 초대 코드 검증 API 호출
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
+      const response = await api.post(`mate/accept/${inviteCode.value}`);
 
+      console.log("=== API 응답 ===");
       console.log("응답 상태:", response.status);
+      console.log("응답 데이터:", response.data);
 
-      if (response.status != 200) {
+      if (response.status >= 200 && response.status < 300) {
+        console.log("초대 코드 검증 성공!");
+        
+        if (response.data && response.data.forestId) {
+          const mateForestId = response.data.forestId;
+          
+          // 초대 수락 성공 이벤트 발생 (다른 컴포넌트에서 감지)
+          if (proxy?.emitter) {
+            proxy.emitter.emit('invite-accepted', {
+              forestId: mateForestId,
+              inviteCode: inviteCode.value,
+              timestamp: new Date().toISOString()
+            });
+          }
+          
+          router.push(`/forestmate/${mateForestId}`);
+        } else {
+          router.push("/");
+        }
+      } else {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      // 성공 시 메인 페이지로 이동
-      router.push("/");
     } catch (error) {
-      console.error("초대 코드 검증 중 상세 오류:", error);
-      alertMessage.value = "초대 코드 검증에 실패했습니다. 다시 시도해주세요.";
+      console.error("=== 초대 코드 검증 실패 ===");
+      console.error("Error:", error);
+      console.error("Error message:", error.message);
+      console.error("Error response:", error.response?.data);
+      console.error("==========================");
+      
+      alertMessage.value = "초대가 만료되었거나 이미 사용된 초대 코드입니다.";
       showAlert.value = true;
     }
   } else {
@@ -469,22 +490,5 @@ const handleSubmit = async () => {
   }
 }
 
-.back-button {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  background: none;
-  border: none;
-  font-size: 28px;
-  color: #3a5a40;
-  cursor: pointer;
-  padding: 10px;
-  transition: transform 0.2s ease;
-  z-index: 10;
-}
 
-.back-button:hover {
-  transform: scale(1.2);
-  cursor: pointer;
-}
 </style>

@@ -4,6 +4,12 @@ import { useRouter, useRoute } from 'vue-router'
 import axios from 'axios'
 import MyDiaryCalendar from '@/components/forest/emotion/MyDiaryCalendar.vue';
 import MyDiaryDetail from '@/components/forest/emotion/MyDiaryDetail.vue';
+import api from '@/lib/api.js'
+import { useAuthStore } from '@/stores/auth.js'
+
+
+
+// Icons
 import CategorySelector from '@/components/forest/common/CategorySelector.vue'
 import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue'
 import WriteDiary from '@/components/forest/common/WriteDiary.vue'
@@ -14,6 +20,8 @@ import ConfirmModal from '@/components/forest/common/ConfirmModal.vue'
 import GuestBookDetail from '@/components/forest/common/guestbook/GuestBookDetail.vue'
 import ForestListModal from "@/components/forest/common/ForestListModal.vue";
 import MyItemView from '@/components/forest/common/MyItemView.vue'
+import AlertModal from '@/components/common/AlertModal.vue'
+
 import buttonIcon_1 from '@/icons/diarywrite_icon.png'
 import buttonIcon_2 from '@/icons/diaryview_icon.png'
 import buttonIcon_3 from '@/icons/forestmate_icon.png'
@@ -36,7 +44,6 @@ const emit = defineEmits(["openForestList", "showAlert"]);
 const { proxy } = getCurrentInstance();
 
 // 상수들
-const nickname = localStorage.getItem("userNickname") || "여행자";
 
 const emotionIcons = {
   즐거움: joyIcon,
@@ -65,6 +72,18 @@ const dummyAnalysisResult = {
 // reactive 상태들
 const isMenuOpen = ref(true)
 const categoryLoading = ref(false)
+// const selectedCategory = ref(null)
+// const showSaveModal = ref(false)
+// const pieceToSave = ref(null)
+// const showMyItemView = ref(false)
+// const showMyDiaryCalendar = ref(false)
+// const showMyDiaryDetail = ref(false)
+// const selectedDiaryData = ref(null)
+// const currentDiaryIndex = ref(0)
+// const showAlertModal = ref(false)
+// const alertMessage = ref('')
+const showLogoutModal = ref(false)
+
 
 const viewState = ref({
   currentView: 'main',
@@ -106,9 +125,9 @@ const sidebarWidth = computed(() => {
   return expandedViews.includes(viewState.value.currentView) ? 576 : 360
 })
 
-const currentForestId = computed(() => {
-  return route.name === "ForestDetail" ? route.params.forestId : null;
-});
+// const currentForestId = computed(() => {
+//   return route.name === "ForestDetail" ? route.params.forestId : null;
+// });
 
 // 함수들
 const switchView = (viewName, data = {}) => {
@@ -129,17 +148,62 @@ const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
 };
 
-const updateForestId = () => {
-  if (currentForestId.value) {
-    localStorage.setItem("forestId", currentForestId.value);
+const authStore = useAuthStore();
+const user = computed(() => authStore.user);
+const token = computed(() => authStore.accessToken || '');
+const forestId = computed(() => authStore.user?.forestId || '');
+const nickname = computed(() => authStore.user?.nickname || "여행자");
+
+const currentForestId = computed(() => {
+  // forest-detail/:forestId 경로에서 forestId 추출
+  if (route.name === "ForestDetail") {
+    return route.params.forestId || forestId;
   }
-};
+  return null;
+});
+
+
+// 컴포넌트 마운트 시 nickname 상태 확인
+onMounted(() => {
+  console.log('=== SideMenu Mounted ===');
+  console.log('authStore:', authStore);
+  console.log('user:', user.value);
+  console.log('닉네임:', nickname.value);
+  console.log('숲 ID:', forestId.value);
+  console.log('token:', token.value);
+  console.log('========================');
+});
+
 
 const logout = () => {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("userNickname");
-  localStorage.removeItem("myRecentforestId");
-  router.push("/login");
+  showLogoutModal.value = true;
+};
+
+const handleLogoutConfirm = async () => {
+  try {
+
+    
+    // 로그아웃 모달 닫기
+    showLogoutModal.value = false;
+    
+    // 실제 로그아웃 처리
+    await authStore.logout();
+    console.log('로그아웃 완료');
+    
+    // 로그인 페이지로 이동
+    router.push("/login");
+  } catch (error) {
+    console.error('로그아웃 실패:', error);
+    
+    // 에러가 발생해도 로그인 페이지로 이동
+    try {
+      router.push("/login");
+    } catch (routerError) {
+      console.error('라우터 이동 실패:', routerError);
+      // 라우터 이동이 실패하면 페이지 새로고침
+      window.location.href = "/login";
+    }
+  }
 };
 
 const handleAnalyze = (category) => {
@@ -161,16 +225,17 @@ async function confirmSaveToStorage() {
     return
   }
   try {
-    const accessToken = localStorage.getItem("accessToken");
-    const forestId    = localStorage.getItem("forestId");
-    const pieceId     = viewState.value.data.pieceToSave.value;
-    await axios.post(
-      `http://localhost:8080/item-storage?itemId=${pieceId}&forestId=${forestId}`,
-      {},
-      { headers: { Authorization: `Bearer ${accessToken}` } }
+    const pieceId     = pieceToSave.value.value;
+    // URL · 헤더 · 쿼리 파라미터 수정
+    await api.post(
+      `item-storage?itemId=${pieceId}&forestId=${forestId.value}`,
+      {},  // 바디는 빈 객체
+      { headers: { Authorization: `Bearer ${token.value}` } }
     );
     closeSaveModal();
-    window.location.href = `/forest-detail/${forestId}`;
+    // 강제 새로고침 방식으로 이동
+    window.location.href = `/forest-detail/${forestId.value}`;
+
   } catch (e) {
     console.error(e);
     emit('showAlert', "보관소 저장에 실패했습니다. 다시 시도해주세요.")
@@ -186,10 +251,7 @@ const toggleCategorySelector = async () => {
     switchView('main', { selectedCategory: null })
   } else {
     try {
-        const accessToken = localStorage.getItem("accessToken");
-        const response = await axios.get('http://localhost:8080/api/diaries/today/written', {
-            headers: { Authorization: `Bearer ${accessToken}` }
-        });
+        const response = await api.get('diaries/today/written')
       
         if (response.data === true) {
             emit('showAlert', "오늘 일기는 이미 작성 하셨네요! 내일 또 봬요!")
@@ -319,7 +381,7 @@ const handleDiarySave = (analysisResult) => {
 
 // 라이프사이클 훅들
 onMounted(() => {
-  updateForestId();
+  console.log('SideMenu 마운트됨');
 });
 
 watch(
@@ -365,6 +427,7 @@ watch(
         </template>
         <template v-else-if="showMyItemView">
           <MyItemView
+            :forestId="user?.forestId"
             @close="closeMyItemView"
             @placeFromStorage="handlePlaceFromStorage"
           />
@@ -489,6 +552,13 @@ watch(
             message="정말로 이 조각을 보관소에 저장하시겠습니까?"
             @confirm="confirmSaveToStorage"
             @cancel="closeSaveModal"
+          />
+    <ConfirmModal
+            :is-open="showLogoutModal"
+            title="로그아웃"
+            message="정말 로그아웃 하시겠습니까?"
+            @confirm="handleLogoutConfirm"
+            @cancel="showLogoutModal = false"
           />
   </div>
 </template>

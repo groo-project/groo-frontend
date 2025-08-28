@@ -8,6 +8,9 @@ import InviteLinkModal from "@/components/forest/mate/InviteLinkModal.vue";
 import ForestListModal from "@/components/forest/common/ForestListModal.vue";
 import WithdrawModal from "@/components/forest/mate/WithdrawModal.vue";
 import AlertModal from "@/components/common/AlertModal.vue";
+import { useAuthStore } from "@/stores/auth.js"; 
+import { storeToRefs } from "pinia";
+import api from "@/lib/api.js"; 
 
 const route = useRoute();
 
@@ -15,6 +18,15 @@ const currentView = ref("background");
 const isInviteLinkModalOpen = ref(false);
 const isForestListModalOpen = ref(false);
 const isWithdrawModalOpen = ref(false);
+
+
+const auth = useAuthStore();
+// 반응형으로 꺼내기
+const { accessToken, user, isAuthenticated } = storeToRefs(auth); // state/getter를 ref로
+const forestId = computed(() => user.value?.forestId ?? null);
+const Token = computed(() => accessToken.value ?? null);
+
+
 const inviteLink = ref("");
 const showAlertModal = ref(false);
 const alertMessage = ref('');
@@ -37,35 +49,53 @@ const openInviteLinkModal = async () => {
   try {
     const pathSegments = window.location.pathname.split("/");
     const forestId = pathSegments[pathSegments.length - 1];
+    console.log("=== 초대 링크 모달 열기 ===");
+    console.log("Route path:", route.path);
+    console.log("Route params:", route.params);
+    
+    // URL에서 forestId 추출
+    const forestId = route.params.id;
     console.log("forestId:", forestId);
+    console.log("Token:", Token.value ? '있음' : '없음');
 
     if (!forestId) {
       console.error("forestId가 없습니다.");
       return;
     }
 
-    const token = localStorage.getItem("accessToken");
-    if (!token) {
+    if (!Token.value) {
       console.error("토큰이 없습니다.");
       return;
     }
 
-    const response = await fetch(
-      `http://localhost:8080/mate/link?forestId=${forestId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+    const response = await api.get(`/mate/link`, {
+      params: {
+        forestId: forestId
       }
-    );
-    if (!response.ok) {
+    });
+    
+    console.log("=== API 응답 ===");
+    console.log("Response:", response);
+    console.log("Response status:", response.status);
+    console.log("Response data:", response.data);
+    
+    if (response.status >= 200 && response.status < 300) {
+      // Axios에서는 response.data를 사용
+      const data = response.data;
+      console.log("서버 응답 데이터:", data);
+      
+      // 서버 응답 구조에 따라 inviteLink 설정
+      if (data.inviteLink) {
+        inviteLink.value = data.inviteLink;
+        isInviteLinkModalOpen.value = true;
+        console.log("초대 링크 설정 완료:", inviteLink.value);
+        console.log("모달 상태:", isInviteLinkModalOpen.value);
+      } else {
+        console.error("초대 링크가 응답에 없습니다:", data);
+      }
+    } else {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const data = await response.json();
-    console.log("서버 응답 데이터:", data);
-
-    inviteLink.value = `${data.inviteLink}`;
-    isInviteLinkModalOpen.value = true;
   } catch (error) {
     console.error("초대 링크 요청 실패:", error);
   }
