@@ -224,23 +224,42 @@ export const useAuthStore = defineStore('auth', {
     },
     async logout() {
         try {
-            // 로그아웃 처리
-            this.accessToken = ''; // 액세스 토큰 초기화
-            this.user = null; // 사용자 정보 초기화
-            this.roles = []; // 사용자 역할 초기화
-            // 로그아웃 API 호출
-            await api.post('/auth/logout');     // 서버에 로그아웃 요청     
-            // todo : 쿠키에 저장된 토큰을 삭제하는 로직이 필요할 수 있음
-            // 예를 들어, HttpOnly 쿠키를 사용하는 경우 브라우저가 자동으로 삭제함.
-
-            // 이 부분은 서버에서 토큰을 블랙리스트에 추가하거나 쿠키를 삭제하는 등의 작업을 수행할 수 있습니다.
-            // 서버에도 로그아웃 알림 : RT 블랙리스트 / 쿠키 삭제 등
-            // api.post('/auth/logout').catch(() => {});
+            console.log('=== 로그아웃 시작 ===');
+            
+            // 클라이언트 상태 먼저 초기화 (사용자 경험 개선)
+            this.accessToken = '';
+            this.user = null;
+            this.roles = [];
+            this.isRefreshing = false;
+            
+            // 서버에 로그아웃 요청 (에러가 발생해도 무시)
+            try {
+                await api.post('/auth/logout');
+                console.log('서버 로그아웃 요청 완료');
+            } catch (serverError) {
+                console.log('서버 로그아웃 실패 (정상):', serverError.message);
+                // 서버 에러는 무시하고 클라이언트 상태만 정리
+            }
+            
+            // refreshToken 쿠키 삭제 시도
+            try {
+                document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=localhost';
+                document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+                console.log('refreshToken 쿠키 삭제 완료');
+            } catch (cookieError) {
+                console.log('쿠키 삭제 실패 (정상):', cookieError.message);
+            }
+            
+            console.log('=== 로그아웃 완료 ===');
+            
         } catch (error) {
             console.error('Logout failed:', error);
-
+            // 에러가 발생해도 클라이언트 상태는 초기화
+            this.accessToken = '';
+            this.user = null;
+            this.roles = [];
+            this.isRefreshing = false;
         }
-        
     },
   },
 });

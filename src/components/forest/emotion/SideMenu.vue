@@ -39,7 +39,6 @@ import tiredIcon from '@/icons/tired_icon.png'
 import romanceIcon from '@/icons/romance_icon.png'
 
 // 상수들
-const nickname = localStorage.getItem("userNickname") || "여행자";
 
 const emotionIcons = {
   즐거움: joyIcon,
@@ -74,16 +73,16 @@ const emit = defineEmits(["openForestList"])
 // reactive 상태들
 const isMenuOpen = ref(true)
 const categoryLoading = ref(false)
-const selectedCategory = ref(null)
-const showSaveModal = ref(false)
-const pieceToSave = ref(null)
-const showMyItemView = ref(false)
-const showMyDiaryCalendar = ref(false)
-const showMyDiaryDetail = ref(false)
-const selectedDiaryData = ref(null)
-const currentDiaryIndex = ref(0)
-const showAlertModal = ref(false)
-const alertMessage = ref('')
+// const selectedCategory = ref(null)
+// const showSaveModal = ref(false)
+// const pieceToSave = ref(null)
+// const showMyItemView = ref(false)
+// const showMyDiaryCalendar = ref(false)
+// const showMyDiaryDetail = ref(false)
+// const selectedDiaryData = ref(null)
+// const currentDiaryIndex = ref(0)
+// const showAlertModal = ref(false)
+// const alertMessage = ref('')
 const showLogoutModal = ref(false)
 
 
@@ -134,9 +133,9 @@ const sidebarWidth = computed(() => {
   return expandedViews.includes(viewState.value.currentView) ? 576 : 360
 })
 
-const currentForestId = computed(() => {
-  return route.name === "ForestDetail" ? route.params.forestId : null;
-});
+// const currentForestId = computed(() => {
+//   return route.name === "ForestDetail" ? route.params.forestId : null;
+// });
 
 // 함수들
 const switchView = (viewName, data = {}) => {
@@ -157,10 +156,6 @@ const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
 };
 
-
-const router = useRouter();
-const route = useRoute();
-
 const authStore = useAuthStore();
 const user = computed(() => authStore.user);
 const token = computed(() => authStore.accessToken || '');
@@ -175,14 +170,6 @@ const currentForestId = computed(() => {
   return null;
 });
 
-
-
-// forestId를 localStorage에 저장
-// const updateForestId = () => {
-//   if (currentForestId.value) {
-//     localStorage.setItem("forestId", currentForestId.value);
-//   }
-// };
 
 // 컴포넌트 마운트 시 nickname 상태 확인
 onMounted(() => {

@@ -83,7 +83,18 @@ const handleLogin = async (e) => {
     setTimeout(() => router.push({ name: "ForestMate", params: { id: forestId } }), 600);
 
   } catch (e) {
-    alertMessage.value = "아이디 또는 비밀번호를 확인해 주세요.";
+    console.error('로그인 에러 상세:', e);
+    
+    if (e.response?.status === 401) {
+      alertMessage.value = "아이디 또는 비밀번호를 확인해 주세요.";
+    } else if (e.response?.status === 500) {
+      alertMessage.value = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+    } else if (e.message === 'Network Error') {
+      alertMessage.value = "서버에 연결할 수 없습니다. 서버 상태를 확인해주세요.";
+    } else {
+      alertMessage.value = `로그인 실패: ${e.message || '알 수 없는 오류'}`;
+    }
+    
     showAlert.value = true;
   }
   finally {
