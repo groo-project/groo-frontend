@@ -127,12 +127,6 @@ export const useAuthStore = defineStore('auth', {
                     state.user = response.data.user;
                 });
                 
-                console.log('=== Refresh - User Restored ===');
-                console.log('서버 응답 response.data.user:', response.data.user);
-                console.log('서버 응답 response.data.user.forestId:', response.data.user?.forestId);
-                console.log('저장된 this.user:', this.user);
-                console.log('저장된 this.user.forestId:', this.user?.forestId);
-                console.log('========================');
             } else {
                 // user 정보가 없으면 JWT에서 기본 정보 추출
                 console.log('=== Refresh - No User Data, Extracting from JWT ===');
@@ -226,31 +220,22 @@ export const useAuthStore = defineStore('auth', {
         try {
             console.log('=== 로그아웃 시작 ===');
             
-            // 클라이언트 상태 먼저 초기화 (사용자 경험 개선)
+            // 클라이언트 상태 초기화
             this.accessToken = '';
             this.user = null;
             this.roles = [];
             this.isRefreshing = false;
             
-            // 서버에 로그아웃 요청 (에러가 발생해도 무시)
+            // refreshToken 쿠키 삭제
             try {
-                await api.post('/auth/logout');
-                console.log('서버 로그아웃 요청 완료');
-            } catch (serverError) {
-                console.log('서버 로그아웃 실패 (정상):', serverError.message);
-                // 서버 에러는 무시하고 클라이언트 상태만 정리
-            }
-            
-            // refreshToken 쿠키 삭제 시도
-            try {
+                // 다양한 경로와 도메인으로 쿠키 삭제 시도
                 document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=localhost';
                 document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+                document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=localhost:5173';
                 console.log('refreshToken 쿠키 삭제 완료');
             } catch (cookieError) {
                 console.log('쿠키 삭제 실패 (정상):', cookieError.message);
             }
-            
-            console.log('=== 로그아웃 완료 ===');
             
         } catch (error) {
             console.error('Logout failed:', error);
