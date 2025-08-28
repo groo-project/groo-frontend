@@ -261,10 +261,7 @@ const toggleCategorySelector = async () => {
     switchView('main', { selectedCategory: null })
   } else {
     try {
-        const accessToken = localStorage.getItem("accessToken");
-        const response = await axios.get('http://localhost:8080/api/diaries/today/written', {
-            headers: { Authorization: `Bearer ${accessToken}` }
-        });
+        const response = await api.get('diaries/today/written')
       
         if (response.data === true) {
             modalState.value.alertMessage = "오늘 일기는 이미 작성 하셨네요! 내일 또 봬요!"
