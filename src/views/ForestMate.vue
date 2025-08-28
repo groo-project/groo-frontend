@@ -83,6 +83,13 @@
       @close="closeEditNameModal"
       @update="handleNameUpdated"
     />
+    
+    <!-- 알림 모달 -->
+    <AlertModal
+      v-if="showAlertModal"
+      :message="alertMessage"
+      @close="showAlertModal = false"
+    />
   </div>
 </template>
 
@@ -91,6 +98,7 @@ import { ref, onMounted, onUnmounted, getCurrentInstance, computed} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import WithdrawModal from "../components/forest/mate/WithdrawModal.vue";
 import EditMateForestNameModal from "../components/forest/mate/EditMateForestNameModal.vue";
+import AlertModal from "@/components/common/AlertModal.vue";
 import api from "@/lib/api.js";
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from "pinia";
@@ -106,6 +114,8 @@ const error = ref(null);
 const isWithdrawModalOpen = ref(false);
 const showSuccessMessage = ref(false);
 const isEditNameModalOpen = ref(false);
+const showAlertModal = ref(false);
+const alertMessage = ref('');
 const { proxy } = getCurrentInstance();
 const selectedPiece = ref(null);
 const dragPos = ref({ x: 50, y: 50 });
@@ -118,10 +128,8 @@ const auth = useAuthStore();
 const { accessToken, user, isAuthenticated } = storeToRefs(auth);
 
 const showSuccess = () => {
-  showSuccessMessage.value = true;
-  setTimeout(() => {
-    showSuccessMessage.value = false;
-  }, 2000); // 2초 후 자동으로 사라짐
+  alertMessage.value = '배치가 완료되었습니다!';
+  showAlertModal.value = true;
 }; 
 const Token = computed(() => accessToken.value ?? null);
 
@@ -284,7 +292,8 @@ const onMouseUp = () => {
 const handleCompletePlacement = async () => {
 
   if (!selectedPiece.value || !forestId.value) {
-    alert('필수 정보가 없습니다.');
+    alertMessage.value = '필수 정보가 없습니다.';
+    showAlertModal.value = true;
     return;
   }
   const body = {
@@ -333,7 +342,8 @@ const handleCompletePlacement = async () => {
     console.error('Error status:', err.response?.status);
     console.error('========================');
     
-    alert('배치에 실패했습니다.');
+    alertMessage.value = '배치에 실패했습니다.';
+    showAlertModal.value = true;
   }
 };
 
