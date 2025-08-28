@@ -80,8 +80,10 @@ import forestImage from "@/icons/forest1.png";
 import AlertModal from "@/components/common/AlertModal.vue";
 import api from "@/lib/api.js";
 import { useAuthStore } from "@/stores/auth.js";
+import { useMateForestStore } from "@/stores/mateForest";
 
 const authStore = useAuthStore();
+const mateForestStore = useMateForestStore();
 const token = authStore.accessToken;
 
 const router = useRouter();
@@ -172,7 +174,7 @@ const handleForestClick = (forestId) => {
   
   // auth.user.forestId는 개인 숲 ID이므로 덮어쓰지 않음
   // 우정의 숲 ID는 route.params.id로 전달됨
-  
+  mateForestStore.setCurrentMateForestId(forestId);
   emit("close");
   console.log("Navigating to:", `/forestmate/${forestId}`);
   router.push(`/forestmate/${forestId}`);

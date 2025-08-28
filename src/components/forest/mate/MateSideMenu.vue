@@ -14,13 +14,10 @@ import DiaryCalendar from '@/components/forest/mate/DiaryCalendar.vue';
 import DiaryDetail from '@/components/forest/mate/DiaryDetail.vue';
 import MyItemView from '@/components/forest/common/MyItemView.vue';
 import CategorySelector from '@/components/forest/common/CategorySelector.vue';
-import WriteDiary from '@/components/forest/common/WriteDiary.vue';
 import LoadingAnimation from '@/components/forest/common/LoadingAnimation.vue';
 import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue';
 import ConfirmModal from '@/components/forest/common/ConfirmModal.vue';
 import { useAuthStore } from "@/stores/auth";
-
-
 
 // Emotion Icons
 import joyIcon from '@/icons/joy_icon.png'
@@ -31,6 +28,7 @@ import anxiousIcon from '@/icons/anxious_icon.png'
 import melancholyIcon from '@/icons/melancholy_icon.png'
 import tiredIcon from '@/icons/tired_icon.png'
 import romanceIcon from '@/icons/romance_icon.png'
+import MateWriteDiary from "./MateWriteDiary.vue";
 
 const { proxy } = getCurrentInstance();
 const route = useRoute();
@@ -362,7 +360,7 @@ const handlePlaceFromStorage = (item) => {
             </button>
           </div>
           <div class="relative-container">
-            <WriteDiary
+            <MateWriteDiary
               :categoryId="selectedCategory"
               @save="handleDiarySave"
               @loading="(val) => (categoryLoading = val)"
