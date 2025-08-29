@@ -20,8 +20,8 @@
             v-model="inviteCode"
             type="text"
             class="code-input"
-            placeholder="초대 코드 8자리"
-            maxlength="8"
+            placeholder="초대 코드 16자리"
+            maxlength="16"
           />
           <div class="input-decoration"> </div>
         </div>
@@ -75,7 +75,7 @@ const handleSubmit = async () => {
   console.log("토큰 상태:", Token.value ? '있음' : '없음');
   console.log("사용자 정보:", user.value);
 
-  if (inviteCode.value.length === 8) {
+  if (inviteCode.value.length === 16) {
 
     if (!Token.value) {
       console.log("토큰이 없습니다. 로그인 페이지로 이동합니다.");
@@ -126,8 +126,9 @@ const handleSubmit = async () => {
       showAlert.value = true;
     }
   } else {
-    console.log("초대 코드가 8자리가 아닙니다.");
-    alertMessage.value = "초대 코드 8자리를 입력해주세요.";
+    alertMessage.value = "초대 코드 16자리를 입력해주세요.";
+    console.log(inviteCode.value.length);
+    console.log(inviteCode.value);
     showAlert.value = true;
   }
 };
