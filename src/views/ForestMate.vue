@@ -50,7 +50,7 @@
     </div>
 
     <div class="title-section">
-      <h1 class="title">{{ forestData?.name || "숲 이름 없음" }}</h1>
+    <h1 class="title">{{ forestData?.name || "숲 이름 없음" }}</h1>
       <img 
         src="@/icons/edit_icon.png" 
         alt="Edit" 
@@ -94,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, getCurrentInstance, computed} from "vue";
+import { ref, onMounted, onUnmounted, getCurrentInstance, computed, nextTick} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import WithdrawModal from "../components/forest/mate/WithdrawModal.vue";
 import EditMateForestNameModal from "../components/forest/mate/EditMateForestNameModal.vue";
@@ -125,7 +125,7 @@ const containerRef = ref(null);
 
 const auth = useAuthStore();
 // 반응형으로 꺼내기
-const { accessToken, user, isAuthenticated } = storeToRefs(auth);
+const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
 
 const showSuccess = () => {
   alertMessage.value = '배치가 완료되었습니다!';
@@ -151,8 +151,8 @@ const fetchForestData = async () => {
     isLoading.value = true;
     error.value = null;
 
-    console.log('fetchForestData - forestId:', forestId.value);
-    console.log('fetchForestData - Token:', Token.value);
+    // console.log('fetchForestData - forestId:', forestId.value);
+    // console.log('fetchForestData - Token:', Token.value);
 
     if (!forestId.value) {
       throw new Error("숲 ID가 없습니다.");
@@ -163,15 +163,14 @@ const fetchForestData = async () => {
     }
 
     const apiUrl = `/mate/detail/${forestId.value}`;
-    console.log("API URL:", apiUrl);
     
     const response = await api.get(apiUrl);
 
-    console.log("API Response:", response);
-    console.log("Forest ID used:", forestId.value);
+    // console.log("API Response:", response);
+    // console.log("Forest ID used:", forestId.value);
     
     const data = response.data;
-    console.log("Received data:", data);
+    // console.log("Received data:", data);
     const validData = Array.isArray(data) ? data[0] : data;
 
     if (!validData) {
@@ -194,18 +193,44 @@ const handleImageError = (e) => {
 
 onMounted(() => {
   console.log('ForestMate Mounted');
-  console.log('User:', user.value);
-  console.log('Forest ID:', forestId.value);
-  console.log('Token:', Token.value);
-  
+
+  // 숲 데이터 조회
   fetchForestData();
   
-  // 실시간 업데이트를 위한 주기적 폴링 (5초마다)
-  const updateInterval = setInterval(() => {
-    if (forestId.value && Token.value) {
-      fetchForestData();
-    }
-  }, 5000);
+      // ===== A. SSE 연결 설정 =====
+    let eventSource = null;
+    
+    if (forestId.value && Token.value && isAuthenticated.value) {
+      console.log('=== SSE 연결 시작 ===');
+      // console.log('Forest ID:', forestId.value);
+      // console.log('Token 존재:', !!Token.value);
+      // console.log('사용자 인증 상태:', isAuthenticated.value);
+      // console.log('현재 사용자:', user.value?.nickname);
+      
+      // EventSource 인스턴스 생성
+      const sseUrl = `${api.defaults.baseURL}/sse/mate/${forestId.value}/events`;
+      console.log('EventSource URL:', sseUrl);
+      console.log('EventSource 옵션:', { withCredentials: true });
+      
+      try {
+        eventSource = new EventSource(sseUrl, { withCredentials: true });
+        console.log('EventSource 인스턴스 생성 성공');
+        console.log('EventSource readyState:', eventSource.readyState);
+      } catch (error) {
+        console.error('EventSource 생성 실패:', error);
+        return;
+      }
+    
+    // ===== B. 이벤트 수신 및 처리 =====
+    // SSE 핸들러 설정
+    setupSSEHandlers(eventSource);
+  } else {
+    console.log('SSE 연결 조건 미충족:', {
+      forestId: forestId.value,
+      hasToken: !!Token.value,
+      isAuthenticated: isAuthenticated.value
+    });
+  }
   
   // 초대 수락 이벤트 감지
   proxy.emitter.on('invite-accepted', (data) => {
@@ -242,9 +267,13 @@ onMounted(() => {
     console.log('Received piece in ForestMate:', selectedPiece.value);
   });
   
-  // 컴포넌트 언마운트 시 인터벌 정리
+  // ===== E. 연결 관리 및 정리 =====
+  // 컴포넌트 언마운트 시 SSE 연결 정리
   onUnmounted(() => {
-    clearInterval(updateInterval);
+    if (eventSource) {
+      eventSource.close();
+      console.log('SSE 연결 종료');
+    }
   });
 });
 
@@ -329,8 +358,8 @@ const handleCompletePlacement = async () => {
         console.log('아이템 배치 완료 이벤트 발생:', forestId.value);
       }
       
-      await fetchForestData();
-      selectedPiece.value = null;
+    await fetchForestData();
+    selectedPiece.value = null;
     } else {
       throw new Error(`배치 실패: ${res.status}`);
     }
@@ -353,6 +382,376 @@ const openEditNameModal = () => {
 
 const closeEditNameModal = () => {
   isEditNameModalOpen.value = false;
+};
+
+// ===== D. 이벤트별 핸들러 함수 =====
+
+// 시퀀스 번호 관리 (중복 이벤트 방지)
+let lastSeq = 0;
+
+// SSE 재연결 함수 (새로고침 없이)
+const reconnectSSE = () => {
+  console.log('=== SSE 재연결 시작 ===');
+  
+  if (forestId.value && Token.value && isAuthenticated.value) {
+    console.log('재연결 조건 확인 완료');
+    
+    // 새로운 EventSource 생성
+    const sseUrl = `${api.defaults.baseURL}/sse/mate/${forestId.value}/events`;
+    console.log('재연결 URL:', sseUrl);
+    
+    try {
+      const newEventSource = new EventSource(sseUrl, { withCredentials: true });
+      console.log('새 EventSource 생성 성공');
+      
+      // 기존 이벤트 핸들러 재등록
+      setupSSEHandlers(newEventSource);
+      
+      // 기존 연결 정리
+      if (eventSource) {
+        eventSource.close();
+      }
+      
+      // 새 연결로 교체
+      eventSource = newEventSource;
+      
+      console.log('SSE 재연결 완료');
+      
+      // 재연결 성공 시 카운터 리셋
+      window.sseReconnectAttempts = 0;
+      
+    } catch (error) {
+      console.error('SSE 재연결 실패:', error);
+    }
+  } else {
+    console.log('재연결 조건 미충족');
+  }
+};
+
+// SSE 핸들러 설정 함수
+const setupSSEHandlers = (emitter) => {
+  console.log('SSE 핸들러 설정 시작');
+  
+  
+  
+  // 이벤트 타입별 리스너 등록
+  emitter.addEventListener('USER_JOINED', (event) => {
+    console.log('=== USER_JOINED 이벤트 수신 ===');
+    console.log('USER_JOINED 데이터:', event.data);
+    console.log('USER_JOINED 시간:', new Date().toLocaleTimeString());
+    
+    try {
+      const data = JSON.parse(event.data);
+      console.log('파싱된 데이터:', data);
+      handleUserJoined(data);
+    } catch (error) {
+      console.error('USER_JOINED 데이터 파싱 오류:', error);
+    }
+  });
+  
+  emitter.addEventListener('USER_LEFT', (event) => {
+    console.log('=== USER_LEFT 이벤트 수신 ===');
+    console.log('USER_LEFT 데이터:', event.data);
+    
+    try {
+      const data = JSON.parse(event.data);
+      handleUserLeft(data);
+    } catch (error) {
+      console.error('USER_LEFT 데이터 파싱 오류:', error);
+    }
+  });
+  
+  emitter.addEventListener('ITEM_PLACED', (event) => {
+    console.log('=== ITEM_PLACED 이벤트 수신 ===');
+    console.log('ITEM_PLACED 데이터:', event.data);
+    
+    try {
+      const data = JSON.parse(event.data);
+      handleItemPlaced(data);
+    } catch (error) {
+      console.error('ITEM_PLACED 데이터 파싱 오류:', error);
+    }
+  });
+  
+  emitter.addEventListener('FOREST_UPDATED', (event) => {
+    console.log('=== FOREST_UPDATED 이벤트 수신 ===');
+    console.log('FOREST_UPDATED 데이터:', event.data);
+    
+    try {
+      const data = JSON.parse(event.data);
+      handleForestUpdated(data);
+    } catch (error) {
+      console.error('FOREST_UPDATED 데이터 파싱 오류:', error);
+    }
+  });
+  
+  emitter.addEventListener('FOREST_NAME_CHANGED', (event) => {
+    console.log('=== FOREST_NAME_CHANGED 이벤트 수신 ===');
+    console.log('FOREST_NAME_CHANGED 데이터:', event.data);
+    
+    try {
+      const data = JSON.parse(event.data);
+      handleForestNameChanged(data);
+    } catch (error) {
+      console.error('FOREST_NAME_CHANGED 데이터 파싱 오류:', error);
+    }
+  });
+  
+  
+  
+  // 연결 성공 핸들러
+  emitter.onopen = () => {
+    console.log('=== SSE 연결 성공 ===');
+    console.log('연결된 Forest ID:', forestId.value);
+    console.log('현재 사용자:', user.value?.nickname);
+    console.log('실시간 이벤트 대기 중...');
+    console.log('EventSource readyState:', emitter.readyState);
+    
+    // 연결 상태를 주기적으로 확인
+    const connectionCheck = setInterval(() => {
+      if (emitter.readyState === EventSource.OPEN) {
+        console.log('SSE 연결 상태: OPEN - 정상 작동 중');
+        console.log('EventSource 객체 상태:', {
+          readyState: emitter.readyState,
+          url: emitter.url,
+          withCredentials: emitter.withCredentials
+        });
+        
+        // 이벤트 리스너 상태 확인
+        console.log('이벤트 리스너 상태 확인:');
+        console.log('- onmessage:', !!emitter.onmessage);
+        console.log('- onopen:', !!emitter.onopen);
+        console.log('- onerror:', !!emitter.onerror);
+        console.log('- addEventListener:', typeof emitter.addEventListener);
+        
+        // 이벤트 수신 테스트
+        console.log('이벤트 수신 테스트 - 현재 시간:', new Date().toLocaleTimeString());
+        
+        // EventSource 객체 상세 정보
+        console.log('EventSource 상세 정보:');
+        console.log('- readyState:', emitter.readyState);
+        console.log('- url:', emitter.url);
+        console.log('- withCredentials:', emitter.withCredentials);
+        console.log('- CONNECTING:', EventSource.CONNECTING);
+        console.log('- OPEN:', EventSource.OPEN);
+        console.log('- CLOSED:', EventSource.CLOSED);
+        
+        // 이벤트 리스너 개수 확인
+        console.log('이벤트 리스너 개수 확인:');
+        console.log('- message 리스너:', emitter.addEventListener ? '있음' : '없음');
+        console.log('- open 리스너:', emitter.addEventListener ? '있음' : '없음');
+        console.log('- error 리스너:', emitter.addEventListener ? '있음' : '없음');
+      } else if (emitter.readyState === EventSource.CONNECTING) {
+        console.log('SSE 연결 상태: CONNECTING - 재연결 시도 중');
+      } else if (emitter.readyState === EventSource.CLOSED) {
+        console.log('SSE 연결 상태: CLOSED - 연결 끊김');
+        clearInterval(connectionCheck);
+      }
+    }, 5000); // 5초마다 확인 (더 자주)
+    
+    // 컴포넌트 언마운트 시 인터벌 정리
+    onUnmounted(() => {
+      clearInterval(connectionCheck);
+    });
+  };
+  
+  // 연결 오류 핸들러
+  emitter.onerror = (error) => {
+    console.error('=== SSE 연결 오류 ===');
+    console.error('Error:', error);
+    console.error('EventSource readyState:', emitter.readyState);
+    console.error('연결 URL:', `${api.defaults.baseURL}/sse/mate/${forestId.value}/events`);
+    
+    // 연결 재시도 로직 (새로고침 없이)
+    if (emitter.readyState === EventSource.CLOSED) {
+      console.log('SSE 연결이 끊어짐 - 5초 후 재연결 시도');
+      
+      // 재연결 시도 횟수 제한
+      if (!window.sseReconnectAttempts) {
+        window.sseReconnectAttempts = 0;
+      }
+      
+      if (window.sseReconnectAttempts < 3) {
+        window.sseReconnectAttempts++;
+        console.log(`SSE 재연결 시도 ${window.sseReconnectAttempts}/3`);
+        
+        setTimeout(() => {
+          console.log('SSE 재연결 시도 중...');
+          // 기존 연결 정리
+          if (emitter) {
+            emitter.close();
+          }
+          // 새 연결 시도 (새로고침 없이)
+          reconnectSSE();
+        }, 5000);
+      } else {
+        console.error('SSE 재연결 시도 횟수 초과 - 수동 새로고침 필요');
+        alert('연결이 불안정합니다. 페이지를 새로고침해주세요.');
+      }
+    }
+  };
+  
+  console.log('SSE 핸들러 설정 완료');
+};
+
+// USER_JOINED 핸들러 (새 멤버 참여)
+const handleUserJoined = async (data) => {
+  console.log('=== handleUserJoined 함수 시작 ===');
+  console.log('새 멤버 참여 이벤트 수신:', data);
+  console.log('현재 forestId.value:', forestId.value);
+  console.log('현재 사용자:', user.value?.nickname);
+  console.log('함수 호출 시간:', new Date().toLocaleTimeString());
+
+  // 시퀀스 체크 및 중복 방지
+  const { seq, payload = {} } = data || {};
+  console.log('handleUserJoined - 시퀀스 체크:', { seq, lastSeq });
+  if (seq && seq <= lastSeq) {
+    console.log('handleUserJoined - 중복 이벤트 감지, 처리 중단');
+    return;
+  }
+  if (seq) {
+    console.log('handleUserJoined - 시퀀스 업데이트:', lastSeq, '->', seq);
+    lastSeq = seq;
+  }
+
+  // forestId 검증
+  const eventForestId = payload.forestId ?? data.forestId;
+  console.log('handleUserJoined - forestId 검증:', { eventForestId, currentForestId: forestId.value });
+  if (Number(eventForestId) !== Number(forestId.value)) {
+    console.log('handleUserJoined - forestId 불일치, 처리 중단');
+    return;
+  }
+
+  // userId 검증
+  const { userId } = payload;
+  if (!userId) {
+    console.log('handleUserJoined - userId가 없음, 처리 중단');
+    return;
+  }
+
+  console.log('새 멤버 참여 처리 시작:', userId);
+
+  // 백엔드에서 전송한 nickname 정보 확인
+  const eventNickname = payload.nickname;
+  console.log('백엔드에서 받은 nickname:', eventNickname);
+  
+  if (eventNickname) {
+    // nicknames 배열에 직접 추가 (중복 방지)
+    if (!forestData.value?.nicknames?.includes(eventNickname)) {
+      if (!forestData.value) {
+        forestData.value = { nicknames: [] };
+      }
+      if (!forestData.value.nicknames) {
+        forestData.value.nicknames = [];
+      }
+      
+      forestData.value.nicknames.push(eventNickname);
+      console.log('nicknames 배열에 새 멤버 추가됨:', eventNickname);
+      console.log('업데이트된 nicknames:', forestData.value.nicknames);
+      
+      // 화면 강제 업데이트
+      await nextTick();
+    } else {
+      console.log('이미 존재하는 nickname:', eventNickname);
+    }
+  } else {
+    console.log('백엔드에서 nickname 정보가 전송되지 않음 - 전체 데이터 새로고침');
+    // 백업: fetchForestData()로 전체 데이터 새로고침
+    await fetchForestData();
+  }
+  
+  // 성공 메시지 표시
+  alertMessage.value = `새 멤버가 우정의 숲에 참여했습니다!`;
+  showAlertModal.value = true;
+  
+  // 3초 후 메시지 숨기기
+  setTimeout(() => {
+    showAlertModal.value = false;
+  }, 3000);
+};
+
+// USER_LEFT 핸들러 (멤버 탈퇴)
+const handleUserLeft = async (data) => {
+  console.log('=== handleUserLeft 함수 시작 ===');
+  const { seq, payload = {} } = data || {};
+  
+  // 시퀀스 체크
+  if (seq && seq <= lastSeq) return;
+  if (seq) lastSeq = seq;
+  
+  // forestId 검증
+  const eventForestId = payload.forestId ?? data.forestId;
+  if (Number(eventForestId) !== Number(forestId.value)) return;
+  
+  const { userId } = payload;
+  if (!userId) return;
+  
+  console.log('멤버 탈퇴 처리:', userId);
+  
+  // 데이터 새로고침
+  await fetchForestData();
+  
+  // 성공 메시지 표시
+  alertMessage.value = `멤버가 우정의 숲을 떠났습니다.`;
+  showAlertModal.value = true;
+  setTimeout(() => { showAlertModal.value = false; }, 3000);
+};
+
+// ITEM_PLACED 핸들러 (아이템 배치)
+const handleItemPlaced = async (data) => {
+  console.log('=== handleItemPlaced 함수 시작 ===');
+  const { seq, payload = {} } = data || {};
+  
+  // 시퀀스 체크
+  if (seq && seq <= lastSeq) return;
+  if (seq) lastSeq = seq;
+  
+  // forestId 검증
+  const eventForestId = payload.forestId ?? data.forestId;
+  if (Number(eventForestId) !== Number(forestId.value)) return;
+  
+  console.log('아이템 배치 처리:', payload);
+  
+  // 데이터 새로고침
+  await fetchForestData();
+};
+
+// FOREST_UPDATED 핸들러 (숲 정보 업데이트)
+const handleForestUpdated = async (data) => {
+  console.log('=== handleForestUpdated 함수 시작 ===');
+  const { seq, payload = {} } = data || {};
+  
+  // 시퀀스 체크
+  if (seq && seq <= lastSeq) return;
+  if (seq) lastSeq = seq;
+  
+  // forestId 검증
+  const eventForestId = payload.forestId ?? data.forestId;
+  if (Number(eventForestId) !== Number(forestId.value)) return;
+  
+  console.log('숲 정보 업데이트 처리:', payload);
+  
+  // 데이터 새로고침
+  await fetchForestData();
+};
+
+// FOREST_NAME_CHANGED 핸들러 (숲 이름 변경)
+const handleForestNameChanged = async (data) => {
+  console.log('=== handleForestNameChanged 함수 시작 ===');
+  const { seq, payload = {} } = data || {};
+  
+  // 시퀀스 체크
+  if (seq && seq <= lastSeq) return;
+  if (seq) lastSeq = seq;
+  
+  // forestId 검증
+  const eventForestId = payload.forestId ?? data.forestId;
+  if (Number(eventForestId) !== Number(forestId.value)) return;
+  
+  console.log('숲 이름 변경 처리:', payload);
+  
+  // 데이터 새로고침
+  await fetchForestData();
 };
 
 const handleNameUpdated = async (newName) => {
