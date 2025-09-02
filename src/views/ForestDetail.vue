@@ -1091,7 +1091,6 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
       </div>
     </div>
 
-     날씨 효과들 
     <RainEffects v-if="showRain" />
     <FlowerRainEffect v-if="showFlowerRain" />
     <FogEffects v-if="showFog" />

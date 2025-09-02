@@ -1,7 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, watch, getCurrentInstance } from "vue";
-import { useRouter, useRoute } from 'vue-router'
-import axios from 'axios'
+import { ref, computed, watch, getCurrentInstance } from "vue";
+import { useRoute } from 'vue-router'
 import MyDiaryCalendar from '@/components/forest/emotion/MyDiaryCalendar.vue';
 import MyDiaryDetail from '@/components/forest/emotion/MyDiaryDetail.vue';
 import api from '@/lib/api.js'
@@ -12,23 +11,15 @@ import { useAuthStore } from '@/stores/auth.js'
 // Icons
 import CategorySelector from '@/components/forest/common/CategorySelector.vue'
 import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue'
-import WriteDiary from '@/components/forest/emotion/WriteDiary.vue'
-import WriteGuestbook from '@/components/forest/common/guestbook/WriteGuestbook.vue'
-import LoadingAnimation from '@/components/forest/common/LoadingAnimation.vue'
 import GuestbookList from '@/components/forest/common/guestbook/GuestbookList.vue'
-import ConfirmModal from '@/components/forest/common/ConfirmModal.vue'
 import GuestBookDetail from '@/components/forest/common/guestbook/GuestBookDetail.vue'
 import ForestListModal from "@/components/forest/common/ForestListModal.vue";
 import MyItemView from '@/components/forest/common/MyItemView.vue'
-import AlertModal from '@/components/common/AlertModal.vue'
 
 import buttonIcon_1 from '@/icons/diarywrite_icon.png'
 import buttonIcon_2 from '@/icons/diaryview_icon.png'
 import buttonIcon_3 from '@/icons/forestmate_icon.png'
-import buttonIcon_4 from '@/icons/forestview_icon.png'
 import buttonIcon_5 from '@/icons/myitemview_icon.png'
-import buttonIcon_6 from '@/icons/mailbox_icon.png'
-import logoutIcon from '@/icons/logout_icon.png'
 import joyIcon from '@/icons/joy_icon.png'
 import sadIcon from '@/icons/sad_icon.png'
 import peacefulIcon from '@/icons/peaceful_icon.png'
@@ -37,25 +28,14 @@ import anxiousIcon from '@/icons/anxious_icon.png'
 import melancholyIcon from '@/icons/melancholy_icon.png'
 import tiredIcon from '@/icons/tired_icon.png'
 import romanceIcon from '@/icons/romance_icon.png'
+import TutorialWriteDiary from "./TutorialWriteDiary.vue";
+import TutorialLoadingAnimation from "./TutorialLoadingAnimation.vue";
 
-const router = useRouter();
 const route = useRoute();
 const emit = defineEmits(["openForestList", "showAlert"]);
 const { proxy } = getCurrentInstance();
 
 // 상수들
-
-const emotionIcons = {
-  즐거움: joyIcon,
-  우울함: melancholyIcon,
-  평온함: peacefulIcon,
-  짜증: annoyIcon,
-  불안함: anxiousIcon,
-  슬픔: sadIcon,
-  지침: tiredIcon,
-  설렘: romanceIcon,
-};
-
 const dummyAnalysisResult = {
   emotions: [
     { label: "평온함", icon: peacefulIcon, percent: 50 },
@@ -69,19 +49,20 @@ const dummyAnalysisResult = {
   ],
 };
 
+const emotionIcons = {
+  즐거움: joyIcon,
+  우울함: melancholyIcon,
+  평온함: peacefulIcon,
+  짜증: annoyIcon,
+  불안함: anxiousIcon,
+  슬픔: sadIcon,
+  지침: tiredIcon,
+  설렘: romanceIcon,
+};
+
 // reactive 상태들
 const isMenuOpen = ref(true)
 const categoryLoading = ref(false)
-// const selectedCategory = ref(null)
-// const showSaveModal = ref(false)
-// const pieceToSave = ref(null)
-// const showMyItemView = ref(false)
-// const showMyDiaryCalendar = ref(false)
-// const showMyDiaryDetail = ref(false)
-// const selectedDiaryData = ref(null)
-// const currentDiaryIndex = ref(0)
-// const showAlertModal = ref(false)
-// const alertMessage = ref('')
 const showLogoutModal = ref(false)
 
 
@@ -126,10 +107,6 @@ const sidebarWidth = computed(() => {
   return expandedViews.includes(viewState.value.currentView) ? 576 : 360
 })
 
-// const currentForestId = computed(() => {
-//   return route.name === "ForestDetail" ? route.params.forestId : null;
-// });
-
 // 함수들
 const switchView = (viewName, data = {}) => {
   viewState.value.currentView = viewName
@@ -137,8 +114,7 @@ const switchView = (viewName, data = {}) => {
 }
 
 function openSaveModal(selectedPiece) {
-  viewState.value.data.pieceToSave = selectedPiece
-  modalState.value.showSaveModal = true
+  emit('showAlert', "회원가입 후 만나요.")
 }
 
 function closeSaveModal() {
@@ -155,93 +131,11 @@ const token = computed(() => authStore.accessToken || '');
 const forestId = computed(() => authStore.user?.forestId || '');
 const nickname = computed(() => authStore.user?.nickname || "여행자");
 
-const currentForestId = computed(() => {
-  // forest-detail/:forestId 경로에서 forestId 추출
-  if (route.name === "ForestDetail") {
-    return route.params.forestId || forestId;
-  }
-  return null;
-});
-
-
-// 컴포넌트 마운트 시 nickname 상태 확인
-onMounted(() => {
-  console.log('=== SideMenu Mounted ===');
-  console.log('authStore:', authStore);
-  console.log('user:', user.value);
-  console.log('닉네임:', nickname.value);
-  console.log('숲 ID:', forestId.value);
-  console.log('token:', token.value);
-  console.log('========================');
-});
-
-
-const logout = () => {
-  showLogoutModal.value = true;
-};
-
-const handleLogoutConfirm = async () => {
-  try {
-
-    
-    // 로그아웃 모달 닫기
-    showLogoutModal.value = false;
-    
-    // 실제 로그아웃 처리
-    await authStore.logout();
-    console.log('로그아웃 완료');
-    
-    // 로그인 페이지로 이동
-    router.push("/login");
-  } catch (error) {
-    console.error('로그아웃 실패:', error);
-    
-    // 에러가 발생해도 로그인 페이지로 이동
-    try {
-      router.push("/login");
-    } catch (routerError) {
-      console.error('라우터 이동 실패:', routerError);
-      // 라우터 이동이 실패하면 페이지 새로고침
-      window.location.href = "/login";
-    }
-  }
-};
-
-const handleAnalyze = (category) => {
-  console.log("Selected category:", category);
-  setTimeout(() => {
-    switchView('analyze')
-  }, 2000);
-};
-
 const handlePlace = (selectedPiece) => {
   viewState.value.data.pieceToSave = selectedPiece
   switchView('main')
   proxy.emitter.emit('place-item', selectedPiece);
 };
-
-async function confirmSaveToStorage() {
-  if (!viewState.value.data.pieceToSave) {
-    emit('showAlert', "저장할 조각 정보가 없습니다.")
-    return
-  }
-  try {
-    const pieceId     = pieceToSave.value.value;
-    // URL · 헤더 · 쿼리 파라미터 수정
-    await api.post(
-      `item-storage?itemId=${pieceId}&forestId=${forestId.value}`,
-      {},  // 바디는 빈 객체
-      { headers: { Authorization: `Bearer ${token.value}` } }
-    );
-    closeSaveModal();
-    // 강제 새로고침 방식으로 이동
-    window.location.href = `/forest-detail/${forestId.value}`;
-
-  } catch (e) {
-    console.error(e);
-    emit('showAlert', "보관소 저장에 실패했습니다. 다시 시도해주세요.")
-  }
-}
 
 const handlePlaceFromStorage = (item) => {
   emit('placeFromStorage', item);
@@ -271,12 +165,7 @@ const handleWriteDiaryBack = () => {
 };
 
 const handleCategorySelect = (categoryId) => {
-  console.log("Selected category ID in SideMenu:", categoryId);
   switchView('writeDiary', { selectedCategory: Number(categoryId) })
-};
-
-const handleGuestbook = () => {
-  switchView('guestbookList')
 };
 
 const handleGuestbookBack = () => {
@@ -284,7 +173,6 @@ const handleGuestbookBack = () => {
 };
 
 const handleGuestbookDetail = (id) => {
-  console.log('Showing guestbook detail:', id);
   switchView('guestbookDetail', { selectedGuestbookId: id })
 };
 
@@ -293,11 +181,11 @@ const handleGuestbookDetailBack = () => {
 };
 
 const handleForestList = () => {
-  emit("openForestList");
+  emit('showAlert', "회원가입 후 만나요.")
 };
 
 function openMyItemView() {
-  switchView('myItemView')
+  emit('showAlert', "회원가입 후 만나요.")
 }
 
 function closeMyItemView() {
@@ -305,7 +193,7 @@ function closeMyItemView() {
 }
 
 const handleViewDiary = () => {
-  switchView('myDiaryCalendar')
+  emit('showAlert', "회원가입 후 만나요.")
 };
 
 const handleDiaryClick = (data) => {
@@ -335,7 +223,6 @@ const handleNextDiary = () => {
 };
 
 const handleDiarySave = (analysisResult) => {
-  console.log("Diary save result:", analysisResult);
   if (!analysisResult || !analysisResult.topEmotions) {
     console.error("유효하지 않은 분석 결과입니다:", analysisResult);
     alert("감정 분석에 실패했습니다. 다시 시도해주세요.");
@@ -380,11 +267,6 @@ const handleDiarySave = (analysisResult) => {
   switchView('analyze')
 };
 
-// 라이프사이클 훅들
-onMounted(() => {
-  console.log('SideMenu 마운트됨');
-});
-
 watch(
   () => route.params.forestId,
   () => {
@@ -395,6 +277,10 @@ watch(
 
 <template>
   <div class="side-wrapper">
+    <button class="toggle-button" @click="toggleMenu">
+      <span v-if="isMenuOpen">»</span>
+      <span v-else>«</span>
+    </button>
     <div
       class="side-menu"
       :class="{
@@ -452,13 +338,13 @@ watch(
             </button>
           </div>
           <div class="relative-container">
-            <WriteDiary
+            <TutorialWriteDiary
               :categoryId="selectedCategory"
               @save="handleDiarySave"
               @loading="(val) => (categoryLoading = val)"
             />
             <div v-if="categoryLoading" class="loading-overlay">
-              <LoadingAnimation />
+              <TutorialLoadingAnimation />
             </div>
           </div>
         </template>
@@ -486,9 +372,6 @@ watch(
         </template>
         <template v-else>
           <div class="top-bar">
-            <span class="logout-icon" @click="logout">
-              <img :src="logoutIcon" class="btn-img" />
-            </span>
           </div>
           <div class="greeting">
             <div>안녕하세요 {{ nickname }}님,</div>
@@ -543,24 +426,6 @@ watch(
         </template>
       </div>
     </div>
-    <button class="toggle-button" @click="toggleMenu">
-      <span v-if="isMenuOpen">»</span>
-      <span v-else>«</span>
-    </button>
-    <ConfirmModal
-            :is-open="showSaveModal"
-            title="보관소에 저장"
-            message="정말로 이 조각을 보관소에 저장하시겠습니까?"
-            @confirm="confirmSaveToStorage"
-            @cancel="closeSaveModal"
-          />
-    <ConfirmModal
-            :is-open="showLogoutModal"
-            title="로그아웃"
-            message="정말 로그아웃 하시겠습니까?"
-            @confirm="handleLogoutConfirm"
-            @cancel="showLogoutModal = false"
-          />
   </div>
 </template>
 
