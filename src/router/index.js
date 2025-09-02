@@ -12,6 +12,7 @@ import ForestDetail from "@/views/ForestDetail.vue";
 import BackgroundImage from "@/components/BackgroundImage.vue";
 import InviteCodeView from "../views/InviteCodeView.vue";
 import LandingPage from "@/views/LandingPage.vue";
+import Tutorial from "@/views/Tutorial.vue";
 
 
 const router = createRouter({
@@ -83,6 +84,11 @@ const router = createRouter({
       name: "LandingPage",
       component: LandingPage,
       meta: { guestOnly: true }, // 로그인하지 않은 사용자만 접근 가능
+    },
+    {
+      path: "/tutorial",
+      name: "Tutorial",
+      component: Tutorial
     }
   ],
 });
