@@ -57,23 +57,6 @@ const props = defineProps({
 const diaryContent = ref('');
 const charCount = ref(0);
 const selectedDate = ref(new Date());
-const showAlert = ref(false);
-const alertMessage = ref('');
-const alertType = ref('');
-
-// Flatpickr 설정
-const flatpickrConfig = {
-  locale: Korean,
-  dateFormat: 'Y-m-d',
-  disableMobile: true,
-  static: true,
-  mode: 'single',
-  allowInput: false,
-  clickOpens: true,
-  position: 'below',
-  monthSelectorType: 'static',
-  defaultDate: selectedDate.value
-};
 
 // 날짜 포맷팅
 const formattedDate = computed(() => {

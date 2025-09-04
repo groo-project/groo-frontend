@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch, getCurrentInstance } from "vue";
 import { useRouter, useRoute } from 'vue-router'
-import axios from 'axios'
 import MyDiaryCalendar from '@/components/forest/emotion/MyDiaryCalendar.vue';
 import MyDiaryDetail from '@/components/forest/emotion/MyDiaryDetail.vue';
 import api from '@/lib/api.js'
@@ -13,21 +12,18 @@ import { useAuthStore } from '@/stores/auth.js'
 import CategorySelector from '@/components/forest/common/CategorySelector.vue'
 import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue'
 import WriteDiary from '@/components/forest/emotion/WriteDiary.vue'
-import WriteGuestbook from '@/components/forest/common/guestbook/WriteGuestbook.vue'
 import LoadingAnimation from '@/components/forest/common/LoadingAnimation.vue'
 import GuestbookList from '@/components/forest/common/guestbook/GuestbookList.vue'
 import ConfirmModal from '@/components/forest/common/ConfirmModal.vue'
 import GuestBookDetail from '@/components/forest/common/guestbook/GuestBookDetail.vue'
 import ForestListModal from "@/components/forest/common/ForestListModal.vue";
 import MyItemView from '@/components/forest/common/MyItemView.vue'
-import AlertModal from '@/components/common/AlertModal.vue'
+import MyDiaryCalendarForWrite from "./MyDiaryCalendarForWrite.vue";
 
 import buttonIcon_1 from '@/icons/diarywrite_icon.png'
 import buttonIcon_2 from '@/icons/diaryview_icon.png'
 import buttonIcon_3 from '@/icons/forestmate_icon.png'
-import buttonIcon_4 from '@/icons/forestview_icon.png'
 import buttonIcon_5 from '@/icons/myitemview_icon.png'
-import buttonIcon_6 from '@/icons/mailbox_icon.png'
 import logoutIcon from '@/icons/logout_icon.png'
 import joyIcon from '@/icons/joy_icon.png'
 import sadIcon from '@/icons/sad_icon.png'
@@ -42,6 +38,10 @@ const router = useRouter();
 const route = useRoute();
 const emit = defineEmits(["openForestList", "showAlert"]);
 const { proxy } = getCurrentInstance();
+
+const forwardShowAlert = (msg) => {
+  emit("showAlert", msg);
+}
 
 // 상수들
 
@@ -110,6 +110,7 @@ const showGuestbookDetail = computed(() => viewState.value.currentView === 'gues
 const showMyItemView = computed(() => viewState.value.currentView === 'myItemView')
 const showMyDiaryCalendar = computed(() => viewState.value.currentView === 'myDiaryCalendar')
 const showMyDiaryDetail = computed(() => viewState.value.currentView === 'myDiaryDetail')
+const showMyDiaryCalendarForWrite = computed(() => viewState.value.currentView === 'myDiaryCalendarForWrite')
 
 const selectedCategory = computed(() => viewState.value.data.selectedCategory)
 const selectedGuestbookId = computed(() => viewState.value.data.selectedGuestbookId)
@@ -122,13 +123,9 @@ const showForestListModal = computed(() => modalState.value.showForestListModal)
 
 const sidebarWidth = computed(() => {
   if (!isMenuOpen.value) return 60;
-  const expandedViews = ['category', 'analyze', 'writeDiary', 'guestbookList', 'guestbookDetail', 'myItemView', 'myDiaryCalendar', 'myDiaryDetail']
+  const expandedViews = ['category', 'analyze', 'writeDiary', 'guestbookList', 'guestbookDetail', 'myItemView', 'myDiaryCalendar', 'myDiaryDetail', 'myDiaryCalendarForWrite']
   return expandedViews.includes(viewState.value.currentView) ? 576 : 360
 })
-
-// const currentForestId = computed(() => {
-//   return route.name === "ForestDetail" ? route.params.forestId : null;
-// });
 
 // 함수들
 const switchView = (viewName, data = {}) => {
@@ -166,13 +163,13 @@ const currentForestId = computed(() => {
 
 // 컴포넌트 마운트 시 nickname 상태 확인
 onMounted(() => {
-  console.log('=== SideMenu Mounted ===');
-  console.log('authStore:', authStore);
-  console.log('user:', user.value);
-  console.log('닉네임:', nickname.value);
-  console.log('숲 ID:', forestId.value);
-  console.log('token:', token.value);
-  console.log('========================');
+  // console.log('=== SideMenu Mounted ===');
+  // console.log('authStore:', authStore);
+  // console.log('user:', user.value);
+  // console.log('닉네임:', nickname.value);
+  // console.log('숲 ID:', forestId.value);
+  // console.log('token:', token.value);
+  // console.log('========================');
 });
 
 
@@ -189,7 +186,6 @@ const handleLogoutConfirm = async () => {
     
     // 실제 로그아웃 처리
     await authStore.logout();
-    console.log('로그아웃 완료');
     
     // 로그인 페이지로 이동
     router.push("/login");
@@ -205,13 +201,6 @@ const handleLogoutConfirm = async () => {
       window.location.href = "/login";
     }
   }
-};
-
-const handleAnalyze = (category) => {
-  console.log("Selected category:", category);
-  setTimeout(() => {
-    switchView('analyze')
-  }, 2000);
 };
 
 const handlePlace = (selectedPiece) => {
@@ -251,18 +240,7 @@ const toggleCategorySelector = async () => {
   if (viewState.value.currentView === 'category') {
     switchView('main', { selectedCategory: null })
   } else {
-    try {
-        const response = await api.get('diaries/today/written')
-      
-        // if (response.data === true) {
-        //     emit('showAlert', "오늘 일기는 이미 작성 하셨네요! 내일 또 봬요!")
-        // } else {
-            switchView('category')
-        // }
-    } catch (error) {
-        console.error('일기 작성 여부 확인 실패:', error)
-        emit('showAlert', "일기 작성 여부 확인에 실패했습니다. 다시 시도해주세요.")
-    }
+    switchView('category')
   }
 };
 
@@ -271,7 +249,6 @@ const handleWriteDiaryBack = () => {
 };
 
 const handleCategorySelect = (categoryId) => {
-  console.log("Selected category ID in SideMenu:", categoryId);
   switchView('writeDiary', { selectedCategory: Number(categoryId) })
 };
 
@@ -284,7 +261,6 @@ const handleGuestbookBack = () => {
 };
 
 const handleGuestbookDetail = (id) => {
-  console.log('Showing guestbook detail:', id);
   switchView('guestbookDetail', { selectedGuestbookId: id })
 };
 
@@ -307,6 +283,10 @@ function closeMyItemView() {
 const handleViewDiary = () => {
   switchView('myDiaryCalendar')
 };
+
+const handleMyDiaryCalendarForWrite = () => {
+  switchView('myDiaryCalendarForWrite')
+}
 
 const handleDiaryClick = (data) => {
   switchView('myDiaryDetail', { 
@@ -335,7 +315,6 @@ const handleNextDiary = () => {
 };
 
 const handleDiarySave = (analysisResult) => {
-  console.log("Diary save result:", analysisResult);
   if (!analysisResult || !analysisResult.topEmotions) {
     console.error("유효하지 않은 분석 결과입니다:", analysisResult);
     alert("감정 분석에 실패했습니다. 다시 시도해주세요.");
@@ -380,11 +359,6 @@ const handleDiarySave = (analysisResult) => {
   switchView('analyze')
 };
 
-// 라이프사이클 훅들
-onMounted(() => {
-  console.log('SideMenu 마운트됨');
-});
-
 watch(
   () => route.params.forestId,
   () => {
@@ -418,6 +392,13 @@ watch(
             @close="handleDiaryDetailClose"
             @prev="handlePrevDiary"
             @next="handleNextDiary"
+          />
+        </template>
+        <template v-else-if="showMyDiaryCalendarForWrite">
+          <MyDiaryCalendarForWrite
+            @close="switchView('main')"
+            @showAlert="forwardShowAlert"
+            @new-diary-click="toggleCategorySelector"
           />
         </template>
         <template v-else-if="showMyDiaryCalendar">
@@ -456,6 +437,7 @@ watch(
               :categoryId="selectedCategory"
               @save="handleDiarySave"
               @loading="(val) => (categoryLoading = val)"
+              @showAlert="forwardShowAlert"
             />
             <div v-if="categoryLoading" class="loading-overlay">
               <LoadingAnimation />
@@ -495,7 +477,7 @@ watch(
             <div>오늘 하루는 어떠셨나요?</div>
           </div>
           <div class="menu-buttons">
-            <button class="menu-btn" @click="toggleCategorySelector">
+            <button class="menu-btn" @click="handleMyDiaryCalendarForWrite">
               <span class="icon">
                 <img :src="buttonIcon_1" class="btn-img" />
               </span>
