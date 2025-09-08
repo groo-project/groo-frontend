@@ -179,18 +179,48 @@ const logout = () => {
 
 const handleLogoutConfirm = async () => {
   try {
-
+    console.log('=== 로그아웃 시작 ===');
     
     // 로그아웃 모달 닫기
     showLogoutModal.value = false;
     
-    // 실제 로그아웃 처리
+    // 1. 백엔드 로그아웃 API 호출
+    console.log('백엔드 로그아웃 API 호출 중...');
+    await api.post('/auth/logout');
+    console.log('백엔드 로그아웃 API 호출 완료');
+
+    // 3. authStore 상태 초기화
+    console.log('authStore 상태 초기화 중...');
     await authStore.logout();
+
+    console.log('authStore 상태 초기화 완료');
     
-    // 로그인 페이지로 이동
+    console.log('=== 로그아웃 완료 ===');
+    
+    // 4. 로그인 페이지로 이동
     router.push("/login");
   } catch (error) {
-    console.error('로그아웃 실패:', error);
+    console.error('=== 로그아웃 실패 ===');
+    console.error('Error:', error);
+    console.error('Error message:', error.message);
+    console.error('Error response:', error.response?.data);
+    
+    // 에러가 발생해도 쿠키 삭제 시도
+    try {
+      console.log('에러 발생 시 쿠키 삭제 시도...');
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
+        if (name) {
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=localhost`;
+        }
+      }
+      console.log('에러 발생 시 쿠키 삭제 완료');
+    } catch (cookieError) {
+      console.error('쿠키 삭제 실패:', cookieError);
+    }
     
     // 에러가 발생해도 로그인 페이지로 이동
     try {
