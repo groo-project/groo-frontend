@@ -18,15 +18,6 @@
           </div>
         </div>
 
-        <div class="button-group">
-          <button class="action-btn secondary" @click="loadDraft">
-            불러오기
-          </button>
-          <button class="action-btn secondary" @click="saveDraft">
-            임시저장
-          </button>
-        </div>
-
         <textarea
           v-model="diaryContent"
           class="diary-textarea"
@@ -36,15 +27,10 @@
 
         <div class="char-counter">{{ charCount }}/1000</div>
 
-        <!-- 텍스트 길이에 따른 메시지 -->
-        <div v-if="lengthMessage" class="length-message">
-          {{ lengthMessage }}
-        </div>
-
         <button 
           class="save-btn"
           @click="saveDiary"
-          :disabled="!canSave"
+          :disabled="!diaryContent.trim()"
         >
           저장하기
         </button>
@@ -56,12 +42,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import 'flatpickr/dist/flatpickr.css';
-import { diaryApi } from '@/lib/api';
-import { useAuthStore } from '@/stores/auth';
-import { useDiaryWriteStore } from '@/stores/diaryWrite';
-
-const auth = useAuthStore();
-const diaryWriteStore = useDiaryWriteStore();
+import { Korean } from 'flatpickr/dist/l10n/ko.js';
 
 const props = defineProps({
   categoryId: {
@@ -79,110 +60,118 @@ const selectedDate = ref(new Date());
 
 // 날짜 포맷팅
 const formattedDate = computed(() => {
+  const date = new Date(selectedDate.value);
   const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-  const dateStr = diaryWriteStore.writeDate;
-  const date = new Date(dateStr);
-  const dayOfWeek = weekdays[date.getDay()];
-  return `${dateStr} ${dayOfWeek}`;
-});
-
-// 텍스트 길이에 따른 메시지
-const lengthMessage = computed(() => {
-  const length = charCount.value;
-  
-  if (length > 1000) {
-    return "1000자 이상 넘어갈 수 없어요.";
-  } else if (length >= 100) {
-    return "분석하기 좋은 충분한 길이네요!";
-  } else if (length >= 50) {
-    return "좋아요! 조금 더 작성해 볼까요?";
-  } else if (length > 0 && length < 30) {
-    return "조금 더 자세히 적어주시면 분석이 더 정확해져요! (최소 30자가 필요해요.)";
-  }
-  
-  return "";
-});
-
-// 저장 버튼 활성화 조건
-const canSave = computed(() => {
-
-  return true;
-
-  // 배포 시 활성화
-  // const length = charCount.value;
-  // return length >= 30 && length <= 1000 && diaryContent.value.trim();
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${weekdays[date.getDay()]}`;
 });
 
 const updateCharCount = () => {
   charCount.value = diaryContent.value.length;
 };
 
-const saveDraft = () => {
-
-  // 실제 api로 수정 필요
-  localStorage.setItem('diaryDraft', JSON.stringify({
-    content: diaryContent.value,
-    date: selectedDate.value
-  }));
-  emit("showAlert", "임시저장되었습니다.");
-};
-
-const loadDraft = () => {
-
-  // 실제 api로 수정 필요
-  emit("showAlert", "임시저장 기능은 현재 사용할 수 없습니다.");
-};
-
-const emit = defineEmits(['save', 'loading', 'showAlert']);
+const emit = defineEmits(['save', 'loading']);
 
 const saveDiary = async () => {
   try {
     if (!props.categoryId) {
-      emit("showAlert", "카테고리가 선택되지 않았습니다.");
+      emit('showAlert', "카테고리가 선택되지 않았습니다.")
+      return;
+    }
+
+    if (!diaryContent.value.trim()) {
+      emit('showAlert', "일기 내용을 입력해주세요.")
       return;
     }
 
     emit('loading', true);
 
-    const createdAt = `${diaryWriteStore.writeDate}T00:00:00`;
-    
-    const forestId = auth.user?.forestId;
-    
-    if (forestId === null || forestId === undefined) {
-      console.error('Invalid forestId:', forestId);
-      emit("showAlert", "숲 정보를 찾을 수 없습니다. 다시 로그인해주세요.");
-      return;
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    const items = [];
+    if (props.categoryId == 1) {
+      // 식물
+      items.push({
+        id: 1,
+        name: "해바라기",
+        categoryId: 1,
+        emotion: "즐거움",
+        imageUrl: "tutorial-items/plant/flower1.png"
+      }, {
+        id: 2,
+        name: "노랑 버섯",
+        categoryId: 1,
+        emotion: "즐거움",
+        imageUrl: "tutorial-items/plant/mushroom.png"
+      }, {
+        id: 3,
+        name: "노란 나무",
+        categoryId: 1,
+        emotion: "즐거움",
+        imageUrl: "tutorial-items/plant/tree1.png"
+      });
+    } else if (props.categoryId == 2) {
+      // 사물
+      items.push({
+        id: 1,
+        name: "갈색 바구니",
+        categoryId: 1,
+        emotion: "즐거움",
+        imageUrl: "tutorial-items/object/basket.png"
+      }, {
+        id: 2,
+        name: "기쁨의 손수레2",
+        categoryId: 1,
+        emotion: "즐거움",
+        imageUrl: "tutorial-items/object/cartwheel2.png"
+      }, {
+        id: 3,
+        name: "작은 우물",
+        categoryId: 1,
+        emotion: "즐거움",
+        imageUrl: "tutorial-items/object/well.png"
+      });
+    } else {
+      // 기타
+      items.push({
+        id: 1,
+        name: "행복한 곰",
+        categoryId: 1,
+        emotion: "즐거움",
+        imageUrl: "tutorial-items/etc/bear.png"
+      }, {
+        id: 2,
+        name: "민트색 공룡",
+        categoryId: 1,
+        emotion: "즐거움",
+        imageUrl: "tutorial-items/etc/dinosaur.png"
+      }, {
+        id: 3,
+        name: "두근두근 하트",
+        categoryId: 1,
+        emotion: "즐거움",
+        imageUrl: "tutorial-items/etc/heart2.png"
+      });
     }
-    
-    const requestData = {
-      content: diaryContent.value,
-      categoryId: props.categoryId,
-      forestId: forestId,
-      createdAt: createdAt
+    const dummyResponse = {
+        emotionItems: items,
+        mainEmotion: "즐거움",
+        topEmotions: {
+            "즐거움": 60,
+            "설렘": 40,
+        },
+        weather: "맑음"
     };
-    
-    const response = await diaryApi.createDiary(requestData);
-
-    if (!response) {
-      throw new Error('API 응답이 없습니다.');
-    }
-    
-    emit('save', response);
+    emit('save', dummyResponse);
   } catch (error) {
     console.error('일기 저장 실패:', error);
-    emit("showAlert", "일기 저장에 실패했습니다. 다시 시도해주세요.");
+    emit('showAlert', "일기 저장에 실패했습니다. 다시 시도해주세요.")
   } finally {
     emit('loading', false);
   }
 };
 
+// 컴포넌트 마운트 시 임시저장 데이터 불러오기 및 auth 상태 확인
 onMounted(() => {
-  const forestId = auth.user?.forestId;
-  
-  if (forestId === null || forestId === undefined) {
-    console.warn('Warning: Invalid forestId on component mount:', forestId);
-  }
-  
+  // 기본값 설정
   selectedDate.value = new Date();
   updateCharCount();
 });
@@ -242,6 +231,7 @@ onMounted(() => {
 .date-selector {
   position: relative;
   background: transparent;
+  font-size: 14px;
 }
 
 .date-input {
@@ -326,17 +316,7 @@ onMounted(() => {
   color: rgba(255,255,255,0.7);
   font-size: 14px;
   text-align: right;
-  margin-bottom: 12px;
-}
-
-.length-message {
-  color: rgba(255,255,255,0.8);
-  font-size: 12px;
-  text-align: center;
-  margin-bottom: 16px;
-  padding: 8px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 8px;
+  margin-bottom: 24px;
 }
 
 .save-btn {

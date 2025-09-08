@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory } from "vue-router";
 
 import Main from "../views/Main.vue";
-import ViewDiary from "../components/forest/common/ViewDiary.vue";
 import ForestMate from "../views/ForestMate.vue";
 import ForestView from "../components/forest/tour/ForestTourView.vue";
 import MyItemView from "../components/forest/common/MyItemView.vue";
@@ -12,6 +11,7 @@ import ForestDetail from "@/views/ForestDetail.vue";
 import BackgroundImage from "@/components/BackgroundImage.vue";
 import InviteCodeView from "../views/InviteCodeView.vue";
 import LandingPage from "@/views/LandingPage.vue";
+import Tutorial from "@/views/Tutorial.vue";
 
 
 const router = createRouter({
@@ -22,17 +22,14 @@ const router = createRouter({
       component: Main, // Main이 레이아웃 역할
       meta: { requiresAuth: true }, // 인증이 필요한 페이지로 설정
       children: [
-        { path: "",
-          redirect: { name: "LandingPage" } },
+        {
+          path: "",
+          redirect: { name: "LandingPage" }
+        },
         {
           path: "background-image", // == "/"
           name: "BackgroundImage",
           component: BackgroundImage,
-        },
-        {
-          path: "viewdiary",
-          name: "ViewDiary",
-          component: ViewDiary,
         },
         {
           path: "forestmate/:id",
@@ -83,6 +80,11 @@ const router = createRouter({
       name: "LandingPage",
       component: LandingPage,
       meta: { guestOnly: true }, // 로그인하지 않은 사용자만 접근 가능
+    },
+    {
+      path: "/tutorial",
+      name: "Tutorial",
+      component: Tutorial
     }
   ],
 });
@@ -139,7 +141,7 @@ export function installGuards(pinia) {
         console.log('User is authenticated, proceeding...');
         return true;
       }
-      
+
       // 토큰 갱신 시도
       console.log('Attempting token refresh...');
       const ok = await auth.tryRefresh();
@@ -147,12 +149,12 @@ export function installGuards(pinia) {
         console.log('Token refresh successful, proceeding...');
         return true;
       }
-      
+
       // 인증 실패 시 로그인 페이지로 리다이렉트
       console.log('Authentication failed, redirecting to login...');
-      return { 
-        name: "Login", 
-        query: { redirect: to.fullPath } 
+      return {
+        name: "Login",
+        query: { redirect: to.fullPath }
       };
     }
 

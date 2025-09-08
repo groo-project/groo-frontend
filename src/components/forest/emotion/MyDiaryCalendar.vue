@@ -42,9 +42,7 @@
   
   <script setup>
   import { ref, computed, watch, onMounted } from 'vue'
-  import axios from 'axios'
   import backIcon from '@/icons/back.png'
-  import forwardIcon from '@/icons/arrow_forward.png'
   import api from '@/lib/api'
   import { useAuthStore } from '@/stores/auth'  
 
@@ -113,8 +111,6 @@
       diaryDates.value = [];
       return;
     }
-    
-    console.log('Using forestId:', currentForestId);
     
     try {
       const res = await api.get(
@@ -291,6 +287,7 @@
     background: #ffffff8f;
     color: #3a5a40;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    z-index: 1;
   }
   .calendar-day:hover {
     background: #b6d6b6;
