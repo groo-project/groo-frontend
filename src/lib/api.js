@@ -4,21 +4,11 @@ import axios from 'axios';
 const api = axios.create({
     baseURL: 'http://localhost:8080/api',
     withCredentials: true, // 쿠키를 포함한 요청을 허용
-    // 브라우저가 **쿠키(특히 HttpOnly 쿠키)**를 자동으로 포함시켜서 요청함.
-    // RefreshToken을 HttpOnly 쿠키에 저장하는 방식을 쓸 때 반드시 필요.
+    // RefreshToken을 HttpOnly 쿠키에 저장하는 방식을 쓸 때 반드시 필요
 });
 
 export default api;
 
-// // 외부에서 주입받을 토큰 게터(초기엔 빈 값)
-// let getToken = () => '';
-
-// // main.js에서 호출할 함수
-// export function attachTokenGetter(fn) {
-//   getToken = fn;   // fn은 매번 최신 토큰을 반환하는 함수여야 함
-// }
-
-/* --- 외부에서 주입받을 훅들(초기 no-op) --- */
 let getAccessToken = () => '';
 let doRefresh = async () => false;
 let doLogout = () => {};
@@ -31,15 +21,8 @@ export function attachAuthHooks({ getToken, refresh, logout }) {
 }
 
 
-// /* 🔸 공유 리프레시 프라미스 */
-// let refreshPromise = null;
-// async function ensureRefreshed(auth) {
-//   if (!refreshPromise) {
-//     refreshPromise = auth.tryRefresh().finally(() => { refreshPromise = null; });
-//   }
-//   return refreshPromise;
-// }
-/* --- refresh 폭주 방지용 공유 프라미스 --- */
+
+//refresh 폭주 방지용 공유 프라미스 
 let refreshPromise = null;
 function ensureRefreshOnce() {
   if (!refreshPromise) {
@@ -68,27 +51,6 @@ api.interceptors.request.use((config) => {
 
 // 응답 인터셉터 설정
 api.interceptors.response.use(
-    // (response) => {
-    //     return response; // 응답을 그대로 반환
-    // },
-    // async (error) => {
-    //     const auth = useAuthStore();
-    //     if (error.response.status === 401 && !error.config.__retry) {
-
-    //         error.config.__retry = true;
-
-    //         // 401 Unauthorized 에러가 발생하면 토큰 갱신 시도
-    //         const success = await auth.tryRefresh();
-    //         if (success) {
-    //             // 토큰 갱신 성공 시 원래 요청을 다시 시도
-    //             return api.request(error.config);
-    //         } else {
-    //             // 토큰 갱신 실패 시 로그아웃 처리
-    //             auth.logout();
-    //         }
-    //     }
-    //     return Promise.reject(error); // 에러를 그대로 전달
-    // }
       (res) => res,
       async (error) => {
        const { response, config } = error || {};
@@ -132,8 +94,6 @@ export const diaryApi = {
   //       categoryId: Number(categoryId),
   //       createdAt: diaryData.createdAt
   //     };
-
-  //     console.log('API Request Data:', requestData);
       
   //     // // 최소 5초의 지연 시간을 보장
   //     // const response = await ensureMinimumDelay(

@@ -73,7 +73,6 @@ let selectedPiece = ref(null)
 const selectPiece = (val) => {
   selected.value = val
   selectedPiece = props.pieces.filter((piece) => piece.value === val)[0]
-  console.log('Selected piece:', selectedPiece)
 }
 
 const emit = defineEmits(['place','toStorage'])

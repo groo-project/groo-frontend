@@ -47,24 +47,9 @@ const closeAlert = () => {
 
 const openInviteLinkModal = async () => {
   try {
-    console.log("=== 초대 링크 모달 열기 ===");
-    console.log("Route path:", route.path);
-    console.log("Route params:", route.params);
     
     // URL에서 forestId 추출
     const forestId = route.params.id;
-    console.log("forestId:", forestId);
-    console.log("Token:", Token.value ? '있음' : '없음');
-
-    if (!forestId) {
-      console.error("forestId가 없습니다.");
-      return;
-    }
-
-    if (!Token.value) {
-      console.error("토큰이 없습니다.");
-      return;
-    }
 
     const response = await api.get(`/mate/link`, {
       params: {
@@ -72,30 +57,26 @@ const openInviteLinkModal = async () => {
       }
     });
     
-    console.log("=== API 응답 ===");
-    console.log("Response:", response);
-    console.log("Response status:", response.status);
-    console.log("Response data:", response.data);
+    
     
     if (response.status >= 200 && response.status < 300) {
       // Axios에서는 response.data를 사용
       const data = response.data;
-      console.log("서버 응답 데이터:", data);
+      
       
       // 서버 응답 구조에 따라 inviteLink 설정
       if (data.inviteLink) {
         inviteLink.value = data.inviteLink;
         isInviteLinkModalOpen.value = true;
-        console.log("초대 링크 설정 완료:", inviteLink.value);
-        console.log("모달 상태:", isInviteLinkModalOpen.value);
+        
       } else {
-        console.error("초대 링크가 응답에 없습니다:", data);
+        
       }
     } else {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
   } catch (error) {
-    console.error("초대 링크 요청 실패:", error);
+    
   }
 };
 

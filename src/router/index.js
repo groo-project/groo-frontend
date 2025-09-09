@@ -121,13 +121,8 @@ import { useAuthStore } from '@/stores/auth';
 
 export function installGuards(pinia) {
   router.beforeEach(async (to) => {
-    const auth = useAuthStore(pinia);   // ✅ 여기서 pinia 사용
+    const auth = useAuthStore(pinia);   
 
-    console.log('=== Router Guard ===');
-    console.log('Route:', to.path);
-    console.log('Is authenticated:', auth.isAuthenticated);
-    console.log('User:', auth.user);
-    console.log('========================');
 
     // 1) 게스트 전용 라우트: 로그인 상태면 홈으로
     if (to.matched.some(r => r.meta.guestOnly)) {
@@ -139,20 +134,16 @@ export function installGuards(pinia) {
     if (to.matched.some(r => r.meta.requiresAuth)) {
       // 인증 상태 체크
       if (auth.isAuthenticated && auth.user) {
-        console.log('User is authenticated, proceeding...');
         return true;
       }
 
       // 토큰 갱신 시도
-      console.log('Attempting token refresh...');
       const ok = await auth.tryRefresh();
       if (ok && auth.user) {
-        console.log('Token refresh successful, proceeding...');
         return true;
       }
 
       // 인증 실패 시 로그인 페이지로 리다이렉트
-      console.log('Authentication failed, redirecting to login...');
       return {
         name: "Login",
         query: { redirect: to.fullPath }

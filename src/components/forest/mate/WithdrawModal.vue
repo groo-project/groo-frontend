@@ -55,25 +55,19 @@ const handleAlertClose = () => {
 
 const handleWithdraw = async () => {
   try {
-    console.log("=== 우정의 숲 탈퇴 시작 ===");
     
-    // 우정의 숲 ID (route.params.id)를 사용
     const mateForestId = route.params.id;
-    console.log("Mate Forest ID (탈퇴할 우정의 숲):", mateForestId);
-    console.log("User Forest ID (개인 숲):", userForestId.value);
+    
 
     if (!mateForestId) {
       throw new Error("우정의 숲 ID를 찾을 수 없습니다.");
     }
 
-    console.log("탈퇴 API 호출:", `/mate/quit?forestId=${mateForestId}`);
+    
     
     const response = await api.delete(`/mate/quit?forestId=${mateForestId}`);
 
-    console.log("=== 탈퇴 API 응답 ===");
-    console.log("Response:", response);
-    console.log("Response status:", response.status);
-    console.log("Response data:", response.data);
+    
 
     if (response.status >= 200 && response.status < 300) {
       alertMessage.value = "우정의 숲에서 탈퇴되었습니다.";
@@ -87,7 +81,7 @@ const handleWithdraw = async () => {
           nickname: authStore.user?.nickname,
           timestamp: new Date().toISOString()
         });
-        console.log('사용자 탈퇴 이벤트 발생:', mateForestId);
+        
       }
 
       router.push(`/forest-detail/${userForestId.value}`);
@@ -95,12 +89,6 @@ const handleWithdraw = async () => {
       throw new Error(`탈퇴 처리 중 오류가 발생했습니다. (${response.status})`);
     }
   } catch (error) {
-    console.error("=== 탈퇴 실패 ===");
-    console.error("Error:", error);
-    console.error("Error message:", error.message);
-    console.error("Error response:", error.response?.data);
-    console.error("==========================");
-    
     alertMessage.value = error.message || "탈퇴 처리 중 오류가 발생했습니다.";
     showAlert.value = true;
   } finally {

@@ -35,11 +35,6 @@ const sendVerification = async () => {
       email: email.value,
     })
     
-    console.log('=== Verification Email Response ===');
-    console.log('Response status:', response.status);
-    console.log('Response data:', response.data);
-    console.log('========================');
-    
     if (response.status >= 200 && response.status < 300) {
       verificationSent.value = true
       showAlertModal('인증번호가 전송되었습니다.', 'success')
@@ -48,7 +43,6 @@ const sendVerification = async () => {
       throw new Error('전송 실패')
     }
   } catch (error) {
-    console.error('에러 발생:', error)
     showAlertModal('인증번호 전송에 실패했습니다.', 'error')
   } finally {
     loadingVerification.value = false
@@ -65,11 +59,6 @@ const verifyCode = async () => {
       authNum: verificationCode.value,
     })
 
-    console.log('=== Code Verification Response ===');
-    console.log('Response status:', response.status);
-    console.log('Response data:', response.data);
-    console.log('========================');
-
     if (response.status >= 200 && response.status < 300) {
       verificationCheckMessage.value = '인증이 완료되었습니다.'
       showAlertModal('인증이 완료되었습니다.', 'success')
@@ -79,7 +68,6 @@ const verifyCode = async () => {
       throw new Error('인증 실패')
     }
   } catch (error) {
-    console.error('인증 에러:', error)
     verificationCheckMessage.value = '인증에 실패했습니다.'
     showAlertModal('인증에 실패했습니다.', 'error')
   } finally {
@@ -97,11 +85,6 @@ const handleSignUp = async (e) => {
       nickname: nickname.value,
     })
 
-    console.log('=== Signup Response ===');
-    console.log('Response status:', response.status);
-    console.log('Response data:', response.data);
-    console.log('========================');
-
     if (response.status >= 200 && response.status < 300) {
       showAlertModal('회원가입 성공! 환영합니다. 🌿', 'success')
       router.push('/login')
@@ -110,7 +93,6 @@ const handleSignUp = async (e) => {
       throw new Error('회원가입 실패')
     }
   } catch (error) {
-    console.error('에러 발생:', error)
     showAlertModal('회원가입 실패', 'error')
   }
 }

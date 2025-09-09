@@ -100,12 +100,12 @@ const handleLogoutConfirm = async () => {
   try {
     // 실제 로그아웃 처리
     await authStore.logout();
-    console.log('로그아웃 완료');
+    
     
     // 로그인 페이지로 이동
     router.push("/login");
   } catch (error) {
-    console.error('로그아웃 실패:', error);
+    
     // 에러가 발생해도 로그인 페이지로 이동
     router.push("/login");
   }
@@ -182,7 +182,7 @@ const handleCategorySelect = (categoryId) => {
 };
 
 const handleDiarySave = async (result) => {
-  console.log("Diary save result:", result);
+  
   
   if (!result || !result.topEmotions) {
     console.error("유효하지 않은 분석 결과입니다:", result);
@@ -239,32 +239,28 @@ const handleDiarySave = async (result) => {
 };
 
 const handlePlace = (selectedPiece) => {
-  console.log('Placing piece:', selectedPiece);
+  
   showAnalyzeResult.value = false;
   if (proxy && proxy.emitter) {
     proxy.emitter.emit('place-item', selectedPiece);
-    console.log('Emitted place-item event with:', selectedPiece);
+    
   } else {
     console.error('Emitter not available');
   }
 };
 
 const handleToStorage = (piece) => {
-  console.log('Saving to storage:', piece);
   showAnalyzeResult.value = false;
   // 보관소 저장 로직 추가
 };
 
 const handlePlaceFromStorage = (item) => {
-  console.log('=== Place From Storage ===');
-  console.log('Selected item:', item);
-  console.log('Forest ID:', forestId.value);
-  console.log('========================');
+  
   
   // 아이템 배치 이벤트 발생
   if (proxy && proxy.emitter) {
     proxy.emitter.emit('place-from-storage', item);
-    console.log('Emitted place-from-storage event with:', item);
+    
   } else {
     console.error('Emitter not available');
   }

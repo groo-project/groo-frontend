@@ -54,17 +54,14 @@ const isLoading = ref(false);
 const emit = defineEmits(['select', 'loading']);
 
 const selectCategory = (value) => {
-  console.log('Selecting category value:', value);
   const category = categories.find(cat => cat.value === value);
   if (category) {
-    console.log('Found category:', category);
     selected.value = category.id;
   }
 };
 
 const handleSelect = () => {
   if (selected.value) {
-    console.log('Emitting selected category ID:', selected.value);
     emit('select', selected.value);
   }
 };

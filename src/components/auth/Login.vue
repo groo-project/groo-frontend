@@ -58,8 +58,6 @@ const handleLogin = async (e) => {
     try {
       const { data } = await api.get("/myforest");
       const forestId = data?.[0]?.id || auth.defaultForestId; // 기본 숲 ID도 여기에 포함
-      console.log("내 숲 정보:", data);
-      console.log("이동할 숲 ID:", forestId);
     
       // 숲이 있다면 해당 숲으로 이동
       if (forestId) {
