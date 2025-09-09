@@ -3,7 +3,6 @@ import { ref, computed, watch, getCurrentInstance } from "vue";
 import { useRoute } from 'vue-router'
 import MyDiaryCalendar from '@/components/forest/emotion/MyDiaryCalendar.vue';
 import MyDiaryDetail from '@/components/forest/emotion/MyDiaryDetail.vue';
-import api from '@/lib/api.js'
 import { useAuthStore } from '@/stores/auth.js'
 
 
@@ -117,10 +116,6 @@ function openSaveModal(selectedPiece) {
   emit('showAlert', "회원가입 후 만나요.")
 }
 
-function closeSaveModal() {
-  modalState.value.showSaveModal = false
-}
-
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
 };
@@ -145,18 +140,7 @@ const toggleCategorySelector = async () => {
   if (viewState.value.currentView === 'category') {
     switchView('main', { selectedCategory: null })
   } else {
-    try {
-        const response = await api.get('diaries/today/written')
-      
-        // if (response.data === true) {
-        //     emit('showAlert', "오늘 일기는 이미 작성 하셨네요! 내일 또 봬요!")
-        // } else {
-            switchView('category')
-        // }
-    } catch (error) {
-        console.error('일기 작성 여부 확인 실패:', error)
-        emit('showAlert', "일기 작성 여부 확인에 실패했습니다. 다시 시도해주세요.")
-    }
+    switchView('category')
   }
 };
 
