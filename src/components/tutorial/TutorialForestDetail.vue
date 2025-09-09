@@ -417,7 +417,7 @@ const goToHome = () => {
         <img
           ref="bgRef"
           class="background"
-          src="/tutorial-items/background/default-green.png"
+          src="/tutorial-items/background/default-green.webp"
           alt="Green Background"
         />
         

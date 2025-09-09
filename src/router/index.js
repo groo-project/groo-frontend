@@ -84,7 +84,8 @@ const router = createRouter({
     {
       path: "/tutorial",
       name: "Tutorial",
-      component: Tutorial
+      component: Tutorial,
+      meta: { guestOnly: true }, // 로그인하지 않은 사용자만 접근 가능
     }
   ],
 });
