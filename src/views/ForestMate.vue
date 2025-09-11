@@ -145,7 +145,6 @@ const fetchForestData = async () => {
     isLoading.value = true;
     error.value = null;
 
-
     if (!forestId.value) {
       throw new Error("숲 ID가 없습니다.");
     }
@@ -159,7 +158,7 @@ const fetchForestData = async () => {
     const response = await api.get(apiUrl);
 
     // console.log("API Response:", response);
-    // console.log("Forest ID used:", forestId.value);
+
     
     const data = response.data;
     // console.log("Received data:", data);
@@ -230,6 +229,20 @@ onMounted(() => {
   proxy.emitter.on('forest-name-updated', (data) => {
     if (data.forestId === forestId.value) {
       fetchForestData();
+    }
+  });
+  
+  // SSE 연결 정리 이벤트 처리 (탈퇴 시)
+  proxy.emitter.on('cleanup-sse-connection', (data) => {
+    if (data.forestId === forestId.value && data.userId === user.value?.userId) {
+      
+      // 즉시 페이지 이동
+      const userForestId = user.value?.forestId;
+      if (userForestId) {
+        window.location.href = `/forest-detail/${userForestId}`;
+      } else {
+        window.location.href = '/';
+      }
     }
   });
   
@@ -428,9 +441,11 @@ const setupSSEHandlers = (emitter) => {
   
   
   
-  // 연결 성공 핸들러 (선택적)
-  // EventSource는 자체적으로 연결 상태를 관리하므로
-  // onopen 핸들러는 필요시에만 사용
+  // 연결 성공 핸들러
+  emitter.onopen = () => {
+    // EventSource는 자체적으로 연결 상태를 관리하므로
+    // 불필요한 주기적 체크 제거
+  };
   
   // 연결 오류 핸들러
   emitter.onerror = (error) => {

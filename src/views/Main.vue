@@ -1,7 +1,7 @@
 <!--Main-->
 <script setup>
-import { ref, computed } from "vue";
-import { useRoute } from "vue-router";
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import SideMenu from "@/components/forest/emotion/SideMenu.vue";
 import MateSideMenu from "@/components/forest/mate/MateSideMenu.vue";
 import InviteLinkModal from "@/components/forest/mate/InviteLinkModal.vue";
@@ -13,11 +13,15 @@ import { storeToRefs } from "pinia";
 import api from "@/lib/api.js"; 
 
 const route = useRoute();
+const router = useRouter();
 
 const currentView = ref("background");
 const isInviteLinkModalOpen = ref(false);
 const isForestListModalOpen = ref(false);
 const isWithdrawModalOpen = ref(false);
+
+// 탈퇴 알림 관련
+const showWithdrawalAlert = ref(false);
 
 
 const auth = useAuthStore();
@@ -99,6 +103,15 @@ const openWithdrawModal = () => {
 const closeWithdrawModal = () => {
   isWithdrawModalOpen.value = false;
 };
+
+// 탈퇴 알림 확인
+onMounted(() => {
+  if (route.query.withdrawal === 'true') {
+    showWithdrawalAlert.value = true;
+    // URL에서 쿼리 파라미터 제거
+    router.replace({ path: route.path });
+  }
+});
 </script>
 
 <template>
@@ -146,6 +159,14 @@ const closeWithdrawModal = () => {
       v-if="showAlertModal"
       :message="alertMessage"
       @close="closeAlert"
+    />
+    
+    <!-- 탈퇴 알림 모달 -->
+    <AlertModal
+      v-if="showWithdrawalAlert"
+      message="우정의 숲에서 탈퇴되었습니다."
+      :duration="3000"
+      @close="showWithdrawalAlert = false"
     />
   </div>
 </template>

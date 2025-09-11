@@ -22,6 +22,7 @@ import SnowEffects from "@/components/weather/SnowEffects.vue";
 import ThunderEffects from "@/components/weather/ThunderEffects.vue";
 import CloudyEffects from "@/components/weather/CloudyEffects.vue";
 import StoredItemControlPanel from "@/components/forest/common/placement/StoredItemControlPanel.vue";
+import AlertModal from "@/components/common/AlertModal.vue";
 
 
 
@@ -64,6 +65,9 @@ const selectedGuestBookId = ref(null);
 const bgRef = ref(null);
 const containerRef = ref(null);
 const emit = defineEmits(["showAlert"]);
+
+// 탈퇴 알림 관련
+const showWithdrawalAlert = ref(false);
 
 // 기존 아이템 배치 관련
 const baseSize = ITEM_CONSTANTS.BASE_SIZE;
@@ -229,6 +233,13 @@ const refreshForestData = async () => {
 };
 
 onMounted(async () => {
+  // 탈퇴 알림 확인
+  if (route.query.withdrawal === 'true') {
+    showWithdrawalAlert.value = true;
+    // URL에서 쿼리 파라미터 제거
+    router.replace({ path: route.path });
+  }
+  
   await refreshForestData();
   
   proxy.emitter.on('place-item', (piece) => {
@@ -1057,6 +1068,14 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
     <SnowEffects v-if="showSnow" />
     <ThunderEffects v-if="showThunder" />
     <CloudyEffects v-if="showCloudy" />
+    
+    <!-- 탈퇴 알림 모달 -->
+    <AlertModal
+      v-if="showWithdrawalAlert"
+      message="우정의 숲에서 탈퇴되었습니다."
+      :duration="3000"
+      @close="showWithdrawalAlert = false"
+    />
   </div>
 </template>
 

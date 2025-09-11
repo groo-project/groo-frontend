@@ -73,10 +73,6 @@ onMounted(async () => {
 
       // 개인 숲 ID를 사용 (우정의 숲 ID가 아님)
       const personalForestId = forestList[0].id
-      console.log('=== BackgroundImage ForestId ===');
-      console.log('Personal forest ID from API:', personalForestId);
-      console.log('User forestId from auth:', authStore.user?.forestId);
-      console.log('========================');
       
       router.replace(`forest-detail/${personalForestId}`)
       return
@@ -95,7 +91,6 @@ onMounted(async () => {
         throw new Error('detail 요청 실패')
       }
       forestData.value = await response.json()
-      console.log('forestData:', forestData.value)
     } catch (error) {
       console.error('숲 정보 불러오기 실패:', error)
     }
@@ -114,9 +109,8 @@ const togglePublic = async () => {
     forestData.value.isPublic = !forestData.value.isPublic;
   } catch (err) {
     alertMessage.value = '공개여부 변경에 실패했습니다.'
-    alertType.value = 'error'
+    alertType.value = 'error' 
     showAlert.value = true
-    console.error(err);
   }
 }
 </script>
