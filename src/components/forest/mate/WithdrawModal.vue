@@ -93,7 +93,6 @@ const handleWithdraw = async () => {
 
     // 다른 사용자가 남아있는 경우에만 이벤트 전송
     if (remainingMembers.length > 0) {
-      console.log('다른 사용자에게 이벤트 전송');
       setTimeout(() => {
         if (proxy?.emitter) {
           proxy.emitter.emit('user-withdrawn', {
@@ -108,10 +107,8 @@ const handleWithdraw = async () => {
     
     // 강제 페이지 이동 (window.location 사용)
     if (userForestId.value) {
-      console.log('개인 숲으로 이동:', `/forest-detail/${userForestId.value}`);
       window.location.href = `/forest-detail/${userForestId.value}`;
     } else {
-      console.log('메인 페이지로 이동: /');
       window.location.href = '/';
     }
     

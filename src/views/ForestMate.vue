@@ -179,7 +179,6 @@ const fetchForestData = async () => {
 
 const handleImageError = (e) => {
   console.error("이미지 로드 실패:", e.target.src);
-  console.log("아이템 정보:", forestData.value?.placementList);
 };
 
 onMounted(() => {
@@ -197,7 +196,6 @@ onMounted(() => {
       try {
         eventSource = new EventSource(sseUrl, { withCredentials: true });
       } catch (error) {
-        console.error('EventSource 생성 실패:', error);
         return;
       }
     

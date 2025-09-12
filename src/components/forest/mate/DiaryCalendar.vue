@@ -100,17 +100,14 @@ function selectMonth(m) {
 
 function getUserIdFromToken() {
   if (!token) {
-    console.log('Token이 없습니다');
     return null;
   }
   
   try {
     const payload = JSON.parse(atob(token.split('.')[1]));
-    console.log('Token payload:', payload);
     
     // JWT에서 userId는 sub 필드에 있습니다
     const userId = payload.sub || payload.userId;
-    console.log('Extracted userId:', userId);
     
     return userId;
   } catch (e) {
@@ -124,27 +121,21 @@ async function fetchDiaries() {
   const userId = getUserIdFromToken();
   
   if (!userId) {
-    console.log('UserId가 없어서 함수 종료');
     return;
   }
   
   if (!props.forestId) {
-    console.log('ForestId가 없어서 함수 종료');
     return;
   }
   
   try {
     const apiUrl = `/mate/diary/${props.forestId}/month?year=${year.value}&month=${month.value}`;
-    console.log('API URL:', apiUrl);
     
     const res = await api.get(apiUrl);
-    console.log('API Response:', res);
     
     if (res.data && Array.isArray(res.data)) {
       diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0]);
-      console.log('Diary dates:', diaryDates.value);
     } else {
-      console.log('Response data is not an array:', res.data);
       diaryDates.value = [];
     }
   } catch (e) {
@@ -158,29 +149,17 @@ async function fetchDiaries() {
 watch([year, month], fetchDiaries)
 
 onMounted(() => {
-  console.log('=== DiaryCalendar Mounted ===');
-  console.log('Props forestId:', props.forestId);
-  console.log('Props forestId type:', typeof props.forestId);
-  console.log('Year:', year.value);
-  console.log('Month:', month.value);
-  console.log('========================');
   fetchDiaries();
 })
 
 async function onDiaryClick(date) {
-  console.log('=== DiaryCalendar onDiaryClick ===');
-  console.log('Clicked date:', date);
-  console.log('Props forestId:', props.forestId);
   
   const dateStr = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-  console.log('Date string:', dateStr);
   
   try {
     const apiUrl = `/mate/diary/${props.forestId}/date?date=${dateStr}`;
-    console.log('API URL:', apiUrl);
     
     const res = await api.get(apiUrl);
-    console.log('API Response:', res);
     
     emit('diary-click', {
       diaries: res.data,
