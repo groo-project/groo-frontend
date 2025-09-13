@@ -172,44 +172,20 @@ const logout = () => {
 
 const handleLogoutConfirm = async () => {
   try {
+    // 서버에 HttpOnly 쿠키 삭제 요청
+    try {
+      await api.post('/auth/logout');
+    } catch (postError) {
+      console.error('POST 로그아웃 실패:', postError);
+    }
     
-    // 로그아웃 모달 닫기
-    showLogoutModal.value = false;
-    
-    // 1. 백엔드 로그아웃 API 호출
-    await api.post('/auth/logout');
-
-    // 2. authStore 상태 초기화
+    // authStore 상태 초기화
     await authStore.logout();
     
-    // 4. 로그인 페이지로 이동
     router.push("/login");
+
   } catch (error) {
-    console.error('로그아웃 실패:', error);
-    
-    // 에러가 발생해도 쿠키 삭제 시도
-    try {
-      const cookies = document.cookie.split(";");
-      for (let cookie of cookies) {
-        const eqPos = cookie.indexOf("=");
-        const name = eqPos > -1 ? cookie.substr(0, eqPos).trim() : cookie.trim();
-        if (name) {
-          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=localhost`;
-        }
-      }
-    } catch (cookieError) {
-      console.error('쿠키 삭제 실패:', cookieError);
-    }
-    
-    // 에러가 발생해도 로그인 페이지로 이동
-    try {
-      router.push("/login");
-    } catch (routerError) {
-      console.error('라우터 이동 실패:', routerError);
-      // 라우터 이동이 실패하면 페이지 새로고침
-      window.location.href = "/login";
-    }
+    router.push("/login");
   }
 };
 

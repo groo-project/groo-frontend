@@ -18,6 +18,7 @@ import LoadingAnimation from '@/components/forest/common/LoadingAnimation.vue';
 import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue';
 import ConfirmModal from '@/components/forest/common/ConfirmModal.vue';
 import { useAuthStore } from "@/stores/auth";
+import api from "@/lib/api";
 
 // Emotion Icons
 import joyIcon from '@/icons/joy_icon.png'
@@ -98,15 +99,19 @@ const logout = () => {
 
 const handleLogoutConfirm = async () => {
   try {
-    // 실제 로그아웃 처리
+    // 서버에 HttpOnly 쿠키 삭제 요청
+    try {
+      await api.post('/auth/logout');
+    } catch (postError) {
+      console.error('POST 로그아웃 실패:', postError);
+    }
+    
+    // authStore 상태 초기화
     await authStore.logout();
     
-    
-    // 로그인 페이지로 이동
     router.push("/login");
+
   } catch (error) {
-    
-    // 에러가 발생해도 로그인 페이지로 이동
     router.push("/login");
   }
 };
