@@ -55,7 +55,7 @@ const { proxy } = getCurrentInstance();
 
 const auth = useAuthStore();
 // 반응형으로 꺼내기
-const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
+const { accessToken, isAuthenticated } = storeToRefs(auth); 
 const Token = computed(() => accessToken.value ?? null);
 
 const showAlert = ref(false);
@@ -69,32 +69,21 @@ onMounted(() => {
 });
 
 const handleSubmit = async () => {
-  console.log("=== 초대 코드 수락 시작 ===");
-  console.log("입력된 초대 코드:", inviteCode.value);
-  console.log("초대 코드 길이:", inviteCode.value.length);
-  console.log("토큰 상태:", Token.value ? '있음' : '없음');
-  console.log("사용자 정보:", user.value);
 
   if (inviteCode.value.length === 8) {
 
     if (!Token.value) {
-      console.log("토큰이 없습니다. 로그인 페이지로 이동합니다.");
       router.push("/login");
       return;
     }
 
     try {
-      console.log("초대 코드 검증 API 호출: mate/accept/${inviteCode.value}");
       
       // 초대 코드 검증 API 호출
       const response = await api.post(`mate/accept/${inviteCode.value}`);
 
-      console.log("=== API 응답 ===");
-      console.log("응답 상태:", response.status);
-      console.log("응답 데이터:", response.data);
 
       if (response.status >= 200 && response.status < 300) {
-        console.log("초대 코드 검증 성공!");
         
         if (response.data && response.data.forestId) {
           const mateForestId = response.data.forestId;
@@ -116,17 +105,12 @@ const handleSubmit = async () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      console.error("=== 초대 코드 검증 실패 ===");
-      console.error("Error:", error);
-      console.error("Error message:", error.message);
-      console.error("Error response:", error.response?.data);
-      console.error("==========================");
+      console.error("Error:", error.message);
       
       alertMessage.value = "초대가 만료되었거나 이미 사용된 초대 코드입니다.";
       showAlert.value = true;
     }
   } else {
-    console.log("초대 코드가 8자리가 아닙니다.");
     alertMessage.value = "초대 코드 8자리를 입력해주세요.";
     showAlert.value = true;
   }
