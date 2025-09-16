@@ -454,8 +454,11 @@ const onEditMouseUp = () => {
       item => item.placementId === selectedEditItem.value.placementId
     );
     if (itemIndex !== -1) {
-      forestData.value[0].placementList[itemIndex].placementPositionX = editDragPos.value.x;
-      forestData.value[0].placementList[itemIndex].placementPositionY = editDragPos.value.y;
+      forestData.value[0].placementList[itemIndex].placementPositionX = editDragPos.value.x
+      forestData.value[0].placementList[itemIndex].placementPositionY = editDragPos.value.y
+      forestData.value[0].placementList[itemIndex].placementWidth = editCalculatedWidth.value
+      forestData.value[0].placementList[itemIndex].placementHeight = editCalculatedHeight.value
+      forestData.value[0].placementList[itemIndex].placementZIndex = editItemZIndex.value
     }
     
     // 변경 사항 추적에 추가
