@@ -150,7 +150,7 @@ const authStore = useAuthStore();
 const user = computed(() => authStore.user);
 const token = computed(() => authStore.accessToken || '');
 const forestId = computed(() => authStore.user?.forestId || '');
-const nickname = computed(() => authStore.user?.nickname || "여행자");
+const nickname = computed(() => authStore.user?.email || "여행자");
 
 const currentForestId = computed(() => {
   // forest-detail/:forestId 경로에서 forestId 추출
@@ -163,6 +163,8 @@ const currentForestId = computed(() => {
 
 
 onMounted(() => {
+  console.log("authStore.user", authStore.user);
+  console.log("authStore.user.nickname", authStore.user.nickname);
 });
 
 
