@@ -53,57 +53,70 @@ const handleAlertClose = () => {
   showAlert.value = false;
 };
 
-const handleWithdraw = async () => {
-  try {
-    console.log("=== 우정의 숲 탈퇴 시작 ===");
-    
-    // 우정의 숲 ID (route.params.id)를 사용
-    const mateForestId = route.params.id;
-    console.log("Mate Forest ID (탈퇴할 우정의 숲):", mateForestId);
-    console.log("User Forest ID (개인 숲):", userForestId.value);
+const leaving = ref(false);
 
+// 탈퇴 처리
+const handleWithdraw = async () => {
+  // 중복 요청 방지
+  if (leaving.value) return;
+  
+  leaving.value = true;
+  
+  try {
+    const mateForestId = route.params.id;
+    
     if (!mateForestId) {
       throw new Error("우정의 숲 ID를 찾을 수 없습니다.");
     }
 
-    console.log("탈퇴 API 호출:", `/mate/quit?forestId=${mateForestId}`);
+    // 탈퇴 API 호출
+    await api.delete(`/mate/quit?forestId=${mateForestId}`);
     
-    const response = await api.delete(`/mate/quit?forestId=${mateForestId}`);
+    // 성공 메시지 표시
+    alertMessage.value = "우정의 숲에서 탈퇴되었습니다.";
+    showAlert.value = true;
 
-    console.log("=== 탈퇴 API 응답 ===");
-    console.log("Response:", response);
-    console.log("Response status:", response.status);
-    console.log("Response data:", response.data);
-
-    if (response.status >= 200 && response.status < 300) {
-      alertMessage.value = "우정의 숲에서 탈퇴되었습니다.";
-      showAlert.value = true;
-
-      // 탈퇴 성공 이벤트 발생 (다른 사용자들의 화면 업데이트)
-      if (proxy?.emitter) {
-        proxy.emitter.emit('user-withdrawn', {
-          forestId: mateForestId,
-          userId: authStore.user?.userId,
-          nickname: authStore.user?.nickname,
-          timestamp: new Date().toISOString()
-        });
-        console.log('사용자 탈퇴 이벤트 발생:', mateForestId);
-      }
-
-      router.push(`/forest-detail/${userForestId.value}`);
-    } else {
-      throw new Error(`탈퇴 처리 중 오류가 발생했습니다. (${response.status})`);
+    // 먼저 현재 사용자의 리소스 정리 (이벤트 전송 전)
+    if (proxy?.emitter) {
+      // SSE 연결 정리 이벤트 발생 (자신에게 먼저)
+      proxy.emitter.emit('cleanup-sse-connection', {
+        forestId: mateForestId,
+        userId: authStore.user?.userId
+      });
     }
-  } catch (error) {
-    console.error("=== 탈퇴 실패 ===");
-    console.error("Error:", error);
-    console.error("Error message:", error.message);
-    console.error("Error response:", error.response?.data);
-    console.error("==========================");
+
+    // 다른 사용자들에게 탈퇴 이벤트 전송 (혼자 남은 경우 제외)
+    // 탈퇴 후 남은 멤버가 있는지 확인
+    const remainingMembers = forestMembers.value.filter(member => 
+      member.userId !== authStore.user?.userId
+    );
+
+    // 다른 사용자가 남아있는 경우에만 이벤트 전송
+    if (remainingMembers.length > 0) {
+      setTimeout(() => {
+        if (proxy?.emitter) {
+          proxy.emitter.emit('user-withdrawn', {
+            forestId: mateForestId,
+            userId: authStore.user?.userId,
+            nickname: authStore.user?.nickname,
+            timestamp: new Date().toISOString()
+          });
+        }
+      }, 100); // 100ms 후 이벤트 전송
+    } 
     
+    // 강제 페이지 이동 (window.location 사용)
+    if (userForestId.value) {
+      window.location.href = `/forest-detail/${userForestId.value}`;
+    } else {
+      window.location.href = '/';
+    }
+    
+  } catch (error) {
     alertMessage.value = error.message || "탈퇴 처리 중 오류가 발생했습니다.";
     showAlert.value = true;
   } finally {
+    leaving.value = false;
     emit("close");
   }
 };

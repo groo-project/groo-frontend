@@ -41,7 +41,6 @@ async function init() {
 
   // guestOnly 라우트(/login, /signup, /landing 등)에서는 refresh 생략
   if (!firstRoute.matched.some(r => r.meta?.guestOnly)) {
-    console.log('Attempting initial token refresh...')
     await auth.tryRefresh().catch(() => {})
   }
 

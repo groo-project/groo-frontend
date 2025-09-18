@@ -52,11 +52,6 @@ const authStore = useAuthStore()
 
 const categoryTitle = computed(() => categoryTitles[props.categoryId])
 const forestId = computed(() => {
-  console.log('=== ItemList ForestId ===');
-  console.log('Props forestId:', props.forestId);
-  console.log('Props forestId type:', typeof props.forestId);
-  console.log('Auth store user forestId:', authStore.user?.forestId);
-  console.log('========================');
   return props.forestId;
 })
 const totalItems = computed(() => {
@@ -78,49 +73,27 @@ const handleItemCountRestore = (restoredItem) => {
   const item = items.value.find(i => i.id === restoredItem.id)
   if (item && item.placedCount > 0) {
     item.placedCount -= 1
-    console.log(`Restored item count for ${item.itemName}: ${availableCount(item)}/${item.totalCount}`)
   }
 }
 
 async function fetchItems() {
-  console.log('=== Fetching Items ===');
-  console.log('Category ID:', props.categoryId);
-  console.log('Forest ID:', forestId.value);
-  console.log('Forest ID type:', typeof forestId.value);
-  console.log('Forest ID is valid:', forestId.value !== null && forestId.value !== undefined);
-  console.log('========================');
-  
   if (!forestId.value) {
-    console.error('Forest ID not available - cannot fetch items');
     return
   }
   
   try {
     const response = await api.get(`/items/${props.categoryId}/${forestId.value}`)
-    
-    // 조각이 있든 없든 정상적으로 처리
     items.value = response.data || []
-    console.log('Items fetched:', response.data)
   } catch (error) {
-    // 404는 조각이 없는 정상적인 상황
     if (error.response?.status === 404) {
       items.value = []
-      console.log('No items found for this category and forest');
       return
     }
-    
-    // 실제 에러만 로깅
     console.error('Failed to fetch items:', error);
   }
 }
 
 onMounted(() => {
-  console.log('=== ItemList Mounted ===');
-  console.log('authStore.user:', authStore.user);
-  console.log('forestId.value:', forestId.value);
-  console.log('props.categoryId:', props.categoryId);
-  console.log('========================');
-  
   fetchItems()
   if (proxy?.emitter) {
     proxy.emitter.on('restore-item-count', handleItemCountRestore)

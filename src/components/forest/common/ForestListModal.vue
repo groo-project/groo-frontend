@@ -56,7 +56,6 @@
             class="forest-name-input"
             @keyup.enter="createNewForest"
           />
-          <!-- <span class="input-icon">🌳</span> -->
         </div>
         <button class="create-button" @click="createNewForest">
           <span>만들기</span>
@@ -106,17 +105,12 @@ const getForestList = async () => {
   try {
 
     const response = await api.get(`/mate/forests`);
-
     
     const data = response.data;
 
-    
-    // 서버 응답 형태가 배열이라고 가정
     const list = Array.isArray(data) ? data
                : Array.isArray(data?.forests) ? data.forests
                : [];
-
-
     
     forests.value = list.map(forest => ({
       ...forest,
@@ -128,7 +122,6 @@ const getForestList = async () => {
 
   } catch (error) {
     console.error("Error fetching forest list:", error);
-    console.log("Error details:", error.response?.data);
     alertMessage.value = "숲 목록을 불러오는데 실패했습니다.";
     showAlert.value = true;
   }
@@ -142,14 +135,10 @@ const createNewForest = async () => {
   }
 
   try {
-    console.log("Creating forest with name:", newForestName.value);
     
     const response = await api.post("/mate/forests/new", {
       forestName: newForestName.value,
     });
-
-    console.log("API Response:", response);
-    console.log("New forest created:", response.data);
 
     showCreateForestModal.value = false;
     newForestName.value = "";
@@ -159,7 +148,6 @@ const createNewForest = async () => {
     await getForestList();
   } catch (error) {
     console.error("Error creating forest:", error);
-    console.log("Error details:", error.response?.data);
     alertMessage.value = "숲 생성에 실패했습니다. 다시 시도해주세요.";
     showAlert.value = true;
   }
@@ -176,7 +164,6 @@ const handleForestClick = (forestId) => {
   // 우정의 숲 ID는 route.params.id로 전달됨
   mateForestStore.setCurrentMateForestId(forestId);
   emit("close");
-  console.log("Navigating to:", `/forestmate/${forestId}`);
   router.push(`/forestmate/${forestId}`);
 };
 

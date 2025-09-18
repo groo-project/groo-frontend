@@ -78,16 +78,12 @@ const handleSubmit = async () => {
   }
 
   try {
-    console.log('=== 우정의 숲 이름 수정 시작 ===');
-    console.log('Forest ID:', props.forestId);
-    console.log('새로운 이름:', editingName.value);
     
     const response = await api.patch(`emotion-forest/${props.forestId}/name`, {
       name: editingName.value
     });
     
     if (response.status >= 200 && response.status < 300) {
-      console.log('우정의 숲 이름 수정 성공!');
       
       emit("update", editingName.value);
       emit("close");
@@ -95,11 +91,8 @@ const handleSubmit = async () => {
       throw new Error(`숲 이름 수정 실패: ${response.status}`);
     }
   } catch (error) {
-    console.error("=== 우정의 숲 이름 수정 실패 ===");
-    console.error("Error:", error);
-    console.error("Error message:", error.message);
+    console.error("Error:", error.message);
     console.error("Error response:", error.response?.data);
-    console.error("==========================");
     
     alertMessage.value = "숲 이름 수정에 실패했습니다.";
     showAlert.value = true;

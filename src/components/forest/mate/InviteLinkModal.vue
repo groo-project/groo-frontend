@@ -38,7 +38,14 @@
               ref="linkInput"
               class="link-input"
             />
-            <button @click="copyLink" class="copy-button"> 복사하기 </button>
+            <button 
+              @click="copyLink" 
+              class="copy-button"
+              :class="{ 'copied': isCopied }"
+              :disabled="isCopied"
+            > 
+              {{ copyButtonText }}
+            </button>
           </div>
         </div>
       </div>
@@ -63,23 +70,50 @@ const props = defineProps({
 defineEmits(["close"]);
 
 const linkInput = ref(null);
+const isCopied = ref(false);
+const copyButtonText = ref('복사하기');
+
 const shareUrl = computed(() => {
   return `${props.inviteLink}`;
 });
 
 const copyLink = async () => {
   try {
-    if (linkInput.value) {
-      linkInput.value.select();
-      await navigator.clipboard.writeText(shareUrl.value);
-      console.log('초대 링크가 클립보드에 복사되었습니다:', shareUrl.value);
-    }
+    // 현대적인 Clipboard API 사용
+    await navigator.clipboard.writeText(shareUrl.value);
+    
+    // 성공 피드백
+    isCopied.value = true;
+    copyButtonText.value = '복사완료!';
+    
+    // 2초 후 원래 텍스트로 복원
+    setTimeout(() => {
+      isCopied.value = false;
+      copyButtonText.value = '복사하기';
+    }, 2000);
+    
   } catch (err) {
-    console.error('클립보드 복사 실패:', err);
-    // fallback: 구식 방식
-    if (linkInput.value) {
-      linkInput.value.select();
-      document.execCommand("copy");
+    console.warn('Clipboard API 실패, fallback 사용:', err);
+    
+    // 구식 방법으로 fallback
+    try {
+      if (linkInput.value) {
+        linkInput.value.select();
+        linkInput.value.setSelectionRange(0, 99999); // 모바일 대응
+        document.execCommand("copy");
+        
+        // 성공 피드백
+        isCopied.value = true;
+        copyButtonText.value = '복사완료!';
+        
+        setTimeout(() => {
+          isCopied.value = false;
+          copyButtonText.value = '복사하기';
+        }, 2000);
+      }
+    } catch (fallbackErr) {
+      console.error('복사 실패:', fallbackErr);
+      alert('복사에 실패했습니다. 링크를 직접 선택해서 복사해주세요.');
     }
   }
 };
@@ -282,9 +316,30 @@ const copyLink = async () => {
   gap: 8px;
 }
 
-.copy-button:hover {
+.copy-button:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(58, 90, 64, 0.3);
+}
+
+.copy-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.copy-button.copied {
+  animation: successPulse 0.6s ease-in-out;
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .sparkle {

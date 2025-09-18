@@ -22,6 +22,7 @@ import SnowEffects from "@/components/weather/SnowEffects.vue";
 import ThunderEffects from "@/components/weather/ThunderEffects.vue";
 import CloudyEffects from "@/components/weather/CloudyEffects.vue";
 import StoredItemControlPanel from "@/components/forest/common/placement/StoredItemControlPanel.vue";
+import AlertModal from "@/components/common/AlertModal.vue";
 
 
 
@@ -64,6 +65,9 @@ const selectedGuestBookId = ref(null);
 const bgRef = ref(null);
 const containerRef = ref(null);
 const emit = defineEmits(["showAlert"]);
+
+// 탈퇴 알림 관련
+const showWithdrawalAlert = ref(false);
 
 // 기존 아이템 배치 관련
 const baseSize = ITEM_CONSTANTS.BASE_SIZE;
@@ -219,32 +223,35 @@ const refreshForestData = async () => {
     
   } catch (error) {
     console.error('숲 정보 불러오기 실패:', error);
-    console.log('Error details:', error.response?.data);
 
     // 자신의 숲이 아닐 때
     if (error.response?.data.code === "F002") {
       emit('showAlert', "해당 숲에는 방문할 수 없어요.")
-      console.log(forestId.value);
       router.replace(`/forest-detail/${auth.user.forestId}`)
     }
   }
 };
 
 onMounted(async () => {
+  // 탈퇴 알림 확인
+  if (route.query.withdrawal === 'true') {
+    showWithdrawalAlert.value = true;
+    // URL에서 쿼리 파라미터 제거
+    router.replace({ path: route.path });
+  }
+  
   await refreshForestData();
   
   proxy.emitter.on('place-item', (piece) => {
     selectedPiece.value = piece;
     dragPos.value = { x: ITEM_CONSTANTS.DEFAULT_POSITION.x, y: ITEM_CONSTANTS.DEFAULT_POSITION.y };
     showControlPanel.value = true;
-    console.log('Received piece in ForestDetail:', selectedPiece.value);
+
   });
   
   proxy.emitter.on('diary-saved', (response) => {
-    console.log('Received diary save response:', response);
     if (response.weather) {
       currentWeather.value = response.weather;
-      console.log('Updated weather:', currentWeather.value);
     }
   });
 
@@ -254,7 +261,6 @@ onMounted(async () => {
     storedItemScale.value = 1.0;
     storedItemZIndex.value = ITEM_CONSTANTS.DEFAULT_Z_INDEX;
     showStoredItemControlPanel.value = true;
-    console.log('Received stored item for placement:', item);
   });
 });
 
@@ -274,32 +280,22 @@ const togglePublic = async () => {
   if (!forestData.value) return;
 
   try {
-    console.log('=== 공개여부 변경 시작 ===');
-    console.log('Forest ID:', forestData.value[0].forestId);
-    console.log('현재 공개여부:', forestData.value[0].isPublic);
-    
+
     const res = await api.patch(`emotion-forest/public/${forestData.value[0].forestId}`, {});
     
-    console.log('=== 공개여부 변경 API 응답 ===');
-    console.log('Response status:', res.status);
-    console.log('Response data:', res.data);
-    console.log('========================');
+
     
     if (res.status >= 200 && res.status < 300) {
       // 성공 시 공개여부 토글
       forestData.value[0].isPublic = !forestData.value[0].isPublic;
-      console.log('공개여부 변경 성공:', forestData.value[0].isPublic);
+
       
       emit('showAlert', "공개여부가 변경되었습니다!");
     } else {
       throw new Error(`공개여부 변경 실패: ${res.status}`);
     }
   } catch (err) {
-    console.error('=== 공개여부 변경 실패 ===');
-    console.error('Error:', err);
-    console.error('Error message:', err.message);
-    console.error('Error response:', err.response?.data);
-    console.error('========================');
+
     
     emit('showAlert', "공개여부 변경에 실패했습니다.");
   }
@@ -351,8 +347,6 @@ const onMouseUp = () => {
   document.removeEventListener('mousemove', onMouseMove);
   document.removeEventListener('mouseup', onMouseUp);
   
-  // 드랍 완료 후 위치 유지 - 추가 처리 없음
-  console.log('드랍 완료, 최종 위치:', dragPos.value);
 };
 
 // 재배치 모드 관련 함수들
@@ -443,9 +437,6 @@ const onEditMouseUp = () => {
   isEditDragging.value = false;
   document.removeEventListener('mousemove', onEditMouseMove);
   document.removeEventListener('mouseup', onEditMouseUp);
-  
-  // 드랍 완료 후 위치 유지 - 추가 처리 없음
-  console.log('편집 아이템 드랍 완료, 최종 위치:', editDragPos.value);
   
   // 변경 사항을 즉시 반영 (선택사항)
   if (selectedEditItem.value) {
@@ -587,12 +578,8 @@ const handleCompleteRearrange = async () => {
     // 모든 요청이 성공했는지 확인 (Axios 방식)
     const allSuccess = results.every(response => response.status >= 200 && response.status < 300);
     
-    console.log('=== 재배치 결과 확인 ===');
     results.forEach((response, index) => {
-      console.log(`요청 ${index + 1}:`, response.status, response.data);
     });
-    console.log('모든 요청 성공:', allSuccess);
-    console.log('========================');
     
     if (allSuccess) {
       emit('showAlert', "재배치가 완료되었습니다!")
@@ -633,9 +620,6 @@ const handleCompletePlacement = async () => {
   };
   
   try {
-    console.log('=== 아이템 배치 시작 ===');
-    console.log('Request body:', body);
-    
     const res = await api.post('emotion-forest/placement', body);
     
     emit('showAlert', "배치가 완료되었습니다!")
@@ -748,10 +732,6 @@ const handleNameUpdate = (newName) => {
 };
 
 const goToHome = () => {
-  console.log('=== Go To Home ===');
-  console.log('User:', user.value);
-  console.log('Current Forest ID:', forestId.value);
-  console.log('========================');
   
   if (user.value?.forestId) {
     // 회원의 forestId로 이동
@@ -782,17 +762,7 @@ const completeStoredItemPlacement = async () => {
       itemZIndex: storedItemZIndex.value
     };
     
-    console.log('=== Stored Item Placement Request ===');
-    console.log('Request body:', requestBody);
-    console.log('Token:', Token.value);
-    console.log('========================');
-    
     const response = await api.post('emotion-forest/placements/from-storage', requestBody);
-
-    console.log('=== Stored Item Placement Response ===');
-    console.log('Response status:', response.status);
-    console.log('Response data:', response.data);
-    console.log('========================');
 
     if (response.status >= 200 && response.status < 300) {
       refreshForestData();
@@ -1101,6 +1071,14 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
     <SnowEffects v-if="showSnow" />
     <ThunderEffects v-if="showThunder" />
     <CloudyEffects v-if="showCloudy" />
+    
+    <!-- 탈퇴 알림 모달 -->
+    <AlertModal
+      v-if="showWithdrawalAlert"
+      message="우정의 숲에서 탈퇴되었습니다."
+      :duration="3000"
+      @close="showWithdrawalAlert = false"
+    />
   </div>
 </template>
 
