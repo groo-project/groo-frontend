@@ -11,6 +11,8 @@ import AlertModal from "@/components/common/AlertModal.vue";
 import { useAuthStore } from "@/stores/auth.js"; 
 import { storeToRefs } from "pinia";
 import api from "@/lib/api.js"; 
+import ConfirmModal from "@/components/forest/common/ConfirmModal.vue";
+import DraftListModal from "@/components/forest/common/DraftListModal.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -104,6 +106,28 @@ const closeWithdrawModal = () => {
   isWithdrawModalOpen.value = false;
 };
 
+// ConfirmModal 관련
+const isConfirmOpen = ref(false);
+const confirmTitle = ref('');
+const confirmMessage = ref('');
+const confirmSubMessage = ref('');
+let confirmCallback = null;
+
+const openConfirmModal = ({ title, message, subMessage, callback }) => {
+  confirmTitle.value = title;
+  confirmMessage.value = message;
+  confirmSubMessage.value = subMessage;
+  confirmCallback = callback;
+  isConfirmOpen.value = true;
+}
+
+const handleConfirm = async () => {
+  if (confirmCallback) {
+    await confirmCallback();
+  }
+  isConfirmOpen.value = false;
+}
+
 // 탈퇴 알림 확인
 onMounted(() => {
   if (route.query.withdrawal === 'true') {
@@ -134,6 +158,7 @@ onMounted(() => {
         @change-view="changeView"
         @openForestList="openForestListModal"
         @showAlert="showAlert"
+        @request-confirm="openConfirmModal"
       />
     </template>
     
@@ -161,12 +186,22 @@ onMounted(() => {
       @close="closeAlert"
     />
     
+    <!-- 위 Alert와 통합 필요 -->
     <!-- 탈퇴 알림 모달 -->
     <AlertModal
       v-if="showWithdrawalAlert"
       message="우정의 숲에서 탈퇴되었습니다."
       :duration="3000"
       @close="showWithdrawalAlert = false"
+    />
+
+    <ConfirmModal
+      :is-open="isConfirmOpen"
+      :title="confirmTitle"
+      :message="confirmMessage"
+      :sub-message="confirmSubMessage"
+      @confirm="handleConfirm"
+      @cancel="isConfirmOpen = false"
     />
   </div>
 </template>

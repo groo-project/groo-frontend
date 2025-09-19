@@ -67,7 +67,7 @@ import { ref, computed, onMounted } from 'vue';
 import VueFlatPickr from 'vue-flatpickr-component';
 import 'flatpickr/dist/flatpickr.css';
 import { Korean } from 'flatpickr/dist/l10n/ko.js';
-import { diaryApi } from '@/lib/api';
+import api from '@/lib/api';
 import AlertModal from '@/components/common/AlertModal.vue';
 import { useAuthStore } from '@/stores/auth';
 import { useMateForestStore } from '@/stores/mateForest';
@@ -169,23 +169,21 @@ const saveDiary = async () => {
       showAlertModal('숲 정보를 찾을 수 없습니다. 다시 로그인해주세요.', 'error');
       return;
     }
-    
-    const requestData = {
-      content: diaryContent.value,
-      categoryId: props.categoryId,
-      forestId: forestId,
-      createdAt: createdAt
-    };
 
-    
-    const response = await diaryApi.createDiary(requestData);
+    const body = {
+      forestId: Number(forestId),
+      content: diaryContent.value,
+      categoryId: Number(props.categoryId),
+      createdAt
+    }
+
+    const response = await api.post('/diaries', body);
 
     if (!response) {
       throw new Error('API 응답이 없습니다.');
     }
     
-    
-    emit('save', response);
+    emit('save', response.data);
   } catch (error) {
     console.error('일기 저장 실패:', error);
     showAlertModal('일기 저장에 실패했습니다. 다시 시도해주세요.', 'error');

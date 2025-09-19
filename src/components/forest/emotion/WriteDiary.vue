@@ -19,7 +19,7 @@
         </div>
 
         <div class="button-group">
-          <button class="action-btn secondary" @click="loadDraft">
+          <button class="action-btn secondary" @click="openDraftListModal">
             불러오기
           </button>
           <button class="action-btn secondary" @click="saveDraft">
@@ -51,14 +51,22 @@
       </div>
     </div>
   </div>
+  <DraftListModal
+    :is-visible="isDraftListModalOpen"
+    @load-draft="handleLoadDraft"
+    @show-alert="emit('showAlert', $event)"
+    @close="isDraftListModalOpen = false"
+    @request-confirm="emit('request-confirm', $event)"
+  />
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import 'flatpickr/dist/flatpickr.css';
-import { diaryApi } from '@/lib/api';
+import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
 import { useDiaryWriteStore } from '@/stores/diaryWrite';
+import DraftListModal from '../common/DraftListModal.vue';
 
 const auth = useAuthStore();
 const diaryWriteStore = useDiaryWriteStore();
@@ -75,7 +83,6 @@ const props = defineProps({
 
 const diaryContent = ref('');
 const charCount = ref(0);
-const selectedDate = ref(new Date());
 
 // 날짜 포맷팅
 const formattedDate = computed(() => {
@@ -106,6 +113,7 @@ const lengthMessage = computed(() => {
 // 저장 버튼 활성화 조건
 const canSave = computed(() => {
 
+  // 배포 시 비활성화
   return true;
 
   // 배포 시 활성화
@@ -117,23 +125,81 @@ const updateCharCount = () => {
   charCount.value = diaryContent.value.length;
 };
 
-const saveDraft = () => {
+const truncate = (text, length = 15) => {
+  if (!text) return '';
+  return text.length > length ? text.slice(0, length) + '...' : text;
+}
 
-  // 실제 api로 수정 필요
-  localStorage.setItem('diaryDraft', JSON.stringify({
-    content: diaryContent.value,
-    date: selectedDate.value
-  }));
-  emit("showAlert", "임시저장되었습니다.");
+const overwriteDraft = async (draftId, content) => {
+  const body = {
+    diaryDraftId: draftId,
+    content: content,
+  }
+  try {
+    await api.put('/diaries/drafts', body);
+    emit("showAlert", "덮어쓰기가 완료되었습니다.");
+  } catch (e) {
+    console.error(e);
+    emit("showAlert", "덮어쓰기가 실패했어요. 잠시 후 다시 시도해 주세요.");
+  }
+  
+}
+
+const saveDraft = async () => {
+  if (diaryContent.value.length === 0) {
+    emit("showAlert", "내용을 작성해 주세요!");
+    return;
+  }
+
+  const draft = await isDraftExist(diaryWriteStore.writeDate)
+  if (draft.draftId === null) {
+    try {
+      const body = {
+        date: diaryWriteStore.writeDate,
+        content: diaryContent.value,
+      }
+
+      await api.post("/diaries/drafts", body);
+      emit("showAlert", "임시저장되었습니다.");
+    } catch (e) {
+      emit("showAlert", "임시 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+    }
+  } else {
+    emit('request-confirm', {
+      title: "덮어쓰기",
+      message: `이미 임시 저장 정보가 있습니다. 덮어쓸까요?`,
+      subMessage: `${draft.diaryDate}: ${truncate(draft.content)}`,
+      callback: () => overwriteDraft(draft.draftId, diaryContent.value)
+    })
+  }
 };
 
-const loadDraft = () => {
+/**
+ * 임시 저장 존재 여부 반환
+ * @param date yyyy-MM-dd 형식
+ */
+const isDraftExist = async (date) => {
+  try {
+    const response = await api.get(`/diaries/drafts/${date}`);
+    
+    return response.data;
+  } catch (e) {
+    emit("showAlert", "임시저장 여부를 불러오지 못했습니다. 나중에 다시 시도해 주세요.");
+  }
+}
 
-  // 실제 api로 수정 필요
-  emit("showAlert", "임시저장 기능은 현재 사용할 수 없습니다.");
+// DraftListModal 관련
+const isDraftListModalOpen = ref(false)
+
+const openDraftListModal = () => {
+  isDraftListModalOpen.value = true
 };
 
-const emit = defineEmits(['save', 'loading', 'showAlert']);
+const handleLoadDraft = (content) => {
+  diaryContent.value = content;
+}
+
+const emit = defineEmits(['save', 'loading', 'showAlert', 'request-confirm']);
 
 const saveDiary = async () => {
   try {
@@ -153,21 +219,21 @@ const saveDiary = async () => {
       emit("showAlert", "숲 정보를 찾을 수 없습니다. 다시 로그인해주세요.");
       return;
     }
-    
-    const requestData = {
+
+    const body = {
+      forestId: Number(forestId),
       content: diaryContent.value,
-      categoryId: props.categoryId,
-      forestId: forestId,
-      createdAt: createdAt
-    };
+      categoryId: Number(props.categoryId),
+      createdAt
+    }
     
-    const response = await diaryApi.createDiary(requestData);
+    const response = await api.post('/diaries', body);
 
     if (!response) {
       throw new Error('API 응답이 없습니다.');
     }
     
-    emit('save', response);
+    emit('save', response.data);
   } catch (error) {
     console.error('일기 저장 실패:', error);
     emit("showAlert", "일기 저장에 실패했습니다. 다시 시도해주세요.");
@@ -182,8 +248,7 @@ onMounted(() => {
   if (forestId === null || forestId === undefined) {
     console.warn('Warning: Invalid forestId on component mount:', forestId);
   }
-  
-  selectedDate.value = new Date();
+
   updateCharCount();
 });
 </script>
