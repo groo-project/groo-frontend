@@ -111,19 +111,20 @@ const isConfirmOpen = ref(false);
 const confirmTitle = ref('');
 const confirmMessage = ref('');
 const confirmSubMessage = ref('');
-let confirmCallback = null;
+const confirmCallback = ref(null);
 
 const openConfirmModal = ({ title, message, subMessage, callback }) => {
   confirmTitle.value = title;
   confirmMessage.value = message;
   confirmSubMessage.value = subMessage;
-  confirmCallback = callback;
+  confirmCallback.value = callback;
   isConfirmOpen.value = true;
 }
 
 const handleConfirm = async () => {
-  if (confirmCallback) {
-    await confirmCallback();
+  if (confirmCallback.value) {
+    await confirmCallback.value();
+    confirmCallback.value = null;
   }
   isConfirmOpen.value = false;
 }
