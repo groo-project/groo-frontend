@@ -8,6 +8,9 @@
         <slot>
           <p>{{ message }}</p>
         </slot>
+        <slot>
+          <p>{{ subMessage }}</p>
+        </slot>
       </div>
       <div class="modal-actions">
         <button class="modal-btn" @click="$emit('confirm')">확인</button>
@@ -21,7 +24,8 @@
 defineProps({
   isOpen: Boolean,
   title: { type: String, default: '확인' },
-  message: { type: String, default: '저장하시겠습니까?' }
+  message: { type: String, default: '저장하시겠습니까?' },
+  subMessage: { type: String, default: null}
 });
 defineEmits(['confirm', 'cancel']);
 </script>

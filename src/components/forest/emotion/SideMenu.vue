@@ -36,7 +36,7 @@ import romanceIcon from '@/icons/romance_icon.png'
 
 const router = useRouter();
 const route = useRoute();
-const emit = defineEmits(["openForestList", "showAlert"]);
+const emit = defineEmits(["openForestList", "showAlert", "request-confirm"]);
 const { proxy } = getCurrentInstance();
 
 const forwardShowAlert = (msg) => {
@@ -150,21 +150,11 @@ const authStore = useAuthStore();
 const user = computed(() => authStore.user);
 const token = computed(() => authStore.accessToken || '');
 const forestId = computed(() => authStore.user?.forestId || '');
-const nickname = computed(() => authStore.user?.email || "여행자");
-
-const currentForestId = computed(() => {
-  // forest-detail/:forestId 경로에서 forestId 추출
-  if (route.name === "ForestDetail") {
-    return route.params.forestId || forestId;
-  }
-  return null;
-});
-
-
+const nickname = computed(() => authStore.user?.nickname || "여행자");
 
 onMounted(() => {
-  console.log("authStore.user", authStore.user);
-  console.log("authStore.user.nickname", authStore.user.nickname);
+  // console.log("authStore.user", authStore.user);
+  // console.log("authStore.user.nickname", authStore.user.nickname);
 });
 
 
@@ -426,6 +416,7 @@ watch(
               @save="handleDiarySave"
               @loading="(val) => (categoryLoading = val)"
               @showAlert="forwardShowAlert"
+              @request-confirm="emit('request-confirm', $event)"
             />
             <div v-if="categoryLoading" class="loading-overlay">
               <LoadingAnimation />
