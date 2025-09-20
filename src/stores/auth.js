@@ -97,7 +97,7 @@ export const useAuthStore = defineStore('auth', {
             } else {
             }
             
-            const response = await api.post('/auth/refresh');
+            const response = await api.post('auth/refresh');
             
             
             if (response.data && response.data.accessToken) {
@@ -135,7 +135,7 @@ export const useAuthStore = defineStore('auth', {
             // user 정보가 없거나 불완전하면 서버에서 사용자 정보를 다시 가져오기
             if (!this.user || !this.user.forestId || !this.user.nickname) {
                 try {
-                    const userResponse = await api.get('/myforest');
+                    const userResponse = await api.get('myforest');
                     if (userResponse.data && userResponse.data.length > 0) {
                         const userInfo = userResponse.data[0];
                         this.$patch((state) => {

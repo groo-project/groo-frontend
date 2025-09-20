@@ -56,7 +56,7 @@ const openInviteLinkModal = async () => {
     // URL에서 forestId 추출
     const forestId = route.params.id;
 
-    const response = await api.get(`/mate/link`, {
+    const response = await api.get(`mate/link`, {
       params: {
         forestId: forestId
       }

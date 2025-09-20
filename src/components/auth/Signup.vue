@@ -31,7 +31,7 @@ const showAlertModal = (message, type = 'info') => {
 const sendVerification = async () => {
   loadingVerification.value = true
   try {
-    const response = await api.post('/mails', {
+    const response = await api.post('mails', {
       email: email.value,
     })
     
@@ -54,7 +54,7 @@ const verifyCode = async () => {
   verificationCheckMessage.value = ''
   loadingVerificationCheck.value = true
   try {
-    const response = await api.post('/mails/verification', {
+    const response = await api.post('mails/verification', {
       email: email.value,
       authNum: verificationCode.value,
     })
@@ -79,7 +79,7 @@ const handleSignUp = async (e) => {
   e.preventDefault()
 
   try {
-    const response = await api.post('/auth/signup', {
+    const response = await api.post('auth/signup', {
       email: email.value,
       password: password.value,
       nickname: nickname.value,

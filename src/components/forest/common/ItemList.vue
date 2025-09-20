@@ -82,7 +82,7 @@ async function fetchItems() {
   }
   
   try {
-    const response = await api.get(`/items/${props.categoryId}/${forestId.value}`)
+    const response = await api.get(`items/${props.categoryId}/${forestId.value}`)
     items.value = response.data || []
   } catch (error) {
     if (error.response?.status === 404) {
