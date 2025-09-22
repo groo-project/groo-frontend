@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import api from '@/lib/api';
+import { jwtDecode } from 'jwt-decode';
 
 
 export const useAuthStore = defineStore('auth', {
@@ -44,15 +45,18 @@ export const useAuthStore = defineStore('auth', {
                 throw new Error('Access token not received');
             }
             
+            const payload = jwtDecode(this.accessToken)
+
             // 서버 응답 그대로 저장
             this.$patch((state) => {
-                state.user = data.user || null; // 사용자 정보 저장 (forestId 포함)
-                state.roles = data.roles || []; // 사용자 역할 저장
-            });  
-
-
+                state.user = {
+                    userId: parseInt(payload.sub),
+                    email: payload.email || 'unknown',
+                    nickname: payload.nickname || '여행자' // JWT에서 nickname 추출 시도
+                };
+            });
+            
             return true; // 로그인 성공
-
         }   
         catch (error) {
             if (error.response && error.response.status === 401) {
@@ -87,7 +91,7 @@ export const useAuthStore = defineStore('auth', {
             const refreshToken = document.cookie.split('; ').find(row => row.startsWith('refreshToken='))?.split('=')[1];
             if (refreshToken) {
                 try {
-                    const payload = JSON.parse(atob(refreshToken.split('.')[1]));
+                    // const payload = JSON.parse(atob(refreshToken.split('.')[1]));
                 } catch (e) {
                 }
             } else {
@@ -101,41 +105,32 @@ export const useAuthStore = defineStore('auth', {
             } else {
                 throw new Error('No access token received from refresh');
             }
-            
-            if (response.data.user) {
+
+            try {
+                const payload = jwtDecode(this.accessToken)
+                
                 // Pinia 상태를 직접 업데이트
                 this.$patch((state) => {
-                    state.user = response.data.user;
+                    state.user = {
+                        userId: parseInt(payload.sub),
+                        email: payload.email || 'unknown',
+                        forestId: payload.forestId || null, // JWT에서 forestId 추출 시도
+                        nickname: payload.nickname || '여행자' // JWT에서 nickname 추출 시도
+                    };
                 });
                 
-            } else {
-                try {
-                    const payload = JSON.parse(atob(this.accessToken.split('.')[1]));
-                    
-                    // Pinia 상태를 직접 업데이트
-                    this.$patch((state) => {
-                        state.user = {
-                            userId: parseInt(payload.sub),
-                            email: payload.email || 'unknown',
-                            forestId: payload.forestId || null, // JWT에서 forestId 추출 시도
-                            nickname: payload.nickname || '여행자' // JWT에서 nickname 추출 시도
-                        };
-                    });
-                    
-                    // 강제로 상태 동기화
-                    if (!this.user || !this.user.forestId) {
-                        this.user = {
-                            userId: parseInt(payload.sub),
-                            email: payload.email || 'unknown',
-                            forestId: payload.forestId || null,
-                            nickname: payload.nickname || '여행자'
-                        };
-                    }
-                } catch (e) {
-                    console.error('Failed to extract user info from JWT:', e);
+                // 강제로 상태 동기화
+                if (!this.user || !this.user.forestId) {
+                    this.user = {
+                        userId: parseInt(payload.sub),
+                        email: payload.email || 'unknown',
+                        forestId: payload.forestId || null,
+                        nickname: payload.nickname || '여행자'
+                    };
                 }
+            } catch (e) {
+                console.error('Failed to extract user info from JWT:', e);
             }
-            if (response.data.roles) this.roles = response.data.roles;
             
             // user 정보가 없거나 불완전하면 서버에서 사용자 정보를 다시 가져오기
             if (!this.user || !this.user.forestId || !this.user.nickname) {

@@ -12,7 +12,6 @@ import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from "pinia";
 import api from "@/lib/api.js"; 
 import ConfirmModal from "@/components/forest/common/ConfirmModal.vue";
-import DraftListModal from "@/components/forest/common/DraftListModal.vue";
 
 const route = useRoute();
 const router = useRouter();

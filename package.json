@@ -12,6 +12,7 @@
     "@lottiefiles/dotlottie-vue": "^0.6.3",
     "axios": "^1.11.0",
     "flatpickr": "^4.6.13",
+    "jwt-decode": "^4.0.0",
     "lottie": "^0.0.1",
     "mitt": "^3.0.1",
     "pinia": "^3.0.3",

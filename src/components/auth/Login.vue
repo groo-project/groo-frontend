@@ -126,10 +126,10 @@ const handleLogin = async (e) => {
           placeholder="비밀번호를 입력하세요"
         />
 
-        <div class="remember-me">
+        <!-- <div class="remember-me">
           <input type="checkbox" id="remember-me" />
           <label for="remember-me">로그인 유지</label>
-        </div>
+        </div> -->
 
         <button type="submit" class="login-button">로그인</button>
       </form>
@@ -139,14 +139,14 @@ const handleLogin = async (e) => {
         <router-link to="/signup" class="signup">회원가입</router-link>
       </div>
 
-      <div class="social-login">
+      <!-- <div class="social-login">
         <span>또는</span>
         <div class="social-icons">
           <img src="/kakao-icon.png" alt="Kakao" />
           <img src="/naver-icon.png" alt="Naver" />
           <img src="/google-icon.png" alt="Google" />
         </div>
-      </div>
+      </div> -->
     </div>
     <AlertModal 
       v-if="showAlert" 
