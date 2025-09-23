@@ -93,7 +93,11 @@ const handleSignUp = async (e) => {
       throw new Error('회원가입 실패')
     }
   } catch (error) {
-    showAlertModal('회원가입 실패', 'error')
+    if (error.response.data.code == 'U003') {
+      showAlertModal("이미 존재하는 닉네임이에요!");
+    } else {
+      showAlertModal('회원가입 실패', 'error')
+    }
   }
 }
 
