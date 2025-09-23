@@ -20,7 +20,7 @@
         <img :src="item.imageUrl" :alt="item.itemName" class="item-image" />
         <div class="item-info">
           <div class="item-count">{{ availableCount(item) }}/{{ item.totalCount }}</div>
-          <div class="item-name">{{ item.itemName }}</div>
+          <div class="item-name" :title="item.itemName">{{ item.itemName }}</div>
         </div>
       </div>
     </div>
@@ -159,7 +159,7 @@ onUnmounted(() => {
 .item-box {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 16px;
-  padding: 15px;
+  padding: 5px;
   display: flex;
   flex-direction: column;
   align-items: center;
