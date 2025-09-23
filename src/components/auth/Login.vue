@@ -57,10 +57,13 @@ const handleLogin = async (e) => {
     // (3) 내 숲 목록에서 최근 숲으로 이동
     try {
       const { data } = await api.get("/myforest");
-      const forestId = data?.[0]?.id || auth.defaultForestId; // 기본 숲 ID도 여기에 포함
+      const forestId = data?.[0]?.id;
     
       // 숲이 있다면 해당 숲으로 이동
       if (forestId) {
+        auth.$patch(state => {
+          state.user.forestId = forestId;
+        })
         setTimeout(
           () => router.push({ name: "ForestDetail", params: { forestId } }),
           600
