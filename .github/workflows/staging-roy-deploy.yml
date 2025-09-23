@@ -1,0 +1,42 @@
+name: Deploy to S3 + CloudFront
+
+on:
+  push:
+    branches:
+      - staging/roy
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build project
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.R_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.R_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Upload to S3
+        run: |
+          aws s3 sync dist/ s3://${{ secrets.R_S3_BUCKET_NAME }} --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.R_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"

@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // axios 인스턴스 생성
 const api = axios.create({
-    baseURL: 'http://localhost:8080/api',
+    baseURL: import.meta.env.VITE_API_BASE_URL,
     withCredentials: true, // 쿠키를 포함한 요청을 허용
     // RefreshToken을 HttpOnly 쿠키에 저장하는 방식을 쓸 때 반드시 필요
 });
