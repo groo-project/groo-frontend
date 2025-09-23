@@ -70,7 +70,7 @@ const handleWithdraw = async () => {
     }
 
     // 탈퇴 API 호출
-    await api.delete(`/mate/quit?forestId=${mateForestId}`);
+    await api.delete(`mate/quit?forestId=${mateForestId}`);
     
     // 성공 메시지 표시
     alertMessage.value = "우정의 숲에서 탈퇴되었습니다.";

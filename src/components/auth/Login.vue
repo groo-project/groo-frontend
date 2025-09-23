@@ -56,7 +56,7 @@ const handleLogin = async (e) => {
 
     // (3) 내 숲 목록에서 최근 숲으로 이동
     try {
-      const { data } = await api.get("/myforest");
+      const { data } = await api.get("myforest");
       const forestId = data?.[0]?.id;
     
       // 숲이 있다면 해당 숲으로 이동

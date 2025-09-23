@@ -128,7 +128,7 @@ async function fetchDiaries() {
   }
   
   try {
-    const apiUrl = `/mate/diary/${props.forestId}/month?year=${year.value}&month=${month.value}`;
+    const apiUrl = `mate/diary/${props.forestId}/month?year=${year.value}&month=${month.value}`;
     
     const res = await api.get(apiUrl);
     
@@ -156,7 +156,7 @@ async function onDiaryClick(date) {
   const dateStr = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
   
   try {
-    const apiUrl = `/mate/diary/${props.forestId}/date?date=${dateStr}`;
+    const apiUrl = `mate/diary/${props.forestId}/date?date=${dateStr}`;
     
     const res = await api.get(apiUrl);
     

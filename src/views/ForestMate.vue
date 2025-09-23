@@ -153,7 +153,7 @@ const fetchForestData = async () => {
       throw new Error("로그인이 필요합니다.");
     }
 
-    const apiUrl = `/mate/detail/${forestId.value}`;
+    const apiUrl = `mate/detail/${forestId.value}`;
     
     const response = await api.get(apiUrl);
 
@@ -313,7 +313,7 @@ const handleCompletePlacement = async () => {
   };
   try {
     
-    const res = await api.post('/emotion-forest/placement', body);
+    const res = await api.post('emotion-forest/placement', body);
     
     
     if (res.status >= 200 && res.status < 300) {

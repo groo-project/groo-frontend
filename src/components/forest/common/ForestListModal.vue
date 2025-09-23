@@ -104,7 +104,7 @@ const alertMessage = ref("");
 const getForestList = async () => {
   try {
 
-    const response = await api.get(`/mate/forests`);
+    const response = await api.get(`mate/forests`);
     
     const data = response.data;
 
@@ -136,7 +136,7 @@ const createNewForest = async () => {
 
   try {
     
-    const response = await api.post("/mate/forests/new", {
+    const response = await api.post("mate/forests/new", {
       forestName: newForestName.value,
     });
 

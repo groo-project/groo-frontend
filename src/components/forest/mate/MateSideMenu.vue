@@ -101,7 +101,7 @@ const handleLogoutConfirm = async () => {
   try {
     // 서버에 HttpOnly 쿠키 삭제 요청
     try {
-      await api.post('/auth/logout');
+      await api.post('auth/logout');
     } catch (postError) {
       console.error('POST 로그아웃 실패:', postError);
     }
