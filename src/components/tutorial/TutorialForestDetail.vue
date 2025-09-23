@@ -6,7 +6,6 @@ import rearrange_icon from "@/icons/rearrange_icon.png"
 import { useRouter, useRoute } from 'vue-router';
 import EditForestName from "@/components/forest/common/EditForestName.vue";
 import ItemControlPanel from "@/components/forest/common/placement/ItemControlPanel.vue";
-import api from "@/lib/api.js";
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from 'pinia';
 

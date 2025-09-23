@@ -43,7 +43,6 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import backIcon from '@/icons/back.png'
-import forwardIcon from '@/icons/arrow_forward.png'
 import api from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 

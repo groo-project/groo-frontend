@@ -48,7 +48,7 @@
   </template>
   
   <script setup>
-  import backPageIcon from '@/icons/Back.png'
+  import backPageIcon from '@/icons/back.png'
   import forwardIcon from '@/icons/arrow_forward.png'
   
   const props = defineProps({
