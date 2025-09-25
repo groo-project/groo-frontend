@@ -5,7 +5,7 @@ import is_public_icon from "@/icons/is_public_icon.png"
 import rearrange_icon from "@/icons/rearrange_icon.png"
 import GuestBookDetail from "@/components/forest/common/guestbook/GuestBookDetail.vue";
 import { useRouter, useRoute } from 'vue-router';
-import EditForestName from "@/components/forest/common/EditForestName.vue";
+import EditForestName from "@/components/forest/common/EidtNickname.vue";
 import ItemControlPanel from "@/components/forest/common/placement/ItemControlPanel.vue";
 import ItemEditPanel from "@/components/forest/common/placement/ItemEditPanel.vue";
 import RearrangeCompletePanel from "@/components/forest/common/placement/RearrangeCompletePanel.vue";
@@ -721,14 +721,12 @@ const sortedPlacementList = computed(() => {
   );
 });
 
-const handleEditNameClick = () => {
+const handleEditNicknameClick = () => {
   showEditName.value = !showEditName.value;
 };
 
-const handleNameUpdate = (newName) => {
-  if (forestData.value && forestData.value.length) {
-    forestData.value[0].name = newName;
-  }
+const handleNicknameUpdate = (newName) => {
+  showEditName.value = !showEditName.value;
 };
 
 const goToHome = () => {
@@ -877,17 +875,18 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
           <img 
             :src="edit_icon"
             class="btn-img"
-            @click="handleEditNameClick"
+            @click="handleEditNicknameClick"
             @mouseenter="showEditNameTooltip = true"
             @mouseleave="showEditNameTooltip = false"
           />
           <div v-if="showEditNameTooltip" class="name-tooltip">
-            숲 이름 변경하기
+            닉네임 변경하기
           </div>
           <EditForestName
             v-if="showEditName"
-            :current-name="forestData?.[0]?.name || ''"
-            @update="handleNameUpdate"
+            :current-name="auth.$state.user.nickname"
+            @nicknameUpdated="handleNicknameUpdate"
+            @showAlert="emit('showAlert', $event)"
           />
         </div>
         
@@ -918,7 +917,7 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
             <div class="tooltip-title">공개 범위 설정</div>
             <div class="tooltip-status"
               :class="forestData && forestData[0].isPublic ? 'public' : 'private'">
-              {{ forestData && forestData[0].isPublic ? '공개중' : '비공개' }}
+              {{ forestData && forestData[0].isPublic ? '공개 중' : '비공개 중' }}
             </div>
           </div>
         </div>
@@ -1187,8 +1186,7 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
 
 .edit-name-container .forest-name-bubble {
   position: absolute;
-  bottom: calc(100% + 8px);
-  left: 50%;
+  left:400%;
   transform: translateX(-50%);
 }
 

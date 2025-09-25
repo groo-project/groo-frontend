@@ -4,7 +4,7 @@ import edit_icon from "@/icons/edit_icon.png"
 import is_public_icon from "@/icons/is_public_icon.png"
 import rearrange_icon from "@/icons/rearrange_icon.png"
 import { useRouter, useRoute } from 'vue-router';
-import EditForestName from "@/components/forest/common/EditForestName.vue";
+import EditForestName from "@/components/forest/common/EidtNickname.vue";
 import ItemControlPanel from "@/components/forest/common/placement/ItemControlPanel.vue";
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from 'pinia';
