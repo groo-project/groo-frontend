@@ -75,7 +75,14 @@ const copyButtonText = ref('복사하기');
 
 // 환경별 도메인 자동 조합
 const getBaseUrl = () => {
-  return import.meta.env.VITE_APP_BASE_URL;
+  const viteBaseUrl = import.meta.env.VITE_APP_BASE_URL;
+  if (viteBaseUrl && viteBaseUrl.length > 0) {
+    return viteBaseUrl;
+  }
+  if (typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  return '';
 };
 
 const shareUrl = computed(() => {
