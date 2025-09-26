@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import api from '@/lib/api';
-import { jwtDecode } from 'jwt-decode';
 
 
 export const useAuthStore = defineStore('auth', {
@@ -9,7 +8,7 @@ export const useAuthStore = defineStore('auth', {
     accessToken: '', // 액세스 토큰
     user: null, // 사용자 정보
     roles: [], // 사용자 역할
-    isRefreshing: false, // 중복 요청 방지 플래그 추가
+    isRefreshing: false, //  중복 요청 방지 플래그 추가
   }),
   getters: {
     isAuthenticated: (state) => !!(state.accessToken && state.user), // 액세스 토큰과 사용자 정보가 모두 있어야 인증됨
