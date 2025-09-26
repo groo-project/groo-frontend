@@ -1,0 +1,46 @@
+name: Frontend Deploy
+
+on:
+  push:
+    branches: [ "develop" ]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install deps
+        run: npm install
+
+      - name: Create .env.staging
+        run: | 
+          echo "VITE_API_BASE_URL=${{ secrets.J_VITE_API_BASE_URL_STAGING }}" > .env.staging
+          
+      - name: Build
+        run: npm run build -- --mode staging 
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.J_AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.J_AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.J_AWS_REGION }}
+
+      - name: Upload to S3
+        run: |
+          aws s3 sync dist/ s3://${{ secrets.J_S3_BUCKET_NAME }} --delete
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.J_CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
