@@ -31,9 +31,21 @@ import tiredIcon from '@/icons/tired_icon.png'
 import romanceIcon from '@/icons/romance_icon.png'
 import MateWriteDiary from "./MateWriteDiary.vue";
 
+// props로 forestId를 받아야함 (우정의 숲 ID)
+const props = defineProps({
+  forestId: {
+    type: [String, Number],
+    required: true
+  }
+});
+
 const { proxy } = getCurrentInstance();
 const route = useRoute();
 const isMenuOpen = ref(true);
+
+// 디버깅: forestId 값 확인
+console.log('MateSideMenu forestId:', props.forestId);
+console.log('MateSideMenu route.params.id:', route.params.id);
 const showDiaryCalendar = ref(false);
 const selectedDiaries = ref(null);
 const currentDiaryIndex = ref(0);
@@ -362,6 +374,7 @@ const handlePlaceFromStorage = (item) => {
           </div>
           <div class="relative-container">
             <MateWriteDiary
+              :forestId="props.forestId"
               :categoryId="selectedCategory"
               @save="handleDiarySave"
               @loading="(val) => (categoryLoading = val)"
@@ -380,7 +393,7 @@ const handlePlaceFromStorage = (item) => {
         </template>
         <div v-else-if="showDiaryCalendar && !showDiaryDetail" class="calendar-view">
           <DiaryCalendar
-            :forestId="route.params.id"
+            :forestId="props.forestId"
             @close="closeDiaryCalendar"
             @diary-click="handleDiaryClick"
           />
@@ -403,7 +416,7 @@ const handlePlaceFromStorage = (item) => {
         </div>
         <div v-else class="myitem-view">
           <MyItemView 
-            :forestId="route.params.id" 
+            :forestId="props.forestId" 
             @close="closeMyItems" 
             @placeFromStorage="handlePlaceFromStorage"
           />

@@ -70,12 +70,16 @@ import { Korean } from 'flatpickr/dist/l10n/ko.js';
 import api from '@/lib/api';
 import AlertModal from '@/components/common/AlertModal.vue';
 import { useAuthStore } from '@/stores/auth';
-import { useMateForestStore } from '@/stores/mateForest';
+import { useRoute } from 'vue-router';
+// import { useMateForestStore } from '@/stores/mateForest';
 
-const auth = useAuthStore();
-const mateForestStore = useMateForestStore();
 
+// props로 forestId를 받아야함 (우정의 숲 ID)
 const props = defineProps({
+  forestId: {
+    type: [String, Number],
+    required: true
+  },
   categoryId: {
     type: Number,
     required: true,
@@ -84,6 +88,9 @@ const props = defineProps({
     }
   }
 });
+
+// 디버깅: forestId 값 확인
+console.log('MateWriteDiary forestId:', props.forestId);
 
 const diaryContent = ref('');
 const charCount = ref(0);
@@ -159,25 +166,24 @@ const saveDiary = async () => {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const createdAt = `${year}-${month}-${day}T00:00:00`;
-    
-    const forestId = mateForestStore.currentMateForestId;
 
-      
+    // const forestId = auth.user?.forestId;
+
     // forestId가 null이나 undefined가 아닌지 확인 (0도 유효한 값으로 처리)
-    if (forestId === null || forestId === undefined) {
-      console.error('Invalid forestId:', forestId);
+    if (props.forestId === null || props.forestId === undefined) {
+      console.error('Invalid forestId:', props.forestId);
       showAlertModal('숲 정보를 찾을 수 없습니다. 다시 로그인해주세요.', 'error');
       return;
     }
-
     const body = {
-      forestId: Number(forestId),
+      forestId: Number(props.forestId),
       content: diaryContent.value,
       categoryId: Number(props.categoryId),
       createdAt
     }
 
     const response = await api.post('/diaries', body);
+
 
     if (!response) {
       throw new Error('API 응답이 없습니다.');
@@ -186,21 +192,22 @@ const saveDiary = async () => {
     emit('save', response.data);
   } catch (error) {
     console.error('일기 저장 실패:', error);
+    console.error('Error details:', error.response || error.message || error);
+    console.log('Request body:', {
+      forestId: props.forestId,
+      content: diaryContent.value,
+      categoryId: props.categoryId,
+      createdAt: createdAt
+    });
+
     showAlertModal('일기 저장에 실패했습니다. 다시 시도해주세요.', 'error');
   } finally {
     emit('loading', false);
   }
 };
 
-// 컴포넌트 마운트 시 임시저장 데이터 불러오기 및 auth 상태 확인
+// 컴포넌트 마운트 시 임시저장 데이터 불러오기
 onMounted(() => {
-  
-  const forestId = auth.user?.forestId;
-  
-  if (forestId === null || forestId === undefined) {
-    console.warn('Warning: Invalid forestId on component mount:', forestId);
-  }
-
   selectedDate.value = new Date();
   updateCharCount();
 });

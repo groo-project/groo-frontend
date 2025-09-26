@@ -148,6 +148,7 @@ onMounted(() => {
     <template v-if="route.path !== '/login'">
       <MateSideMenu
         v-if="route.name === 'ForestMate'"
+        :forestId="route.params.id"
         @openShare="openInviteLinkModal"
         @openForestList="openForestListModal"
         @openWithdraw="openWithdrawModal"
