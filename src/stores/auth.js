@@ -13,9 +13,6 @@ export const useAuthStore = defineStore('auth', {
   }),
   getters: {
     isAuthenticated: (state) => !!(state.accessToken && state.user), // 액세스 토큰과 사용자 정보가 모두 있어야 인증됨
-    // forestId getter 제거 - 각 컴포넌트에서 auth.user.forestId 직접 사용
-    // getUser: (state) => state.user, // 사용자 정보 반환
-    // getRoles: (state) => state.roles, // 사용자 역할 반환
   },
   actions: {
     async login(credentials) {
