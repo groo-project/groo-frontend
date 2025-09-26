@@ -16,7 +16,7 @@ export const useAuthStore = defineStore('auth', {
   },
   actions: {
     async login(credentials) {
-        // ✅ 이미 갱신 중이면 대기
+        // 이미 갱신 중이면 대기
         if (this.isRefreshing) {
             console.log('Token refresh already in progress, waiting...');
             // 진행 중인 갱신 요청이 완료될 때까지 대기
