@@ -63,7 +63,7 @@ const props = defineProps({
   },
   inviteLink: {
     type: String,
-    required: true,
+    required: true, // 여기에는 "초대코드"만 전달됨 (ex: "abcd1234")
   },
 });
 
@@ -73,46 +73,38 @@ const linkInput = ref(null);
 const isCopied = ref(false);
 const copyButtonText = ref('복사하기');
 
+// 환경별 도메인 자동 조합
+const getBaseUrl = () => {
+  return import.meta.env.VITE_APP_BASE_URL;
+};
+
 const shareUrl = computed(() => {
-  return `${props.inviteLink}`;
+  return `${getBaseUrl()}/mate/invite/${props.inviteLink}`;
 });
 
 const copyLink = async () => {
   try {
-    // 현대적인 Clipboard API 사용
     await navigator.clipboard.writeText(shareUrl.value);
-    
-    // 성공 피드백
     isCopied.value = true;
     copyButtonText.value = '복사완료!';
-    
-    // 2초 후 원래 텍스트로 복원
     setTimeout(() => {
       isCopied.value = false;
       copyButtonText.value = '복사하기';
     }, 2000);
-    
   } catch (err) {
-    console.warn('Clipboard API 실패, fallback 사용:', err);
-    
-    // 구식 방법으로 fallback
     try {
       if (linkInput.value) {
         linkInput.value.select();
-        linkInput.value.setSelectionRange(0, 99999); // 모바일 대응
+        linkInput.value.setSelectionRange(0, 99999);
         document.execCommand("copy");
-        
-        // 성공 피드백
         isCopied.value = true;
         copyButtonText.value = '복사완료!';
-        
         setTimeout(() => {
           isCopied.value = false;
           copyButtonText.value = '복사하기';
         }, 2000);
       }
     } catch (fallbackErr) {
-      console.error('복사 실패:', fallbackErr);
       alert('복사에 실패했습니다. 링크를 직접 선택해서 복사해주세요.');
     }
   }
