@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import api from '@/lib/api';
+import { jwtDecode } from 'jwt-decode';
 
 
 export const useAuthStore = defineStore('auth', {
