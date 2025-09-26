@@ -9,7 +9,7 @@ export const useAuthStore = defineStore('auth', {
     accessToken: '', // 액세스 토큰
     user: null, // 사용자 정보
     roles: [], // 사용자 역할
-    isRefreshing: false, // ✅ 중복 요청 방지 플래그 추가
+    isRefreshing: false, // 중복 요청 방지 플래그 추가
   }),
   getters: {
     isAuthenticated: (state) => !!(state.accessToken && state.user), // 액세스 토큰과 사용자 정보가 모두 있어야 인증됨
@@ -29,7 +29,7 @@ export const useAuthStore = defineStore('auth', {
             return true;
         }
         
-        this.isRefreshing = true; // ✅ 갱신 시작 플래그
+        this.isRefreshing = true; //  갱신 시작 플래그
   
 
         try {
@@ -69,7 +69,7 @@ export const useAuthStore = defineStore('auth', {
 
         }
         finally {
-            this.isRefreshing = false; // ✅ 갱신 완료 플래그 초기화
+            this.isRefreshing = false; // 갱신 완료 플래그 초기화
         }
     },
     async tryRefresh() {
