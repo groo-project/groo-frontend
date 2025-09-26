@@ -70,7 +70,7 @@ onMounted(() => {
 
 const handleSubmit = async () => {
 
-  if (inviteCode.value.length === 8) {
+  if (inviteCode.value.length === 16) {
 
     if (!Token.value) {
       router.push("/login");
