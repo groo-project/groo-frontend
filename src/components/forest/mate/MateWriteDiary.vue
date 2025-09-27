@@ -89,8 +89,6 @@ const props = defineProps({
   }
 });
 
-// 디버깅: forestId 값 확인
-console.log('MateWriteDiary forestId:', props.forestId);
 
 const diaryContent = ref('');
 const charCount = ref(0);
