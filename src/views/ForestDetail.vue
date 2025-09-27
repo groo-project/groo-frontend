@@ -1075,7 +1075,7 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
     <AlertModal
       v-if="showWithdrawalAlert"
       message="우정의 숲에서 탈퇴되었습니다."
-      :duration="3000"
+      :duration="1500"
       @close="showWithdrawalAlert = false"
     />
   </div>

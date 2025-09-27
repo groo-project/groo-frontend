@@ -236,10 +236,10 @@ onMounted(() => {
       
       // 즉시 페이지 이동
       const userForestId = user.value?.forestId;
-      if (userForestId) {
-        window.location.href = `/forest-detail/${userForestId}`;
+        if (userForestId) {
+        router.push(`/forest-detail/${userForestId}?withdrawal=true`);
       } else {
-        window.location.href = '/';
+        router.push('/');
       }
     }
   });

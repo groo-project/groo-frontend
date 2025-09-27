@@ -106,11 +106,11 @@ const handleWithdraw = async () => {
     } 
     
     // 강제 페이지 이동 (window.location 사용)
-    if (userForestId.value) {
-      window.location.href = `/forest-detail/${userForestId.value}`;
-    } else {
-      window.location.href = '/';
-    }
+    // if (userForestId.value) {
+    //   window.location.href = `/forest-detail/${userForestId.value}`;
+    // } else {
+    //   window.location.href = '/';
+    // }
     
   } catch (error) {
     alertMessage.value = error.message || "탈퇴 처리 중 오류가 발생했습니다.";
