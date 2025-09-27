@@ -42,10 +42,6 @@ const props = defineProps({
 const { proxy } = getCurrentInstance();
 const route = useRoute();
 const isMenuOpen = ref(true);
-
-// 디버깅: forestId 값 확인
-console.log('MateSideMenu forestId:', props.forestId);
-console.log('MateSideMenu route.params.id:', route.params.id);
 const showDiaryCalendar = ref(false);
 const selectedDiaries = ref(null);
 const currentDiaryIndex = ref(0);
