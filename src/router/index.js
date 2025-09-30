@@ -7,6 +7,7 @@ import MyItemView from "../components/forest/common/MyItemView.vue";
 import Guestbook from "../components/forest/common/guestbook/GuestBook.vue";
 import Login from "@/components/auth/Login.vue";
 import Signup from "@/components/auth/Signup.vue";
+import ForgotPassword from "@/components/auth/ForgotPassword.vue";
 import ForestDetail from "@/views/ForestDetail.vue";
 import BackgroundImage from "@/components/BackgroundImage.vue";
 import InviteCodeView from "../views/InviteCodeView.vue";
@@ -68,6 +69,12 @@ const router = createRouter({
       path: "/signup",
       name: "SignUp",
       component: Signup,
+      meta: { guestOnly: true }, // 로그인하지 않은 사용자만 접근 가능
+    },
+    {
+      path: "/forgot-password",
+      name: "ForgotPassword",
+      component: ForgotPassword,
       meta: { guestOnly: true }, // 로그인하지 않은 사용자만 접근 가능
     },
     {
