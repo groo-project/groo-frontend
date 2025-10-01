@@ -138,7 +138,7 @@ const handleLogin = async (e) => {
       </form>
 
       <div class="links">
-        <a href="#" class="find-password">비밀번호 찾기</a>
+        <router-link to="/forgot-password" class="find-password">비밀번호 재설정</router-link>
         <router-link to="/signup" class="signup">회원가입</router-link>
       </div>
 
