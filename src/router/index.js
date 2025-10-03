@@ -81,6 +81,7 @@ const router = createRouter({
       path: "/mate/invite/:inviteCode", // 초대 코드 입력 화면도 레이아웃 없이 독립적으로 표시
       name: "InviteCode",
       component: InviteCodeView,
+      meta: { guestOnly: true }, // 로그인하지 않은 사용자도 접근 가능
     },
     {
       path: "/landing",
