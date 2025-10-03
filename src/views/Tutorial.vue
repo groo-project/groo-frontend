@@ -1,36 +1,13 @@
 <script setup>
-import { ref } from "vue";
-import AlertModal from '@/components/common/AlertModal.vue';
 import TutorialForestDetail from '@/components/tutorial/TutorialForestDetail.vue';
 import TutorialSideMenu from '@/components/tutorial/TutorialSideMenu.vue';
-
-const showAlertModal = ref(false);
-const alertMessage = ref('');
-
-const showAlert = (message) => {
-  alertMessage.value = message;
-  showAlertModal.value = true;
-};
-
-const closeAlert = () => {
-  showAlertModal.value = false;
-  alertMessage.value = '';
-};
 </script>
 <template>
   <div class="container">
     <div class="main-area">
-      <TutorialForestDetail
-      @showAlert="showAlert"/>
+      <TutorialForestDetail />
     </div>
-    <TutorialSideMenu
-      @showAlert="showAlert"/>
-
-      <AlertModal
-      v-if="showAlertModal"
-      :message="alertMessage"
-      @close="closeAlert"
-    />
+    <TutorialSideMenu />
   </div>
 </template>
 <style scoped>

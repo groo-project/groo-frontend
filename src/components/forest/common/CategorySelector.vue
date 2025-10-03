@@ -40,7 +40,6 @@ import { ref, watch } from "vue";
 import plantIcon from "@/icons/plant.png";
 import objectIcon from "@/icons/object.png";
 import etcIcon from "@/icons/etc.png";
-import LoadingAnimation from "@/components/forest/common/LoadingAnimation.vue";
 
 const categories = [
   { id: 1, value: "plant", label: "식물", icon: plantIcon },

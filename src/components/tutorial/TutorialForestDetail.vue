@@ -8,8 +8,9 @@ import EditForestName from "@/components/forest/common/EidtNickname.vue";
 import ItemControlPanel from "@/components/forest/common/placement/ItemControlPanel.vue";
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from 'pinia';
+import { useAlertStore } from '@/stores/alert'
 
-
+const alert = useAlertStore()
 
 const auth = useAuthStore();
 // 반응형으로 꺼내기
@@ -35,7 +36,6 @@ const route = useRoute();
 const forestId = computed(() => route.params.forestId);
 const bgRef = ref(null);
 const containerRef = ref(null);
-const emit = defineEmits(["showAlert"]);
 
 // 기존 아이템 배치 관련
 const baseSize = ITEM_CONSTANTS.BASE_SIZE;
@@ -155,7 +155,7 @@ onUnmounted(() => {
 });
 
 const togglePublic = async () => {
-  emit('showAlert', "회원가입 후 만나요.")
+  alert.show("회원가입 후 만나요.")
 };
 
 // 기존 아이템 배치 관련 함수들 (수정됨)
@@ -207,7 +207,7 @@ const onMouseUp = () => {
 
 // 재배치 모드 관련 함수들
 const toggleRearrangeMode = () => {
-  emit('showAlert', "회원가입 후 만나요.")
+  alert.show("회원가입 후 만나요.")
 };
 
 const onEditMouseMove = (event) => {
@@ -254,12 +254,12 @@ const onEditMouseUp = () => {
 const handleCompletePlacement = async () => {
 
   if (!selectedPiece.value || !forestId) {
-    emit('showAlert', "필수 정보가 없습니다.")
+    alert.show("필수 정보가 없습니다.")
     return;
   }
   
   try {
-    emit('showAlert', "배치가 완료되었습니다!")
+    alert.show("배치가 완료되었습니다!")
     // 여기에 값 추가
     placedItems.value.push({
         id: new Date(),
@@ -275,7 +275,7 @@ const handleCompletePlacement = async () => {
     forceUpdate.value++;
     
   } catch (err) {
-    emit('showAlert', "배치에 실패했습니다.");
+    alert.show("배치에 실패했습니다.")
     console.error(err);
   }
 };
@@ -314,7 +314,7 @@ const decreaseZIndex = () => {
 };
 
 const handleEditNameClick = () => {
-  emit('showAlert', "회원가입 후 만나요.")
+  alert.show("회원가입 후 만나요.")
 };
 
 const handleNameUpdate = (newName) => {

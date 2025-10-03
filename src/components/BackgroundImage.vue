@@ -4,18 +4,10 @@ import { useRoute, useRouter } from 'vue-router'
 import buttonIcon_6 from "@/icons/edit_icon.png"
 import buttonIcon_7 from "@/icons/External_icon.png"
 import buttonIcon_8 from "@/icons/is_public_icon.png"
-import AlertModal from '@/components/common/AlertModal.vue'
-import { useAuthStore } from "@/stores/auth.js";
-import { storeToRefs } from 'pinia';
 import api from '@/lib/api.js'
+import { useAlertStore } from '@/stores/alert'
 
-const auth = useAuthStore();
-
-// 반응형으로 꺼내기
-const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
-
-const forestId = computed(() => user.value?.forestId ?? null);
-
+const alert = useAlertStore()
 
 const props = defineProps({
   isSidebarOpen: {
@@ -42,12 +34,8 @@ watch(() => props.isSidebarOpen, (newValue) => {
   }
 }, { immediate: true })
 
-const currentView = ref('background')
 const forestData = ref(null)
 const showTooltip = ref(false)
-const showAlert = ref(false)
-const alertMessage = ref('')
-const alertType = ref('')
 
 const route = useRoute()
 const router = useRouter()
@@ -65,9 +53,7 @@ onMounted(async () => {
       const forestList = await res.json()
 
       if (!forestList.length) {
-        alertMessage.value = '소유한 숲이 없습니다.'
-        alertType.value = 'error'
-        showAlert.value = true
+        alert.show('소유한 숲이 없습니다.')
         return
       }
 
@@ -84,9 +70,7 @@ onMounted(async () => {
       const response = await api.get(`detail/${forestId}`)
 
       if (!response.ok) {
-        alertMessage.value = "다시 로그인해 주세요!"
-        alertType.value = 'error'
-        showAlert.value = true
+        alert.show("다시 로그인해 주세요!")
         router.push('/login')
         throw new Error('detail 요청 실패')
       }
@@ -108,21 +92,13 @@ const togglePublic = async () => {
 
     forestData.value.isPublic = !forestData.value.isPublic;
   } catch (err) {
-    alertMessage.value = '공개여부 변경에 실패했습니다.'
-    alertType.value = 'error' 
-    showAlert.value = true
+    alert.show('공개여부 변경에 실패했습니다.')
   }
 }
 </script>
 
 <template>
   <div class="container1">
-    <AlertModal
-      v-if="showAlert"
-      :message="alertMessage"
-      :type="alertType"
-      @close="showAlert = false"
-    />
     <div class="main-area1">
       <div class="icons">
         <img :src="buttonIcon_6" class="btn-img" />

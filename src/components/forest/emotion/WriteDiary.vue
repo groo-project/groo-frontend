@@ -54,7 +54,6 @@
   <DraftListModal
     :is-visible="isDraftListModalOpen"
     @load-draft="handleLoadDraft"
-    @show-alert="emit('showAlert', $event)"
     @close="isDraftListModalOpen = false"
     @request-confirm="emit('request-confirm', $event)"
   />
@@ -67,6 +66,9 @@ import api from '@/lib/api';
 import { useAuthStore } from '@/stores/auth';
 import { useDiaryWriteStore } from '@/stores/diaryWrite';
 import DraftListModal from '../common/DraftListModal.vue';
+import { useAlertStore } from '@/stores/alert'
+
+const alert = useAlertStore()
 
 const auth = useAuthStore();
 const diaryWriteStore = useDiaryWriteStore();
@@ -137,17 +139,16 @@ const overwriteDraft = async (draftId, content) => {
   }
   try {
     await api.put('/diaries/drafts', body);
-    emit("showAlert", "덮어쓰기가 완료되었습니다.");
+    alert.show("덮어쓰기가 완료되었습니다.")
   } catch (e) {
     console.error(e);
-    emit("showAlert", "덮어쓰기가 실패했어요. 잠시 후 다시 시도해 주세요.");
+    alert.show("덮어쓰기가 실패했어요. 잠시 후 다시 시도해 주세요.")
   }
-  
 }
 
 const saveDraft = async () => {
   if (diaryContent.value.length === 0) {
-    emit("showAlert", "내용을 작성해 주세요!");
+    alert.show("내용을 작성해 주세요!")
     return;
   }
 
@@ -160,9 +161,9 @@ const saveDraft = async () => {
       }
 
       await api.post("/diaries/drafts", body);
-      emit("showAlert", "임시저장되었습니다.");
+      alert.show("임시저장되었습니다.")
     } catch (e) {
-      emit("showAlert", "임시 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.");
+      alert.show("임시 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.")
     }
   } else {
     emit('request-confirm', {
@@ -184,7 +185,7 @@ const isDraftExist = async (date) => {
     
     return response.data;
   } catch (e) {
-    emit("showAlert", "임시저장 여부를 불러오지 못했습니다. 나중에 다시 시도해 주세요.");
+    alert.show("임시저장 여부를 불러오지 못했습니다. 나중에 다시 시도해 주세요.")
   }
 }
 
@@ -199,12 +200,12 @@ const handleLoadDraft = (content) => {
   diaryContent.value = content;
 }
 
-const emit = defineEmits(['save', 'loading', 'showAlert', 'request-confirm']);
+const emit = defineEmits(['save', 'loading', 'request-confirm']);
 
 const saveDiary = async () => {
   try {
     if (!props.categoryId) {
-      emit("showAlert", "카테고리가 선택되지 않았습니다.");
+      alert.show("카테고리가 선택되지 않았습니다.")
       return;
     }
 
@@ -216,7 +217,7 @@ const saveDiary = async () => {
     
     if (forestId === null || forestId === undefined) {
       console.error('Invalid forestId:', forestId);
-      emit("showAlert", "숲 정보를 찾을 수 없습니다. 다시 로그인해주세요.");
+      alert.show("숲 정보를 찾을 수 없습니다. 다시 로그인해주세요.")
       return;
     }
 
@@ -236,7 +237,7 @@ const saveDiary = async () => {
     emit('save', response.data);
   } catch (error) {
     console.error('일기 저장 실패:', error);
-    emit("showAlert", "일기 저장에 실패했습니다. 다시 시도해주세요.");
+    alert.show("일기 저장에 실패했습니다. 다시 시도해주세요.")
   } finally {
     emit('loading', false);
   }

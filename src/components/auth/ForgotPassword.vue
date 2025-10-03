@@ -1,10 +1,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import AlertModal from '@/components/common/AlertModal.vue'
 import api from '@/lib/api.js'
+import { useAlertStore } from '@/stores/alert'
 
 const router = useRouter()
+
+const alert = useAlertStore()
 
 const email = ref('')
 const verificationCode = ref('')
@@ -17,21 +19,10 @@ const loadingVerification = ref(false) // 전송 중 로딩 상태
 const loadingVerificationCheck = ref(false)
 const verificationCheckMessage = ref('')
 
-// AlertModal 관련 상태
-const showAlert = ref(false)
-const alertMessage = ref('')
-const alertType = ref('')
-
-const showAlertModal = (message, type = 'info') => {
-  alertMessage.value = message
-  alertType.value = type
-  showAlert.value = true
-}
-
 // 비밀번호 찾기용 이메일 인증 전송
 const sendVerification = async () => {
   if (!email.value) {
-    showAlertModal('이메일을 입력해주세요.', 'error')
+    alert.show('이메일을 입력해주세요.')
     return
   }
 
@@ -43,20 +34,20 @@ const sendVerification = async () => {
     
     if (response.status >= 200 && response.status < 300) {
       verificationSent.value = true
-      showAlertModal('인증번호가 전송되었습니다.', 'success')
+      alert.show('인증번호가 전송되었습니다.')
     } else {
-      showAlertModal('인증번호 전송에 실패했습니다.', 'error')
+      alert.show('인증번호 전송에 실패했습니다.')
       throw new Error('전송 실패')
     }
   } catch (error) {
 
     
     if (error.response?.status === 404) {
-      showAlertModal('존재하지 않는 이메일입니다. 이메일을 확인해주세요.', 'error')
+      alert.show('존재하지 않는 이메일입니다. 이메일을 확인해주세요.')
     } else if (error.response?.data?.message) {
-      showAlertModal(error.response.data.message, 'error')
+      alert.show(error.response.data.message)
     } else {
-      showAlertModal('인증번호 전송에 실패했습니다.', 'error')
+      alert.show('인증번호 전송에 실패했습니다.')
     }
   } finally {
     loadingVerification.value = false
@@ -66,7 +57,7 @@ const sendVerification = async () => {
 // 인증번호 확인
 const verifyCode = async () => {
   if (!verificationCode.value) {
-    showAlertModal('인증번호를 입력해주세요.', 'error')
+    alert.show('인증번호를 입력해주세요.')
     return
   }
 
@@ -80,15 +71,15 @@ const verifyCode = async () => {
 
     if (response.status >= 200 && response.status < 300) {
       verificationCheckMessage.value = '인증이 완료되었습니다.'
-      showAlertModal('인증이 완료되었습니다.', 'success')
+      alert.show('인증이 완료되었습니다.')
     } else {
       verificationCheckMessage.value = '인증에 실패했습니다.'
-      showAlertModal(response.data?.message || '인증에 실패했습니다.', 'error')
+      alert.show(response.data?.message || '인증에 실패했습니다.')
       throw new Error('인증 실패')
     }
   } catch (error) {
     verificationCheckMessage.value = '인증에 실패했습니다.'
-    showAlertModal('인증에 실패했습니다.', 'error')
+    alert.show('인증에 실패했습니다.')
   } finally {
     loadingVerificationCheck.value = false
   }
@@ -99,17 +90,17 @@ const handlePasswordReset = async (e) => {
   e.preventDefault()
 
   if (!newPassword.value || !confirmPassword.value) {
-    showAlertModal('새 비밀번호를 입력해주세요.', 'error')
+    alert.show('새 비밀번호를 입력해주세요.')
     return
   }
 
   if (newPassword.value !== confirmPassword.value) {
-    showAlertModal('비밀번호가 일치하지 않습니다.', 'error')
+    alert.show('비밀번호가 일치하지 않습니다.')
     return
   }
 
   if (!passwordValid.value) {
-    showAlertModal('비밀번호 조건을 만족하지 않습니다.', 'error')
+    alert.show('비밀번호 조건을 만족하지 않습니다.')
     return
   }
 
@@ -120,16 +111,16 @@ const handlePasswordReset = async (e) => {
     })
 
     if (response.status >= 200 && response.status < 300) {
-      showAlertModal('비밀번호가 성공적으로 변경되었습니다! 🌿', 'success')
+      alert.show('비밀번호가 성공적으로 변경되었습니다! 🌿')
       setTimeout(() => {
         router.push('/login')
       }, 1500)
     } else {
-      showAlertModal(response.data?.message || '비밀번호 변경에 실패했습니다.', 'error')
+      alert.show(response.data?.message || '비밀번호 변경에 실패했습니다.')
       throw new Error('비밀번호 변경 실패')
     }
   } catch (error) {
-    showAlertModal('비밀번호 변경에 실패했습니다.', 'error')
+    alert.show('비밀번호 변경에 실패했습니다.')
   }
 }
 

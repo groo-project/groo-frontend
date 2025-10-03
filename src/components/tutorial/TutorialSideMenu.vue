@@ -29,9 +29,12 @@ import tiredIcon from '@/icons/tired_icon.png'
 import romanceIcon from '@/icons/romance_icon.png'
 import TutorialWriteDiary from "./TutorialWriteDiary.vue";
 import TutorialLoadingAnimation from "./TutorialLoadingAnimation.vue";
+import { useAlertStore } from '@/stores/alert'
+
+const alert = useAlertStore()
 
 const route = useRoute();
-const emit = defineEmits(["openForestList", "showAlert"]);
+const emit = defineEmits(["openForestList"]);
 const { proxy } = getCurrentInstance();
 
 // 상수들
@@ -95,9 +98,7 @@ const selectedCategory = computed(() => viewState.value.data.selectedCategory)
 const selectedGuestbookId = computed(() => viewState.value.data.selectedGuestbookId)
 const selectedDiaryData = computed(() => viewState.value.data.selectedDiaryData)
 const currentDiaryIndex = computed(() => viewState.value.data.currentDiaryIndex)
-const pieceToSave = computed(() => viewState.value.data.pieceToSave)
 
-const showSaveModal = computed(() => modalState.value.showSaveModal)
 const showForestListModal = computed(() => modalState.value.showForestListModal)
 
 const sidebarWidth = computed(() => {
@@ -112,8 +113,8 @@ const switchView = (viewName, data = {}) => {
   Object.assign(viewState.value.data, data)
 }
 
-function openSaveModal(selectedPiece) {
-  emit('showAlert', "회원가입 후 만나요.")
+function openSaveModal() {
+  alert.show("회원가입 후 만나요.")
 }
 
 const toggleMenu = () => {
@@ -122,8 +123,6 @@ const toggleMenu = () => {
 
 const authStore = useAuthStore();
 const user = computed(() => authStore.user);
-const token = computed(() => authStore.accessToken || '');
-const forestId = computed(() => authStore.user?.forestId || '');
 const nickname = computed(() => authStore.user?.nickname || "여행자");
 
 const handlePlace = (selectedPiece) => {
@@ -165,11 +164,11 @@ const handleGuestbookDetailBack = () => {
 };
 
 const handleForestList = () => {
-  emit('showAlert', "회원가입 후 만나요.")
+  alert.show("회원가입 후 만나요.")
 };
 
 function openMyItemView() {
-  emit('showAlert', "회원가입 후 만나요.")
+  alert.show("회원가입 후 만나요.")
 }
 
 function closeMyItemView() {
@@ -177,7 +176,7 @@ function closeMyItemView() {
 }
 
 const handleViewDiary = () => {
-  emit('showAlert', "회원가입 후 만나요.")
+  alert.show("회원가입 후 만나요.")
 };
 
 const handleDiaryClick = (data) => {
@@ -209,7 +208,7 @@ const handleNextDiary = () => {
 const handleDiarySave = (analysisResult) => {
   if (!analysisResult || !analysisResult.topEmotions) {
     console.error("유효하지 않은 분석 결과입니다:", analysisResult);
-    alert("감정 분석에 실패했습니다. 다시 시도해주세요.");
+    alert.show("감정 분석에 실패했습니다. 다시 시도해주세요.")
     return;
   }
 

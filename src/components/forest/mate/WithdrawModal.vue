@@ -12,28 +12,20 @@
         <button @click="handleWithdraw" class="confirm-btn">탈퇴하기</button>
       </div>
     </div>
-    <AlertModal
-      v-if="showAlert"
-      :message="alertMessage"
-      :duration="2000"
-      @close="handleAlertClose"
-    />
   </div>
 </template>
 
 <script setup>
-import { useRouter, useRoute } from "vue-router";
+import { useRoute } from "vue-router";
 import { ref, computed, getCurrentInstance } from "vue";
-import AlertModal from "@/components/common/AlertModal.vue";
 import api from "@/lib/api";
 import { useAuthStore } from "@/stores/auth";
+import { useAlertStore } from '@/stores/alert'
+
+const alert = useAlertStore()
 
 const route = useRoute();
-const router = useRouter();
-const showAlert = ref(false);
-const alertMessage = ref("");
 const authStore = useAuthStore();
-const userForestId = computed(() => authStore.user?.forestId ?? null);
 const { proxy } = getCurrentInstance();
 
 
@@ -44,14 +36,9 @@ const props = defineProps({
   },
 });
 
-// props 이름을 AlertModal과 맞춤
 const isOpen = computed(() => props.isOpen);
 
 const emit = defineEmits(["close"]);
-
-const handleAlertClose = () => {
-  showAlert.value = false;
-};
 
 const leaving = ref(false);
 
@@ -73,8 +60,7 @@ const handleWithdraw = async () => {
     await api.delete(`mate/quit?forestId=${mateForestId}`);
     
     // 성공 메시지 표시
-    alertMessage.value = "우정의 숲에서 탈퇴되었습니다.";
-    showAlert.value = true;
+    alert.show("우정의 숲에서 탈퇴되었습니다.")
 
     // 먼저 현재 사용자의 리소스 정리 (이벤트 전송 전)
     if (proxy?.emitter) {
@@ -113,8 +99,7 @@ const handleWithdraw = async () => {
     // }
     
   } catch (error) {
-    alertMessage.value = error.message || "탈퇴 처리 중 오류가 발생했습니다.";
-    showAlert.value = true;
+    alert.show("탈퇴 처리 중 오류가 발생했습니다.")
   } finally {
     leaving.value = false;
     emit("close");

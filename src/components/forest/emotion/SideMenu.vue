@@ -33,18 +33,16 @@ import anxiousIcon from '@/icons/anxious_icon.png'
 import melancholyIcon from '@/icons/melancholy_icon.png'
 import tiredIcon from '@/icons/tired_icon.png'
 import romanceIcon from '@/icons/romance_icon.png'
+import { useAlertStore } from '@/stores/alert'
+
+const alert = useAlertStore()
 
 const router = useRouter();
 const route = useRoute();
-const emit = defineEmits(["openForestList", "showAlert", "request-confirm"]);
+const emit = defineEmits(["openForestList", "request-confirm"]);
 const { proxy } = getCurrentInstance();
 
-const forwardShowAlert = (msg) => {
-  emit("showAlert", msg);
-}
-
 // 상수들
-
 const emotionIcons = {
   즐거움: joyIcon,
   우울함: melancholyIcon,
@@ -72,16 +70,6 @@ const dummyAnalysisResult = {
 // reactive 상태들
 const isMenuOpen = ref(true)
 const categoryLoading = ref(false)
-// const selectedCategory = ref(null)
-// const showSaveModal = ref(false)
-// const pieceToSave = ref(null)
-// const showMyItemView = ref(false)
-// const showMyDiaryCalendar = ref(false)
-// const showMyDiaryDetail = ref(false)
-// const selectedDiaryData = ref(null)
-// const currentDiaryIndex = ref(0)
-// const showAlertModal = ref(false)
-// const alertMessage = ref('')
 const showLogoutModal = ref(false)
 
 
@@ -187,7 +175,7 @@ const handlePlace = (selectedPiece) => {
 
 async function confirmSaveToStorage() {
   if (!viewState.value.data.pieceToSave) {
-    emit('showAlert', "저장할 조각 정보가 없습니다.")
+    alert.show("저장할 조각 정보가 없습니다.")
     return
   }
   try {
@@ -204,7 +192,7 @@ async function confirmSaveToStorage() {
 
   } catch (e) {
     console.error(e);
-    emit('showAlert', "보관소 저장에 실패했습니다. 다시 시도해주세요.")
+    alert.show("보관소 저장에 실패했습니다. 다시 시도해주세요.")
   }
 }
 
@@ -293,7 +281,7 @@ const handleNextDiary = () => {
 const handleDiarySave = (analysisResult) => {
   if (!analysisResult || !analysisResult.topEmotions) {
     console.error("유효하지 않은 분석 결과입니다:", analysisResult);
-    alert("감정 분석에 실패했습니다. 다시 시도해주세요.");
+    alert.show("감정 분석에 실패했습니다. 다시 시도해주세요.");
     return;
   }
 
@@ -373,7 +361,6 @@ watch(
         <template v-else-if="showMyDiaryCalendarForWrite">
           <MyDiaryCalendarForWrite
             @close="switchView('main')"
-            @showAlert="forwardShowAlert"
             @new-diary-click="toggleCategorySelector"
           />
         </template>
@@ -413,7 +400,6 @@ watch(
               :categoryId="selectedCategory"
               @save="handleDiarySave"
               @loading="(val) => (categoryLoading = val)"
-              @showAlert="forwardShowAlert"
               @request-confirm="emit('request-confirm', $event)"
             />
             <div v-if="categoryLoading" class="loading-overlay">

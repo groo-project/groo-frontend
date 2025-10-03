@@ -1,19 +1,16 @@
 <script setup>
 import { ref } from "vue";
 import { useRouter , useRoute } from "vue-router";
-import AlertModal from "@/components/common/AlertModal.vue";
 import api from "@/lib/api"; // API 호출을 위한 axios 인스턴스
 import { useAuthStore } from "@/stores/auth"; // Pinia 스토어 가져오기
-
-
+import { useAlertStore } from '@/stores/alert'
 
 const email = ref("");
 const password = ref("");
 const router = useRouter();
 const route = useRoute();
-const showAlert = ref(false);
-const alertMessage = ref("");
 const auth = useAuthStore(); 
+const alert = useAlertStore()
 const loading = ref(false);           // ✅ 중복 제출 방지
 
 
@@ -28,8 +25,7 @@ const handleLogin = async (e) => {
     await auth.login({ email: email.value, password: password.value });
 
     // 2) 성공 메시지
-    alertMessage.value = "로그인 성공! 환영합니다.🌿";
-    showAlert.value = true;
+    alert.show('로그인 성공! 환영합니다.🌿')
     // 2.5) Pinia 스토어에서 AT 가져오기
     
     // 3) 이동 우선순위
@@ -73,8 +69,7 @@ const handleLogin = async (e) => {
         // 예시: 홈으로 이동하거나, 안내 메시지 표시
         setTimeout(() => router.push("/"), 600);
         // 또는
-        alertMessage.value = "접근 가능한 숲이 없습니다.";
-        showAlert.value = true;
+        alert.show('접근 가능한 숲이 없습니다.')
       }
           } catch (e) {
       console.error("숲 정보 불러오기 실패:", e);
@@ -87,16 +82,14 @@ const handleLogin = async (e) => {
     console.error('로그인 에러 상세:', e);
     
     if (e.response?.status === 401) {
-      alertMessage.value = "아이디 또는 비밀번호를 확인해 주세요.";
+      alert.show('아이디 또는 비밀번호를 확인해 주세요.')
     } else if (e.response?.status === 500) {
-      alertMessage.value = "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
+      alert.show('서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
     } else if (e.message === 'Network Error') {
-      alertMessage.value = "서버에 연결할 수 없습니다. 서버 상태를 확인해주세요.";
+      alert.show('서버에 연결할 수 없습니다. 서버 상태를 확인해주세요.')
     } else {
-      alertMessage.value = `로그인 실패: ${e.message || '알 수 없는 오류'}`;
+      alert.show(`로그인 실패: ${e.message || '알 수 없는 오류'}`)
     }
-    
-    showAlert.value = true;
   }
   finally {
     // 입력 필드 초기화
@@ -151,11 +144,6 @@ const handleLogin = async (e) => {
         </div>
       </div> -->
     </div>
-    <AlertModal 
-      v-if="showAlert" 
-      :message="alertMessage"
-      @close="showAlert = false"
-    />
   </div>
 </template>
 

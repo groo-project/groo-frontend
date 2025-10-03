@@ -55,6 +55,9 @@
 
 <script setup>
 import { ref, computed } from "vue";
+import { useAlertStore } from '@/stores/alert'
+
+const alert = useAlertStore()
 
 const props = defineProps({
   isOpen: {
@@ -112,7 +115,7 @@ const copyLink = async () => {
         }, 2000);
       }
     } catch (fallbackErr) {
-      alert('복사에 실패했습니다. 링크를 직접 선택해서 복사해주세요.');
+      alert.show('복사에 실패했습니다. 링크를 직접 선택해서 복사해주세요.');
     }
   }
 };

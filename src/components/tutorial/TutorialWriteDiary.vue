@@ -42,7 +42,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import 'flatpickr/dist/flatpickr.css';
-import { Korean } from 'flatpickr/dist/l10n/ko.js';
+import { useAlertStore } from '@/stores/alert'
+
+const alert = useAlertStore()
 
 const props = defineProps({
   categoryId: {
@@ -74,12 +76,12 @@ const emit = defineEmits(['save', 'loading']);
 const saveDiary = async () => {
   try {
     if (!props.categoryId) {
-      emit('showAlert', "카테고리가 선택되지 않았습니다.")
+      alert.show("카테고리가 선택되지 않았습니다.")
       return;
     }
 
     if (!diaryContent.value.trim()) {
-      emit('showAlert', "일기 내용을 입력해주세요.")
+      alert.show("일기 내용을 입력해주세요.")
       return;
     }
 
@@ -163,7 +165,7 @@ const saveDiary = async () => {
     emit('save', dummyResponse);
   } catch (error) {
     console.error('일기 저장 실패:', error);
-    emit('showAlert', "일기 저장에 실패했습니다. 다시 시도해주세요.")
+    alert.show("일기 저장에 실패했습니다. 다시 시도해주세요.")
   } finally {
     emit('loading', false);
   }

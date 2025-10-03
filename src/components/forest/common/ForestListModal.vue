@@ -63,30 +63,21 @@
       </div>
     </div>
   </div>
-
-  <AlertModal
-    v-if="showAlert"
-    :message="alertMessage"
-    :duration="2000"
-    @close="showAlert = false"
-  />
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 import forestImage from "@/icons/forest1.png";
-import AlertModal from "@/components/common/AlertModal.vue";
 import api from "@/lib/api.js";
-import { useAuthStore } from "@/stores/auth.js";
 import { useMateForestStore } from "@/stores/mateForest";
+import { useAlertStore } from '@/stores/alert'
 
-const authStore = useAuthStore();
+const alert = useAlertStore()
+
 const mateForestStore = useMateForestStore();
-const token = authStore.accessToken;
 
 const router = useRouter();
-const route = useRoute();
 const props = defineProps({
   isOpen: {
     type: Boolean,
@@ -98,8 +89,6 @@ const emit = defineEmits(["close", "openCreateForest"]);
 const forests = ref([]);
 const showCreateForestModal = ref(false);
 const newForestName = ref("");
-const showAlert = ref(false);
-const alertMessage = ref("");
 
 const getForestList = async () => {
   try {
@@ -122,15 +111,13 @@ const getForestList = async () => {
 
   } catch (error) {
     console.error("Error fetching forest list:", error);
-    alertMessage.value = "숲 목록을 불러오는데 실패했습니다.";
-    showAlert.value = true;
+    alert.show("숲 목록을 불러오는데 실패했습니다.")
   }
 };
 
 const createNewForest = async () => {
   if (!newForestName.value.trim()) {
-    alertMessage.value = "숲 이름을 입력해주세요.";
-    showAlert.value = true;
+    alert.show("숲 이름을 입력해주세요.")
     return;
   }
 
@@ -142,20 +129,13 @@ const createNewForest = async () => {
 
     showCreateForestModal.value = false;
     newForestName.value = "";
-    alertMessage.value = "새로운 숲이 생성되었습니다!";
-    showAlert.value = true;
+    alert.show("새로운 숲이 생성되었습니다!")
 
     await getForestList();
   } catch (error) {
     console.error("Error creating forest:", error);
-    alertMessage.value = "숲 생성에 실패했습니다. 다시 시도해주세요.";
-    showAlert.value = true;
+    alert.show("숲 생성에 실패했습니다. 다시 시도해주세요.")
   }
-};
-
-// 멤버 수 요청 함수
-const requestMemberCount = (forestId) => {
-  emit("getMemberCount", forestId);
 };
 
 const handleForestClick = (forestId) => {

@@ -30,6 +30,9 @@ import melancholyIcon from '@/icons/melancholy_icon.png'
 import tiredIcon from '@/icons/tired_icon.png'
 import romanceIcon from '@/icons/romance_icon.png'
 import MateWriteDiary from "./MateWriteDiary.vue";
+import { useAlertStore } from '@/stores/alert'
+
+const alert = useAlertStore()
 
 // props로 forestId를 받아야함 (우정의 숲 ID)
 const props = defineProps({
@@ -199,7 +202,7 @@ const handleDiarySave = async (result) => {
   
   if (!result || !result.topEmotions) {
     console.error("유효하지 않은 분석 결과입니다:", result);
-    alert("감정 분석에 실패했습니다. 다시 시도해주세요.");
+    alert.show("감정 분석에 실패했습니다. 다시 시도해주세요.");
     return;
   }
 
@@ -247,7 +250,7 @@ const handleDiarySave = async (result) => {
     showAnalyzeResult.value = true;
   } catch (error) {
     console.error("분석 결과 처리 중 오류 발생:", error);
-    alert("분석 결과 처리 중 오류가 발생했습니다. 다시 시도해주세요.");
+    alert.show("분석 결과 처리 중 오류가 발생했습니다. 다시 시도해주세요.");
   }
 };
 

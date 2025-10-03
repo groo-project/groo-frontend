@@ -1,17 +1,17 @@
 <!--Main-->
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import SideMenu from "@/components/forest/emotion/SideMenu.vue";
 import MateSideMenu from "@/components/forest/mate/MateSideMenu.vue";
 import InviteLinkModal from "@/components/forest/mate/InviteLinkModal.vue";
 import ForestListModal from "@/components/forest/common/ForestListModal.vue";
 import WithdrawModal from "@/components/forest/mate/WithdrawModal.vue";
-import AlertModal from "@/components/common/AlertModal.vue";
-import { useAuthStore } from "@/stores/auth.js"; 
-import { storeToRefs } from "pinia";
 import api from "@/lib/api.js"; 
 import ConfirmModal from "@/components/forest/common/ConfirmModal.vue";
+import { useAlertStore } from '@/stores/alert'
+
+const alert = useAlertStore()
 
 const route = useRoute();
 const router = useRouter();
@@ -21,33 +21,10 @@ const isInviteLinkModalOpen = ref(false);
 const isForestListModalOpen = ref(false);
 const isWithdrawModalOpen = ref(false);
 
-// 탈퇴 알림 관련
-const showWithdrawalAlert = ref(false);
-
-
-const auth = useAuthStore();
-// 반응형으로 꺼내기
-const { accessToken, user, isAuthenticated } = storeToRefs(auth); // state/getter를 ref로
-const forestId = computed(() => user.value?.forestId ?? null);
-const Token = computed(() => accessToken.value ?? null);
-
-
 const inviteLink = ref("");
-const showAlertModal = ref(false);
-const alertMessage = ref('');
 
 const changeView = (view) => {
   currentView.value = view;
-};
-
-const showAlert = (message) => {
-  alertMessage.value = message;
-  showAlertModal.value = true;
-};
-
-const closeAlert = () => {
-  showAlertModal.value = false;
-  alertMessage.value = '';
 };
 
 const openInviteLinkModal = async () => {
@@ -61,8 +38,6 @@ const openInviteLinkModal = async () => {
         forestId: forestId
       }
     });
-    
-    
     
     if (response.status >= 200 && response.status < 300) {
       // Axios에서는 response.data를 사용
@@ -131,8 +106,7 @@ const handleConfirm = async () => {
 // 탈퇴 알림 확인
 onMounted(() => {
   if (route.query.withdrawal === 'true') {
-    showWithdrawalAlert.value = true;
-    // URL에서 쿼리 파라미터 제거
+    alert.show("우정의 숲에서 탈퇴되었습니다.")
     router.replace({ path: route.path });
   }
 });
@@ -141,8 +115,7 @@ onMounted(() => {
 <template>
   <div class="container">
     <div class="main-area">
-      <router-view 
-      @showAlert="showAlert"/>
+      <router-view />
     </div>
     
     <template v-if="route.path !== '/login'">
@@ -152,13 +125,11 @@ onMounted(() => {
         @openShare="openInviteLinkModal"
         @openForestList="openForestListModal"
         @openWithdraw="openWithdrawModal"
-        @showAlert="showAlert"
       />
       <SideMenu
         v-else
         @change-view="changeView"
         @openForestList="openForestListModal"
-        @showAlert="showAlert"
         @request-confirm="openConfirmModal"
       />
     </template>
@@ -179,21 +150,6 @@ onMounted(() => {
       v-if="isWithdrawModalOpen"
       :is-open="isWithdrawModalOpen"
       @close="closeWithdrawModal"
-    />
-    
-    <AlertModal
-      v-if="showAlertModal"
-      :message="alertMessage"
-      @close="closeAlert"
-    />
-    
-    <!-- 위 Alert와 통합 필요 -->
-    <!-- 탈퇴 알림 모달 -->
-    <AlertModal
-      v-if="showWithdrawalAlert"
-      message="우정의 숲에서 탈퇴되었습니다."
-      :duration="1500"
-      @close="showWithdrawalAlert = false"
     />
 
     <ConfirmModal

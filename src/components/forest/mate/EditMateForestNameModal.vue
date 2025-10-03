@@ -27,18 +27,14 @@
       </div>
     </div>
   </div>
-  
-  <AlertModal
-    v-if="showAlert"
-    :message="alertMessage"
-    @close="showAlert = false"
-  />
 </template>
 
 <script setup>
 import { ref, watch, nextTick } from "vue";
-import AlertModal from "@/components/common/AlertModal.vue";
 import api from "@/lib/api";
+import { useAlertStore } from '@/stores/alert'
+
+const alert = useAlertStore()
 
 const props = defineProps({
   isOpen: {
@@ -59,8 +55,6 @@ const emit = defineEmits(["close", "update"]);
 
 const editingName = ref(props.currentName);
 const nameInput = ref(null);
-const showAlert = ref(false);
-const alertMessage = ref("");
 
 // 모달이 열릴 때마다 현재 이름으로 초기화
 watch(() => props.isOpen, async (newValue) => {
@@ -94,8 +88,7 @@ const handleSubmit = async () => {
     console.error("Error:", error.message);
     console.error("Error response:", error.response?.data);
     
-    alertMessage.value = "숲 이름 수정에 실패했습니다.";
-    showAlert.value = true;
+    alert.show("숲 이름 수정에 실패했습니다.")
   }
 };
 </script>

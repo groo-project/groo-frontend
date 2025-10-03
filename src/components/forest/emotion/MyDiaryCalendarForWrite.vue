@@ -51,12 +51,15 @@ import backIcon from '@/icons/back.png'
 import api from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'  
 import { useDiaryWriteStore } from '@/stores/diaryWrite'
+import { useAlertStore } from '@/stores/alert'
+
+const alert = useAlertStore()
 
 const auth = useAuthStore()
 const diaryWriteStore = useDiaryWriteStore();
 const forestId = auth.user?.forestId || '';
 
-const emit = defineEmits(['close', 'new-diary-click', 'showAlert'])
+const emit = defineEmits(['close', 'new-diary-click'])
 
 const today = new Date()
 const year = ref(today.getFullYear())
@@ -111,7 +114,7 @@ function handleDateClick(date) {
 
 // 이미 일기가 작성된 날을 클릭했을 때 실행되는 함수
 async function onExistingDiaryClick(date) {
-  emit("showAlert", "해당 날짜에 이미 일기가 작성되었어요!")
+  alert.show("해당 날짜에 이미 일기가 작성되었어요!")
 
   // 배포 시 제거
   onNewDiaryClick(date);

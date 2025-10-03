@@ -31,21 +31,18 @@
         <span class="button-icon">🌳</span>
       </button>
     </div>
-    <AlertModal
-      v-if="showAlert"
-      :message="alertMessage"
-      @close="showAlert = false"
-    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, getCurrentInstance } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import AlertModal from "@/components/common/AlertModal.vue";
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from "pinia";
 import api from "@/lib/api.js";
+import { useAlertStore } from '@/stores/alert'
+
+const alert = useAlertStore()
 
 const router = useRouter();
 const route = useRoute();
@@ -55,11 +52,8 @@ const { proxy } = getCurrentInstance();
 
 const auth = useAuthStore();
 // 반응형으로 꺼내기
-const { accessToken, isAuthenticated } = storeToRefs(auth); 
+const { accessToken } = storeToRefs(auth); 
 const Token = computed(() => accessToken.value ?? null);
-
-const showAlert = ref(false);
-const alertMessage = ref("");
 
 onMounted(() => {
   // URL 파라미터에서 inviteCode를 가져와서 설정
@@ -107,12 +101,10 @@ const handleSubmit = async () => {
     } catch (error) {
       console.error("Error:", error.message);
       
-      alertMessage.value = "초대가 만료되었거나 이미 사용된 초대 코드입니다.";
-      showAlert.value = true;
+      alert.show("초대가 만료되었거나 이미 사용된 초대 코드입니다.")
     }
   } else {
-    alertMessage.value = "초대 코드 8자리를 입력해주세요.";
-    showAlert.value = true;
+    alert.show("초대 코드 8자리를 입력해주세요.")
   }
 };
 </script>

@@ -1,10 +1,12 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import AlertModal from '@/components/common/AlertModal.vue'
 import api from '@/lib/api.js'
+import { useAlertStore } from '@/stores/alert'
 
 const router = useRouter()
+
+const alert = useAlertStore()
 
 const email = ref('')
 const verificationCode = ref('')
@@ -17,17 +19,6 @@ const loadingVerification = ref(false) // 전송 중 로딩 상태
 const loadingVerificationCheck = ref(false)
 const verificationCheckMessage = ref('')
 
-// AlertModal 관련 상태
-const showAlert = ref(false)
-const alertMessage = ref('')
-const alertType = ref('')
-
-const showAlertModal = (message, type = 'info') => {
-  alertMessage.value = message
-  alertType.value = type
-  showAlert.value = true
-}
-
 const sendVerification = async () => {
   loadingVerification.value = true
   try {
@@ -37,13 +28,13 @@ const sendVerification = async () => {
     
     if (response.status >= 200 && response.status < 300) {
       verificationSent.value = true
-      showAlertModal('인증번호가 전송되었습니다.', 'success')
+      alert.show('인증번호가 전송되었습니다.')
     } else {
-      showAlertModal('인증번호 전송에 실패했습니다.', 'error')
+      alert.show('인증번호 전송에 실패했습니다.')
       throw new Error('전송 실패')
     }
   } catch (error) {
-    showAlertModal('인증번호 전송에 실패했습니다.', 'error')
+    alert.show('인증번호 전송에 실패했습니다.')
   } finally {
     loadingVerification.value = false
   }
@@ -61,15 +52,15 @@ const verifyCode = async () => {
 
     if (response.status >= 200 && response.status < 300) {
       verificationCheckMessage.value = '인증이 완료되었습니다.'
-      showAlertModal('인증이 완료되었습니다.', 'success')
+      alert.show('인증이 완료되었습니다.')
     } else {
       verificationCheckMessage.value = '인증에 실패했습니다.'
-      showAlertModal(response.data?.message || '인증에 실패했습니다.', 'error')
+      alert.show(response.data?.message || '인증에 실패했습니다.')
       throw new Error('인증 실패')
     }
   } catch (error) {
     verificationCheckMessage.value = '인증에 실패했습니다.'
-    showAlertModal('인증에 실패했습니다.', 'error')
+    alert.show('인증에 실패했습니다.')
   } finally {
     loadingVerificationCheck.value = false
   }
@@ -86,17 +77,17 @@ const handleSignUp = async (e) => {
     })
 
     if (response.status >= 200 && response.status < 300) {
-      showAlertModal('회원가입 성공! 환영합니다. 🌿', 'success')
+      alert.show('회원가입 성공! 환영합니다. 🌿')
       router.push('/login')
     } else {
-      showAlertModal(response.data?.message || '회원가입 정보를 확인해 주세요!', 'error')
+      alert.show(response.data?.message || '회원가입 정보를 확인해 주세요!')
       throw new Error('회원가입 실패')
     }
   } catch (error) {
     if (error.response.data.code == 'U003') {
-      showAlertModal("이미 존재하는 닉네임이에요!");
+      alert.show("이미 존재하는 닉네임이에요!");
     } else {
-      showAlertModal('회원가입 실패', 'error')
+      alert.show('회원가입 실패')
     }
   }
 }
@@ -172,12 +163,6 @@ const canSignUp = computed(() => {
         <button type="submit" class="signup-button" :disabled="!canSignUp">가입</button>
       </form>
     </div>
-    <AlertModal
-      v-if="showAlert"
-      :message="alertMessage"
-      :type="alertType"
-      @close="showAlert = false"
-    />
   </div>
 </template>
 

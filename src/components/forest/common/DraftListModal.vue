@@ -62,6 +62,9 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import api from '@/lib/api'
+import { useAlertStore } from '@/stores/alert'
+
+const alert = useAlertStore()
 
 const props = defineProps({
   isVisible: {
@@ -70,7 +73,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['close', 'load-draft', 'show-alert'])
+const emit = defineEmits(['close', 'load-draft'])
 
 const currentView = ref('list') // 'list' or 'detail'
 const drafts = ref([])
@@ -96,7 +99,7 @@ const fetchDrafts = async () => {
     drafts.value = response.data || []
   } catch (error) {
     console.error('임시저장 목록 불러오기 실패:', error)
-    emit('show-alert', '임시저장 목록을 불러오지 못했습니다.')
+    alert.show('임시저장 목록을 불러오지 못했습니다.')
     drafts.value = []
   } finally {
     loading.value = false
@@ -128,7 +131,7 @@ const deleteDraft = async () => {
     callback: async () => {
         try {
             await api.delete(`diaries/drafts/${selectedDraft.value.diaryDraftId}`)
-            emit('show-alert', '임시저장 글이 삭제되었습니다.')
+            alert.show('임시저장 글이 삭제되었습니다.')
     
             // 목록에서 삭제된 항목 제거
             drafts.value = drafts.value.filter(
@@ -138,7 +141,7 @@ const deleteDraft = async () => {
             backToList()
         } catch (error) {
             console.error('임시저장 글 삭제 실패:', error)
-            emit('show-alert', '삭제에 실패했습니다. 다시 시도해주세요.')
+            alert.show('삭제에 실패했습니다. 다시 시도해주세요.')
         }
     }
   })
@@ -152,7 +155,7 @@ const loadDraft = () => {
     message: "기존 작성하던 내용이 없어지고 해당 내용으로 덮어쓸게요.",
     callback: async () => {
         emit('load-draft', selectedDraft.value.content)
-        emit('show-alert', '임시저장 글을 불러왔습니다.')
+        alert.show('임시저장 글을 불러왔습니다.')
         closeModal()
     }
   })

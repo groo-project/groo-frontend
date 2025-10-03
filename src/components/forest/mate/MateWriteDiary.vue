@@ -53,12 +53,6 @@
         </button>
       </div>
     </div>
-    <AlertModal
-      v-if="showAlert"
-      :message="alertMessage"
-      :type="alertType"
-      @close="showAlert = false"
-    />
   </div>
 </template>
 
@@ -68,11 +62,9 @@ import VueFlatPickr from 'vue-flatpickr-component';
 import 'flatpickr/dist/flatpickr.css';
 import { Korean } from 'flatpickr/dist/l10n/ko.js';
 import api from '@/lib/api';
-import AlertModal from '@/components/common/AlertModal.vue';
-import { useAuthStore } from '@/stores/auth';
-import { useRoute } from 'vue-router';
-// import { useMateForestStore } from '@/stores/mateForest';
+import { useAlertStore } from '@/stores/alert'
 
+const alert = useAlertStore()
 
 // props로 forestId를 받아야함 (우정의 숲 ID)
 const props = defineProps({
@@ -89,13 +81,9 @@ const props = defineProps({
   }
 });
 
-
 const diaryContent = ref('');
 const charCount = ref(0);
 const selectedDate = ref(new Date());
-const showAlert = ref(false);
-const alertMessage = ref('');
-const alertType = ref('');
 
 // Flatpickr 설정
 const flatpickrConfig = {
@@ -122,24 +110,18 @@ const updateCharCount = () => {
   charCount.value = diaryContent.value.length;
 };
 
-const showAlertModal = (message, type = 'info') => {
-  alertMessage.value = message;
-  alertType.value = type;
-  showAlert.value = true;
-};
-
 const saveDraft = () => {
   localStorage.setItem('diaryDraft', JSON.stringify({
     content: diaryContent.value,
     date: selectedDate.value
   }));
-  showAlertModal('임시저장되었습니다.');
+  alert.show('임시저장되었습니다.')
 };
 
 const loadDraft = () => {
   // localStorage 대신 auth 스토어에서 필요한 정보 가져오기
   // 임시저장 기능이 필요하다면 auth 스토어에 추가하거나 다른 방식으로 구현
-  showAlertModal('임시저장 기능은 현재 사용할 수 없습니다.');
+  alert.show('임시저장 기능은 현재 사용할 수 없습니다.')
 };
 
 const emit = defineEmits(['save', 'loading']);
@@ -147,12 +129,12 @@ const emit = defineEmits(['save', 'loading']);
 const saveDiary = async () => {
   try {
     if (!props.categoryId) {
-      showAlertModal('카테고리가 선택되지 않았습니다.', 'error');
+      alert.show('카테고리가 선택되지 않았습니다.')
       return;
     }
 
     if (!diaryContent.value.trim()) {
-      showAlertModal('일기 내용을 입력해주세요.', 'error');
+      alert.show('일기 내용을 입력해주세요.')
       return;
     }
 
@@ -170,7 +152,7 @@ const saveDiary = async () => {
     // forestId가 null이나 undefined가 아닌지 확인 (0도 유효한 값으로 처리)
     if (props.forestId === null || props.forestId === undefined) {
       console.error('Invalid forestId:', props.forestId);
-      showAlertModal('숲 정보를 찾을 수 없습니다. 다시 로그인해주세요.', 'error');
+      alert.show('숲 정보를 찾을 수 없습니다. 다시 로그인해주세요.')
       return;
     }
     const body = {
@@ -198,7 +180,7 @@ const saveDiary = async () => {
       createdAt: createdAt
     });
 
-    showAlertModal('일기 저장에 실패했습니다. 다시 시도해주세요.', 'error');
+    alert.show('일기 저장에 실패했습니다. 다시 시도해주세요.')
   } finally {
     emit('loading', false);
   }

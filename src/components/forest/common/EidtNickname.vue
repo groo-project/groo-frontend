@@ -16,6 +16,9 @@
 import { ref, onMounted } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import api from "@/lib/api";
+import { useAlertStore } from '@/stores/alert'
+
+const alert = useAlertStore()
 
 const auth = useAuthStore();
 
@@ -26,7 +29,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["nicknameUpdated", "showAlert"]);
+const emit = defineEmits(["nicknameUpdated"]);
 
 const newNickname = ref(props.currentName);
 const nameInput = ref(null);
@@ -38,7 +41,7 @@ onMounted(() => {
 
 const handleSubmit = async () => {
   if (!newNickname.value.trim() || newNickname.value === props.currentName) {
-    emit("showAlert", "닉네임이 그대로에요!")
+    alert.show("닉네임이 그대로에요!")
     return;
   }
 
@@ -53,17 +56,17 @@ const handleSubmit = async () => {
 
       auth.user.nickname = newNickname.value;
 
-      emit("showAlert", "닉네임 변경이 완료되었습니다!")
+      alert.show("닉네임 변경이 완료되었습니다!")
     } else {
-      emit("showAlert", "닉네임 변경에 실패했습니다! 잠시 후 다시 시도해 주세요.")
+      alert.show("닉네임 변경에 실패했습니다! 잠시 후 다시 시도해 주세요.")
       throw new Error(`숲 이름 수정 실패: ${response.status}`);
     }
   } catch (error) {
     newNickname.value = props.currentName; // 실패 시 원래 이름 복원
     if (error.response.data.code == "U003") {
-      emit("showAlert", error.response.data.message);
+      alert.show(error.response.data.message)
     } else {
-      emit("showAlert", "닉네임 변경에 실패했습니다! 잠시 후 다시 시도해 주세요.")
+      alert.show("닉네임 변경에 실패했습니다! 잠시 후 다시 시도해 주세요.")
     }
   }
 };

@@ -5,7 +5,7 @@ import is_public_icon from "@/icons/is_public_icon.png"
 import rearrange_icon from "@/icons/rearrange_icon.png"
 import GuestBookDetail from "@/components/forest/common/guestbook/GuestBookDetail.vue";
 import { useRouter, useRoute } from 'vue-router';
-import EditForestName from "@/components/forest/common/EidtNickname.vue";
+import EditNickname from "@/components/forest/common/EidtNickname.vue";
 import ItemControlPanel from "@/components/forest/common/placement/ItemControlPanel.vue";
 import ItemEditPanel from "@/components/forest/common/placement/ItemEditPanel.vue";
 import RearrangeCompletePanel from "@/components/forest/common/placement/RearrangeCompletePanel.vue";
@@ -22,14 +22,13 @@ import SnowEffects from "@/components/weather/SnowEffects.vue";
 import ThunderEffects from "@/components/weather/ThunderEffects.vue";
 import CloudyEffects from "@/components/weather/CloudyEffects.vue";
 import StoredItemControlPanel from "@/components/forest/common/placement/StoredItemControlPanel.vue";
-import AlertModal from "@/components/common/AlertModal.vue";
+import { useAlertStore } from '@/stores/alert'
 
-
+const alert = useAlertStore()
 
 const auth = useAuthStore();
 // 반응형으로 꺼내기
-const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
-const Token = computed(() => accessToken.value ?? null);
+const { user } = storeToRefs(auth); 
 
 // ===== 상수 정의 =====
 const ITEM_CONSTANTS = {
@@ -64,10 +63,6 @@ const showGuestBookDetail = ref(false);
 const selectedGuestBookId = ref(null);
 const bgRef = ref(null);
 const containerRef = ref(null);
-const emit = defineEmits(["showAlert"]);
-
-// 탈퇴 알림 관련
-const showWithdrawalAlert = ref(false);
 
 // 기존 아이템 배치 관련
 const baseSize = ITEM_CONSTANTS.BASE_SIZE;
@@ -226,7 +221,7 @@ const refreshForestData = async () => {
 
     // 자신의 숲이 아닐 때
     if (error.response?.data.code === "F002") {
-      emit('showAlert', "해당 숲에는 방문할 수 없어요.")
+      alert.show("해당 숲에는 방문할 수 없어요.")
       router.replace(`/forest-detail/${auth.user.forestId}`)
     }
   }
@@ -235,7 +230,7 @@ const refreshForestData = async () => {
 onMounted(async () => {
   // 탈퇴 알림 확인
   if (route.query.withdrawal === 'true') {
-    showWithdrawalAlert.value = true;
+    alert.show("탈퇴되었어요!")
     // URL에서 쿼리 파라미터 제거
     router.replace({ path: route.path });
   }
@@ -289,15 +284,13 @@ const togglePublic = async () => {
       // 성공 시 공개여부 토글
       forestData.value[0].isPublic = !forestData.value[0].isPublic;
 
-      
-      emit('showAlert', "공개여부가 변경되었습니다!");
+      alert.show("공개여부가 변경되었습니다!")
     } else {
       throw new Error(`공개여부 변경 실패: ${res.status}`);
     }
   } catch (err) {
 
-    
-    emit('showAlert', "공개여부 변경에 실패했습니다.");
+    alert.show("공개여부 변경에 실패했습니다.")
   }
 };
 
@@ -582,7 +575,7 @@ const handleCompleteRearrange = async () => {
     });
     
     if (allSuccess) {
-      emit('showAlert', "재배치가 완료되었습니다!")
+      alert.show("재배치가 완료되었습니다!")
       await refreshForestData();
       exitRearrangeMode();
     } else {
@@ -590,7 +583,7 @@ const handleCompleteRearrange = async () => {
     }
     
   } catch (err) {
-    emit('showAlert', "재배치에 실패했습니다.");
+    alert.show("재배치에 실패했습니다.")
     console.error(err);
   }
 };
@@ -605,7 +598,7 @@ const handleCancelRearrange = () => {
 const handleCompletePlacement = async () => {
 
   if (!selectedPiece.value || !forestId) {
-    emit('showAlert', "필수 정보가 없습니다.")
+    alert.show("필수 정보가 없습니다.")
     return;
   }
   
@@ -620,14 +613,14 @@ const handleCompletePlacement = async () => {
   };
   
   try {
-    const res = await api.post('emotion-forest/placement', body);
+    await api.post('emotion-forest/placement', body);
     
-    emit('showAlert', "배치가 완료되었습니다!")
+    alert.show("배치가 완료되었습니다!")
     await refreshForestData();
     resetControlPanel();
     forceUpdate.value++;
   } catch (err) {
-    emit('showAlert', "배치에 실패했습니다.");
+    alert.show("배치에 실패했습니다.")
     console.error(err);
   }
 };
@@ -764,14 +757,14 @@ const completeStoredItemPlacement = async () => {
 
     if (response.status >= 200 && response.status < 300) {
       refreshForestData();
-      emit('showAlert', "아이템이 성공적으로 배치되었습니다!")
+      alert.show("아이템이 성공적으로 배치되었습니다!")
       showStoredItemControlPanel.value = false;
     } else {
       throw new Error(`배치 실패: ${response.status}`);
     }
   } catch (error) {
     console.error('아이템 배치 실패:', error);
-    emit('showAlert', "아이템 배치에 실패했습니다.")
+    alert.show("아이템 배치에 실패했습니다.")
   }
 };
 
@@ -882,11 +875,10 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
           <div v-if="showEditNameTooltip" class="name-tooltip">
             닉네임 변경하기
           </div>
-          <EditForestName
+          <EditNickname
             v-if="showEditName"
             :current-name="auth.$state.user.nickname"
             @nicknameUpdated="handleNicknameUpdate"
-            @showAlert="emit('showAlert', $event)"
           />
         </div>
         
@@ -1070,14 +1062,6 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
     <SnowEffects v-if="showSnow" />
     <ThunderEffects v-if="showThunder" />
     <CloudyEffects v-if="showCloudy" />
-    
-    <!-- 탈퇴 알림 모달 -->
-    <AlertModal
-      v-if="showWithdrawalAlert"
-      message="우정의 숲에서 탈퇴되었습니다."
-      :duration="1500"
-      @close="showWithdrawalAlert = false"
-    />
   </div>
 </template>
 

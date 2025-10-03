@@ -83,39 +83,27 @@
       @close="closeEditNameModal"
       @update="handleNameUpdated"
     />
-    
-    <!-- 알림 모달 -->
-    <AlertModal
-      v-if="showAlertModal"
-      :message="alertMessage"
-      @close="showAlertModal = false"
-    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, getCurrentInstance, computed, nextTick} from "vue";
 import { useRoute, useRouter } from "vue-router";
-import WithdrawModal from "../components/forest/mate/WithdrawModal.vue";
 import EditMateForestNameModal from "../components/forest/mate/EditMateForestNameModal.vue";
-import AlertModal from "@/components/common/AlertModal.vue";
 import api from "@/lib/api.js";
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from "pinia";
+import { useAlertStore } from '@/stores/alert'
 
-
-
+const alert = useAlertStore()
 
 const route = useRoute();
 const router = useRouter();
 const forestData = ref(null);
 const isLoading = ref(true);
 const error = ref(null);    
-const isWithdrawModalOpen = ref(false);
 const showSuccessMessage = ref(false);
 const isEditNameModalOpen = ref(false);
-const showAlertModal = ref(false);
-const alertMessage = ref('');
 const { proxy } = getCurrentInstance();
 const selectedPiece = ref(null);
 const dragPos = ref({ x: 50, y: 50 });
@@ -127,12 +115,7 @@ const auth = useAuthStore();
 // 반응형으로 꺼내기
 const { accessToken, user, isAuthenticated } = storeToRefs(auth); 
 
-const showSuccess = () => {
-  alertMessage.value = '배치가 완료되었습니다!';
-  showAlertModal.value = true;
-}; 
 const Token = computed(() => accessToken.value ?? null);
-
 
 const forestId = computed(() => {
   const routeId = route.params.id;
@@ -301,8 +284,7 @@ const onMouseUp = () => {
 const handleCompletePlacement = async () => {
 
   if (!selectedPiece.value || !forestId.value) {
-    alertMessage.value = '필수 정보가 없습니다.';
-    showAlertModal.value = true;
+    alert.show('필수 정보가 없습니다.')
     return;
   }
   const body = {
@@ -317,7 +299,7 @@ const handleCompletePlacement = async () => {
     
     
     if (res.status >= 200 && res.status < 300) {
-      showSuccess();
+      alert.show("'배치가 완료되었습니다!'")
       
       // 아이템 배치 완료 이벤트 발생 (다른 사용자들의 화면 업데이트)
       if (proxy?.emitter) {
@@ -337,8 +319,7 @@ const handleCompletePlacement = async () => {
   } catch (err) {
     console.error('Error:', err);
     
-    alertMessage.value = '배치에 실패했습니다.';
-    showAlertModal.value = true;
+    alert.show('배치에 실패했습니다.')
   }
 };
 
@@ -469,7 +450,7 @@ const setupSSEHandlers = (emitter) => {
           reconnectSSE();
         }, 5000);
       } else {
-        alert('연결이 불안정합니다. 페이지를 새로고침해주세요.');
+        alert.show('연결이 불안정합니다. 페이지를 새로고침해주세요.')
       }
     }
   };
@@ -526,13 +507,7 @@ const handleUserJoined = async (data) => {
   }
   
   // 성공 메시지 표시
-  alertMessage.value = `새 멤버가 우정의 숲에 참여했습니다!`;
-  showAlertModal.value = true;
-  
-  // 3초 후 메시지 숨기기
-  setTimeout(() => {
-    showAlertModal.value = false;
-  }, 3000);
+  alert.show(`새 멤버가 우정의 숲에 참여했습니다!`)
 };
 
 // USER_LEFT 핸들러 (멤버 탈퇴)
@@ -555,9 +530,7 @@ const handleUserLeft = async (data) => {
   await fetchForestData();
   
   // 성공 메시지 표시
-  alertMessage.value = `멤버가 우정의 숲을 떠났습니다.`;
-  showAlertModal.value = true;
-  setTimeout(() => { showAlertModal.value = false; }, 3000);
+  alert.show(`멤버가 우정의 숲을 떠났습니다.`)
 };
 
 // ITEM_PLACED 핸들러 (아이템 배치)
