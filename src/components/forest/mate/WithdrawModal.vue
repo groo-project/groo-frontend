@@ -58,9 +58,6 @@ const handleWithdraw = async () => {
 
     // 탈퇴 API 호출
     await api.delete(`mate/quit?forestId=${mateForestId}`);
-    
-    // 성공 메시지 표시
-    alert.show("우정의 숲에서 탈퇴되었습니다.")
 
     // 먼저 현재 사용자의 리소스 정리 (이벤트 전송 전)
     if (proxy?.emitter) {

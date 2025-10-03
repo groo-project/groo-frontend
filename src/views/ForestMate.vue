@@ -525,12 +525,11 @@ const handleUserLeft = async (data) => {
   const { userId } = payload;
   if (!userId) return;
   
-  
   // 데이터 새로고침
   await fetchForestData();
   
   // 성공 메시지 표시
-  alert.show(`멤버가 우정의 숲을 떠났습니다.`)
+  if (userId !== auth.$state.user.userId) alert.show(`멤버가 우정의 숲을 떠났습니다.`)
 };
 
 // ITEM_PLACED 핸들러 (아이템 배치)

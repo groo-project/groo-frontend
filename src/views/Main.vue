@@ -102,14 +102,6 @@ const handleConfirm = async () => {
   }
   isConfirmOpen.value = false;
 }
-
-// 탈퇴 알림 확인
-onMounted(() => {
-  if (route.query.withdrawal === 'true') {
-    alert.show("우정의 숲에서 탈퇴되었습니다.")
-    router.replace({ path: route.path });
-  }
-});
 </script>
 
 <template>
