@@ -69,6 +69,42 @@ export const useAuthStore = defineStore('auth', {
             this.isRefreshing = false; // 갱신 완료 플래그 초기화
         }
     },
+    async kakaoLogin(code) {
+      try {
+        // 백엔드로 인가 코드 전달
+        const res = await api.post('/auth/kakao/login', { code });
+        const accessToken = res.data?.accessToken;
+        if (!accessToken) throw new Error("토큰이 없습니다.");
+
+        // JWT 디코딩
+        const payload = jwtDecode(accessToken);
+
+        // Pinia 상태 업데이트
+        this.$patch(state => {
+          state.accessToken = accessToken;
+          state.user = {
+            userId: parseInt(payload.sub),
+            nickname: payload.nickname || '여행자',
+            email: payload.email || null,
+            forestId: null,
+          };
+        });
+
+        // forestId 가져오기
+        const { data } = await api.get('myforest');
+        const forestId = data?.[0]?.id;
+        if (forestId) {
+          this.$patch(state => {
+            state.user.forestId = forestId;
+          });
+        }
+
+        return true;
+      } catch (err) {
+        console.error('카카오 로그인 실패:', err);
+        throw err;
+      }
+    },
     async tryRefresh() {
         // 중복 요청 방지
         if (this.isRefreshing) {

@@ -9,7 +9,6 @@ import Login from "@/components/auth/Login.vue";
 import Signup from "@/components/auth/Signup.vue";
 import ForgotPassword from "@/components/auth/ForgotPassword.vue";
 import ForestDetail from "@/views/ForestDetail.vue";
-import BackgroundImage from "@/components/BackgroundImage.vue";
 import InviteCodeView from "../views/InviteCodeView.vue";
 import LandingPage from "@/views/LandingPage.vue";
 import Tutorial from "@/views/Tutorial.vue";
@@ -26,11 +25,6 @@ const router = createRouter({
         {
           path: "",
           redirect: { name: "LandingPage" }
-        },
-        {
-          path: "background-image", // == "/"
-          name: "BackgroundImage",
-          component: BackgroundImage,
         },
         {
           path: "forestmate/:id",
@@ -94,6 +88,12 @@ const router = createRouter({
       name: "Tutorial",
       component: Tutorial,
       meta: { guestOnly: true }, // 로그인하지 않은 사용자만 접근 가능
+    },
+    {
+      path: "/oauth-kakao",
+      name: "OauthKakao",
+      component: KakaoLoginRedirect,
+      meta: { guestOnly: true },
     }
   ],
 });
@@ -126,6 +126,7 @@ const router = createRouter({
 
 
 import { useAuthStore } from '@/stores/auth';
+import KakaoLoginRedirect from "@/components/auth/KakaoLoginRedirect.vue";
 
 export function installGuards(pinia) {
   router.beforeEach(async (to) => {
@@ -134,7 +135,7 @@ export function installGuards(pinia) {
 
     // 1) 게스트 전용 라우트: 로그인 상태면 홈으로
     if (to.matched.some(r => r.meta.guestOnly)) {
-      if (auth.isAuthenticated) return { name: "BackgroundImage" };
+      if (auth.isAuthenticated) return { name: "ForestDetail" };
       return true;
     }
 
