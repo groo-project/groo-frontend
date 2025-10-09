@@ -99,6 +99,15 @@ const handleLogin = async (e) => {
   }
   
 };
+
+const handleKakaoLogin = () => {
+  const clientId = import.meta.env.VITE_KAKAO_REST_API_KEY;
+  const redirectURI = import.meta.env.VITE_KAKAO_REDIRECT_URI;
+  const apiHost = "https://kauth.kakao.com";
+  const kakaoAuthUrl = `${apiHost}/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectURI}&response_type=code`;
+
+  window.location.href = kakaoAuthUrl;
+}
 </script>
 
 <template>
@@ -135,14 +144,14 @@ const handleLogin = async (e) => {
         <router-link to="/signup" class="signup">회원가입</router-link>
       </div>
 
-      <!-- <div class="social-login">
+      <div class="social-login">
         <span>또는</span>
         <div class="social-icons">
-          <img src="/kakao-icon.png" alt="Kakao" />
-          <img src="/naver-icon.png" alt="Naver" />
-          <img src="/google-icon.png" alt="Google" />
+          <img src="/kakao_login_medium_wide.png" alt="Kakao"
+            @click="handleKakaoLogin"
+          />
         </div>
-      </div> -->
+      </div>
     </div>
   </div>
 </template>
@@ -255,10 +264,7 @@ const handleLogin = async (e) => {
 }
 
 .social-icons img {
-  width: 40px;
-  height: 40px;
   cursor: pointer;
-  border-radius: 50%;
   transition: transform 0.2s;
 }
 
