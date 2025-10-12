@@ -15,6 +15,12 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (state) => !!(state.accessToken && state.user), // 액세스 토큰과 사용자 정보가 모두 있어야 인증됨
   },
   actions: {
+    // 소셜/외부 토큰으로 로그인 상태 세팅
+    // 백엔드 /auth/google 응답을 여기로 집결
+    async loginWithExternalToken(accessToken, profile = {}) {
+    this.accessToken = accessToken
+    },
+
     async login(credentials) {
         // 이미 갱신 중이면 대기
         if (this.isRefreshing) {
