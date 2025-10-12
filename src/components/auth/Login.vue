@@ -178,8 +178,8 @@ onMounted(async () => {
       <div class="social-login">
         <span>또는</span>
         <div class="social-icons">
-          <img src="/kakao-icon.png" alt="Kakao" />
-          <img src="/naver-icon.png" alt="Naver" />
+          <!-- <img src="/kakao-icon.png" alt="Kakao" />
+          <img src="/naver-icon.png" alt="Naver" /> -->
           <!-- <img src="/google-icon.png" alt="Google" /> -->
           <div ref="googleBtn" class="google-btn"></div>
 
