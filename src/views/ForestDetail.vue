@@ -230,7 +230,7 @@ const refreshForestData = async () => {
 onMounted(async () => {
   // 탈퇴 알림 확인
   if (route.query.withdrawal === 'true') {
-    alert.show("탈퇴되었어요!")
+    alert.show("우정의 숲에서 탈퇴되었습니다.")
     // URL에서 쿼리 파라미터 제거
     router.replace({ path: route.path });
   }

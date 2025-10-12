@@ -109,7 +109,7 @@ async function handleGoogleCredential(resp) {
 
     // 예: Pinia에 저장하고 동일한 후속 로직 재사용
     await auth.loginWithExternalToken(data.accessToken); // 네가 쓰는 메서드명에 맞게
-    alert.show("구글 로그인 성공! 🌿");
+    alert.show("구글 로그인 성공! 환영합니다.🌿");
 
     // 기존 네비게이션 로직 재사용
     const redirect = route.query.redirect;
