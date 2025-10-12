@@ -15,6 +15,36 @@ export const useAuthStore = defineStore('auth', {
     isAuthenticated: (state) => !!(state.accessToken && state.user), // 액세스 토큰과 사용자 정보가 모두 있어야 인증됨
   },
   actions: {
+     // 소셜/외부 토큰으로 로그인 상태 세팅
+      /**
+    //  * @param {string} accessToken
+    //  * @param {{email?: string, nickname?: string}} [profile]
+    //  */
+    // async loginWithExternalToken(accessToken, profile = {}) {
+    //     this.accessToken = accessToken
+    //     this.user = { ...(this.user || {}), ...profile }
+  
+    //     api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`
+    //     // localStorage.setItem('accessToken', accessToken)
+    //   },
+
+    // 공통: AT 세팅 (axios 헤더 포함)
+    setAccessToken(token) {
+    this.accessToken = token || ''
+    if (token) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    } else {
+        delete api.defaults.headers.common['Authorization']
+    }
+    },
+    
+    // 소셜/외부 토큰으로 로그인 상태 세팅
+    // 백엔드 /auth/google 응답을 여기로 집결
+    async loginWithExternalToken(accessToken, profile = {}) {
+    this.setAccessToken(accessToken)
+    this.user = { ...(this.user || {}), ...profile }
+    },
+
     async login(credentials) {
         // 이미 갱신 중이면 대기
         if (this.isRefreshing) {
@@ -34,7 +64,7 @@ export const useAuthStore = defineStore('auth', {
             const { data } = await api.post('/auth/login', {
                 email: credentials.email,
                 password: credentials.password,
-            });
+            }, { withCredentials: true });
 
             // 로그인 성공 시 상태 업데이트
             this.accessToken = data.accessToken || ''; // 액세스 토큰 저장
@@ -98,7 +128,7 @@ export const useAuthStore = defineStore('auth', {
             
             
             if (response.data && response.data.accessToken) {
-                this.accessToken = response.data.accessToken;
+                this.setAccessToken(response.data.accessToken);
             } else {
                 throw new Error('No access token received from refresh');
             }
@@ -164,7 +194,7 @@ export const useAuthStore = defineStore('auth', {
             }
             
             // 에러 발생 시 상태 초기화
-            this.accessToken = '';
+            this.setAccessToken('');
             this.user = null;
             this.roles = [];
             
@@ -177,7 +207,7 @@ export const useAuthStore = defineStore('auth', {
         try {
             
             // 클라이언트 상태 초기화
-            this.accessToken = '';
+            this.setAccessToken('');
             this.user = null;
             this.roles = [];
             this.isRefreshing = false;
@@ -194,7 +224,7 @@ export const useAuthStore = defineStore('auth', {
         } catch (error) {
             console.error('Logout failed:', error);
             // 에러가 발생해도 클라이언트 상태는 초기화
-            this.accessToken = '';
+            this.setAccessToken('');
             this.user = null;
             this.roles = [];
             this.isRefreshing = false;

@@ -1,9 +1,10 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter , useRoute } from "vue-router";
 import api from "@/lib/api"; // API 호출을 위한 axios 인스턴스
 import { useAuthStore } from "@/stores/auth"; // Pinia 스토어 가져오기
 import { useAlertStore } from '@/stores/alert'
+import { useGoogleSignIn } from "@/composables/useGoogleSignIn";
 
 const email = ref("");
 const password = ref("");
@@ -11,11 +12,11 @@ const router = useRouter();
 const route = useRoute();
 const auth = useAuthStore(); 
 const alert = useAlertStore()
-const loading = ref(false);           // ✅ 중복 제출 방지
-
+const loading = ref(false);           // 중복 제출 방지
+const googleBtn = ref(null); // Google 로그인 버튼
 
 const handleLogin = async (e) => {
-  if (loading.value) return;          // ✅ 가드
+  if (loading.value) return;          // 가드
   loading.value = true;
   // e.preventDefault();
 
@@ -99,6 +100,45 @@ const handleLogin = async (e) => {
   }
   
 };
+
+//  구글 ID 토큰 콜백 → 백엔드로 전달 → 우리 JWT 수신
+async function handleGoogleCredential(resp) {
+  try {
+    const { credential: idToken } = resp;           // 구글 ID 토큰(JWT)
+    const { data } = await api.post("/auth/google", { idToken }); // /api/auth/google
+
+    // 예: Pinia에 저장하고 동일한 후속 로직 재사용
+    await auth.loginWithExternalToken(data.accessToken); // 네가 쓰는 메서드명에 맞게
+    alert.show("구글 로그인 성공! 🌿");
+
+    // 기존 네비게이션 로직 재사용
+    const redirect = route.query.redirect;
+    if (redirect) return router.push(redirect);
+
+    const { data: forests } = await api.get("myforest");
+    const forestId = forests?.[0]?.id;
+    if (forestId) {
+      auth.$patch((state) => (state.user.forestId = forestId));
+      return router.push({ name: "ForestDetail", params: { forestId } });
+    }
+    return router.push("/");
+  } catch (e) {
+    console.error("Google login error:", e);
+    alert.show("구글 로그인 실패. 다시 시도해 주세요.");
+  }
+}
+
+// GSI 초기화 & 버튼 렌더
+const { init, renderButton /* , prompt */ } = useGoogleSignIn({
+  clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+  callback: handleGoogleCredential,
+});
+
+onMounted(async () => {
+  await init();
+  renderButton(googleBtn.value);  // 구글 아이콘 자리에 버튼 렌더
+  // prompt(); // 원탭도 쓰고 싶으면 주석 해제
+});
 </script>
 
 <template>
@@ -135,14 +175,16 @@ const handleLogin = async (e) => {
         <router-link to="/signup" class="signup">회원가입</router-link>
       </div>
 
-      <!-- <div class="social-login">
+      <div class="social-login">
         <span>또는</span>
         <div class="social-icons">
           <img src="/kakao-icon.png" alt="Kakao" />
           <img src="/naver-icon.png" alt="Naver" />
-          <img src="/google-icon.png" alt="Google" />
+          <!-- <img src="/google-icon.png" alt="Google" /> -->
+          <div ref="googleBtn" class="google-btn"></div>
+
         </div>
-      </div> -->
+      </div>
     </div>
   </div>
 </template>
