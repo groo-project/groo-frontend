@@ -18,7 +18,20 @@ export const useAuthStore = defineStore('auth', {
     // 소셜/외부 토큰으로 로그인 상태 세팅
     // 백엔드 /auth/google 응답을 여기로 집결
     async loginWithExternalToken(accessToken, profile = {}) {
-    this.accessToken = accessToken
+        this.accessToken = accessToken
+        try {
+            const p = jwtDecode(accessToken);
+            this.user = {
+              userId: Number(p.sub),
+              email: p.email || profile.email || 'unknown',
+              nickname: p.nickname || profile.nickname || '여행자',
+              ...(this.user || {}),
+            };
+          } catch {
+            // 토큰 디코드 실패 시에도 최소한 객체는 보장
+            this.user = { ...(this.user || {}), ...profile };
+          }
+
     },
 
     async login(credentials) {
