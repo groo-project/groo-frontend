@@ -139,6 +139,15 @@ onMounted(async () => {
   renderButton(googleBtn.value);  // 구글 아이콘 자리에 버튼 렌더
   // prompt(); // 원탭도 쓰고 싶으면 주석 해제
 });
+
+const handleKakaoLogin = () => {
+  const clientId = import.meta.env.VITE_KAKAO_REST_API_KEY;
+  const redirectURI = import.meta.env.VITE_KAKAO_REDIRECT_URI;
+  const apiHost = "https://kauth.kakao.com";
+  const kakaoAuthUrl = `${apiHost}/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectURI}&response_type=code`;
+
+  window.location.href = kakaoAuthUrl;
+}
 </script>
 
 <template>
@@ -183,6 +192,9 @@ onMounted(async () => {
           <!-- <img src="/google-icon.png" alt="Google" /> -->
           <div ref="googleBtn" class="google-btn"></div>
 
+          <img src="/kakao_login_medium_wide.png" alt="Kakao"
+            @click="handleKakaoLogin"
+          />
         </div>
       </div>
     </div>
@@ -297,10 +309,7 @@ onMounted(async () => {
 }
 
 .social-icons img {
-  width: 40px;
-  height: 40px;
   cursor: pointer;
-  border-radius: 50%;
   transition: transform 0.2s;
 }
 

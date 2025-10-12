@@ -25,6 +25,8 @@ jobs:
         run: |
           echo "VITE_API_BASE_URL=${{ secrets.R_VITE_API_BASE_URL_STAGING }}" > .env.staging
           echo "VITE_APP_BASE_URL=${{ secrets.R_VITE_APP_BASE_URL_STAGING }}" >> .env.staging
+          echo "VITE_KAKAO_REST_API_KEY=${{ secrets.R_VITE_KAKAO_REST_API_KEY_STAGING }}" >> .env.staging
+          echo "VITE_KAKAO_REDIRECT_URI=${{ secrets.R_VITE_KAKAO_REDIRECT_URI_STAGING }}" >> .env.staging
 
       - name: Build project
         run: npm run build -- --mode staging
