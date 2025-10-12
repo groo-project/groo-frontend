@@ -19,8 +19,6 @@ export const useAuthStore = defineStore('auth', {
     // 백엔드 /auth/google 응답을 여기로 집결
     async loginWithExternalToken(accessToken, profile = {}) {
     this.accessToken = accessToken
-    this.user = { ...(this.user || {}), ...profile }
-    console.log('loginWithExternalToken', this.accessToken, this.user);
     },
 
     async login(credentials) {
