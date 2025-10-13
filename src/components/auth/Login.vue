@@ -4,7 +4,7 @@ import { useRouter , useRoute } from "vue-router";
 import api from "@/lib/api"; // API 호출을 위한 axios 인스턴스
 import { useAuthStore } from "@/stores/auth"; // Pinia 스토어 가져오기
 import { useAlertStore } from '@/stores/alert'
-import { useGoogleSignIn } from "@/composables/useGoogleSignIn";
+import { useGoogleSignIn } from "@/composables/useGoogleSignIn";
 
 const email = ref("");
 const password = ref("");
