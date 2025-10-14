@@ -153,7 +153,7 @@ const handleKakaoLogin = () => {
 <template>
   <div class="login-container">
     <div class="login-box">
-      <img src="/logo-icon.png" alt="Logo" class="logo" />
+      <img src="/icon.png" alt="Logo" class="logo" />
       <form class="login-form" @submit.prevent="handleLogin">
         <label for="email">이메일</label>
         <input
@@ -185,14 +185,11 @@ const handleKakaoLogin = () => {
       </div>
 
       <div class="social-login">
-        <span>또는</span>
+        <span>또는 SNS 계정으로 로그인</span>
         <div class="social-icons">
-          <!-- <img src="/kakao-icon.png" alt="Kakao" />
-          <img src="/naver-icon.png" alt="Naver" /> -->
-          <!-- <img src="/google-icon.png" alt="Google" /> -->
           <div ref="googleBtn" class="google-btn"></div>
 
-          <img src="/kakao_login_medium_wide.png" alt="Kakao"
+          <img src="/kakao_icon.png" alt="Kakao" class="kakao-btn"
             @click="handleKakaoLogin"
           />
         </div>
@@ -305,15 +302,18 @@ const handleKakaoLogin = () => {
   display: flex;
   justify-content: center;
   gap: 50px;
-  margin-top: 12px;
+  margin-top: 15px;
 }
 
-.social-icons img {
+.social-icons img.kakao-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   cursor: pointer;
   transition: transform 0.2s;
 }
 
-.social-icons img:hover {
-  transform: scale(1.1);
+.social-icons img.kakao-btn:hover {
+  filter: brightness(0.9);
 }
 </style>
