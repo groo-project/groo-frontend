@@ -15,6 +15,17 @@ const alert = useAlertStore()
 const loading = ref(false);           // 중복 제출 방지
 const googleBtn = ref(null); // Google 로그인 버튼
 
+// 탈퇴 완료 알림 체크
+onMounted(() => {
+  if (route.query.withdrawn === "true") {
+    alert.show("계정이 성공적으로 탈퇴되었습니다.");
+    
+    // 알림 표시 후 URL에서 쿼리 파라미터 제거 (새로고침 시 중복 알림 방지)
+    // router.replace 대신 history.replaceState 사용하여 화면 깜빡임 방지
+    window.history.replaceState({}, '', '/login');
+  }
+});
+
 const handleLogin = async (e) => {
   if (loading.value) return;          // 가드
   loading.value = true;
