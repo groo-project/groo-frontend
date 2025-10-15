@@ -135,7 +135,13 @@ export function installGuards(pinia) {
 
     // 1) 게스트 전용 라우트: 로그인 상태면 홈으로
     if (to.matched.some(r => r.meta.guestOnly)) {
-      if (auth.isAuthenticated) return { name: "ForestDetail" };
+      // 탈퇴 후 이동하는 특수 케이스는 예외 처리
+      if (to.query.withdrawn === "true") {
+        return true;
+      }
+      if (auth.isAuthenticated) {
+        return { name: "ForestDetail" };
+      }
       return true;
     }
 

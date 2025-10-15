@@ -105,7 +105,7 @@ const handlePasswordReset = async (e) => {
   }
 
   try {
-    const response = await api.post('auth/password', {
+    const response = await api.post('auth/password/reset', {
       email: email.value,
       password: newPassword.value,
     })

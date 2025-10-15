@@ -46,7 +46,7 @@ onMounted(() => {
   color: white;
   padding: 16px 28px;
   border-radius: 8px;
-  z-index: 1000;
+  z-index: 99999;
   display: flex;
   align-items: center;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
