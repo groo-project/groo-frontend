@@ -65,6 +65,8 @@ const setActiveTab = (tab) => {
         <span class="icon">⚠️</span>
         탈퇴하기
       </button>
+      <!-- 업데이트 정보 탭 - 추후 개발 예정 -->
+      <!--
       <button 
         class="tab-btn" 
         @click="setActiveTab('update')"
@@ -72,6 +74,7 @@ const setActiveTab = (tab) => {
         <span class="icon">🔄</span>
         업데이트 정보
       </button>
+      -->
     </div>
   </div>
 </template>
