@@ -76,7 +76,6 @@ const showLogoutModal = ref(false)
 const showMyInfoModal = ref(false)
 const myInfoActiveTab = ref('password')
 const myInfoPasswordForm = ref({
-  currentPassword: '',
   newPassword: '',
   confirmPassword: ''
 })
@@ -274,7 +273,6 @@ function closeMyInfoModal() {
   showMyInfoModal.value = false
   // 폼 데이터 초기화
   myInfoPasswordForm.value = {
-    currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   }
@@ -285,8 +283,8 @@ function closeMyInfoModal() {
 
 // 비밀번호 변경 함수
 async function changeMyInfoPassword() {
-  if (!myInfoPasswordForm.value.currentPassword || !myInfoPasswordForm.value.newPassword || !myInfoPasswordForm.value.confirmPassword) {
-    alertStore.show("모든 필드를 입력해주세요.");
+  if (!myInfoPasswordForm.value.newPassword || !myInfoPasswordForm.value.confirmPassword) {
+    alertStore.show("새 비밀번호와 확인 비밀번호를 입력해주세요.");
     return;
   }
   if (myInfoPasswordForm.value.newPassword !== myInfoPasswordForm.value.confirmPassword) {
@@ -299,18 +297,15 @@ async function changeMyInfoPassword() {
   }
 
   try {
-    await api.patch('auth/password', {
-      currentPassword: myInfoPasswordForm.value.currentPassword,
-      newPassword: myInfoPasswordForm.value.newPassword
-    }, {
-      headers: { Authorization: `Bearer ${authStore.accessToken}` }
+    await api.patch('/user/me/password', {
+      password: myInfoPasswordForm.value.newPassword
     });
 
     alertStore.show("비밀번호가 성공적으로 변경되었습니다.");
     closeMyInfoModal();
   } catch (error) {
     console.error('비밀번호 변경 실패:', error);
-    alertStore.show("비밀번호 변경에 실패했습니다. 현재 비밀번호를 확인해주세요.");
+    alertStore.show("비밀번호 변경에 실패했습니다. 다시 시도해주세요.");
   }
 }
 
@@ -666,14 +661,6 @@ watch(
           <button class="close-btn" @click="closeMyInfoModal">×</button>
         </div>
         <div class="form-section">
-          <div class="form-group">
-            <label>현재 비밀번호</label>
-            <input 
-              type="password" 
-              v-model="myInfoPasswordForm.currentPassword"
-              placeholder="현재 비밀번호를 입력하세요"
-            />
-          </div>
           <div class="form-group">
             <label>새 비밀번호</label>
             <input 
@@ -1138,7 +1125,7 @@ watch(
 .fullscreen-modal .danger-btn {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  background: #d63031;
   border: none;
   border-radius: 12px;
   color: #fff;
@@ -1151,7 +1138,7 @@ watch(
 }
 
 .fullscreen-modal .danger-btn:hover {
-  background: linear-gradient(135deg, #c0392b, #a93226);
+  background: #e17055;
   box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
 }
 
@@ -1381,7 +1368,7 @@ watch(
 .fullscreen-modal .danger-btn {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  background: #d63031;
   border: none;
   border-radius: 12px;
   color: #fff;
@@ -1394,7 +1381,7 @@ watch(
 }
 
 .fullscreen-modal .danger-btn:hover {
-  background: linear-gradient(135deg, #c0392b, #a93226);
+  background: #e17055;
   box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
 }
 
@@ -1529,7 +1516,7 @@ watch(
 .modal-overlay .danger-btn {
   flex: 1;
   padding: 12px;
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  background: #d63031;
   border: none;
   border-radius: 8px;
   color: #fff;
@@ -1540,7 +1527,7 @@ watch(
 }
 
 .modal-overlay .danger-btn:hover {
-  background: linear-gradient(135deg, #c0392b, #a93226);
+  background: #e17055;
 }
 
 /* GROO 스타일 모달 오버라이드 */
@@ -1699,7 +1686,7 @@ watch(
 
 .fullscreen-modal .danger-btn {
   padding: 14px !important;
-  background: linear-gradient(135deg, #e74c3c, #c0392b, #a93226) !important;
+  background: #d63031 !important;
   border-radius: 12px !important;
   font-size: 15px !important;
   font-weight: 700 !important;
@@ -1713,7 +1700,7 @@ watch(
 
 
 .fullscreen-modal .danger-btn:hover {
-  background: linear-gradient(135deg, #c0392b, #a93226, #922b21) !important;
+  background: #e17055 !important;
   box-shadow: 0 8px 25px rgba(231, 76, 60, 0.5) !important;
   transform: translateY(-2px) !important;
 }

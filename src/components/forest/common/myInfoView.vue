@@ -48,22 +48,28 @@ const setActiveTab = (tab) => {
         class="tab-btn" 
         @click="setActiveTab('password')"
       >
-        <span class="icon">🔒</span>
-        비밀번호 변경
+        <span class="icon">
+            <img src="../../../icons/password_reset_icon.png" class="btn-img" />
+        </span>
+        비밀번호 변경하기
       </button>
       <button 
         class="tab-btn" 
         @click="setActiveTab('nickname')"
       >
-        <span class="icon">👤</span>
-        닉네임 변경
+        <span class="icon">
+            <img src="../../../icons/nickname_edit_icon.png" class="btn-img" />
+        </span>
+        닉네임 변경하기
       </button>
       <button 
         class="tab-btn" 
         @click="setActiveTab('withdraw')"
       >
-        <span class="icon">⚠️</span>
-        탈퇴하기
+        <span class="icon">
+            <img src="../../../icons/withdraw_icon.png" class="btn-img" />
+        </span>
+        계정 탈퇴하기
       </button>
       <!-- 업데이트 정보 탭 - 추후 개발 예정 -->
       <!--
@@ -72,7 +78,7 @@ const setActiveTab = (tab) => {
         @click="setActiveTab('update')"
       >
         <span class="icon">🔄</span>
-        업데이트 정보
+        업데이트 정보 확인하기
       </button>
       -->
     </div>
@@ -150,6 +156,14 @@ const setActiveTab = (tab) => {
 .icon {
   font-size: 22px;
   margin-left: 18px;
+}
+
+.btn-img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  margin-right: 8px;
+  vertical-align: middle;
 }
 
 .tab-content {
