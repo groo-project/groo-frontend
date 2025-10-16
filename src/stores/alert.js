@@ -7,8 +7,17 @@ export const useAlertStore = defineStore('alert', {
   }),
   actions: {
     show(message, duration = 1500) {
-      this.message = message
-      this.duration = duration
+      if (this.message === message) {
+        console.log("same message")
+        this.message = ''
+        setTimeout(() => {
+          this.message = message
+          this.duration = duration
+        }, 10)
+      } else {
+        this.message = message
+        this.duration = duration
+      }
     },
     clear() {
       this.message = ''
