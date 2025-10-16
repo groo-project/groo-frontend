@@ -332,10 +332,9 @@ async function changeMyInfoNickname() {
       throw new Error(`닉네임 변경 실패: ${response.status}`);
     }
   } catch (error) {
-    // 실패 시 원래 닉네임으로 복원
-    myInfoNicknameForm.value.newNickname = authStore.user?.nickname || "";
+    myInfoNicknameForm.value.newNickname = "";
     
-    if (error.response?.data?.code == "U003") {
+    if (error.response?.data?.code == "U004") {
       alertStore.show(error.response.data.message);
     } else {
       alertStore.show("닉네임 변경에 실패했습니다! 잠시 후 다시 시도해 주세요.");

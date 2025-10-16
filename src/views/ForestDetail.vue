@@ -1,11 +1,9 @@
 <script setup>
 import { ref, onMounted, onUnmounted, getCurrentInstance, computed, watch } from "vue";
-import edit_icon from "@/icons/edit_icon.png"
 import is_public_icon from "@/icons/is_public_icon.png"
 import rearrange_icon from "@/icons/rearrange_icon.png"
 import GuestBookDetail from "@/components/forest/common/guestbook/GuestBookDetail.vue";
 import { useRouter, useRoute } from 'vue-router';
-import EditNickname from "@/components/forest/common/EidtNickname.vue";
 import ItemControlPanel from "@/components/forest/common/placement/ItemControlPanel.vue";
 import ItemEditPanel from "@/components/forest/common/placement/ItemEditPanel.vue";
 import RearrangeCompletePanel from "@/components/forest/common/placement/RearrangeCompletePanel.vue";
@@ -101,7 +99,6 @@ const removedItems = ref(new Set());
 
 // 기타
 const showTooltip = ref(false);
-const showEditNameTooltip = ref(false);
 const showRearrangeTooltip = ref(false);
 const forestData = ref(null);
 const currentWeather = ref(null);
@@ -864,23 +861,6 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
         />
       </div>
       <div class="control-icons">
-        <div class="edit-name-container">
-          <img 
-            :src="edit_icon"
-            class="btn-img"
-            @click="handleEditNicknameClick"
-            @mouseenter="showEditNameTooltip = true"
-            @mouseleave="showEditNameTooltip = false"
-          />
-          <div v-if="showEditNameTooltip" class="name-tooltip">
-            닉네임 변경하기
-          </div>
-          <EditNickname
-            v-if="showEditName"
-            :current-name="auth.$state.user.nickname"
-            @nicknameUpdated="handleNicknameUpdate"
-          />
-        </div>
         
         <div class="rearrange-container">
           <img 
