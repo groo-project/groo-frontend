@@ -10,7 +10,6 @@
     />
   </main>
   </div>
-  <DotLottieVue style="height: 500px; width: 500px" autoplay loop src="https://path-to-lottie.lottie" />
 </template>
 
 <script setup>
@@ -19,7 +18,6 @@ import { useAlertStore } from './stores/alert';
 
 const alert = useAlertStore()
 </script>
-<!-- import { DotLottieVue } from '@lottiefiles/dotlottie-vue'   -->
 <style scoped>
 .wrapper {
   width: 100vw;
