@@ -60,6 +60,8 @@ onMounted(() => {
   if (route.params.inviteCode) {
     inviteCode.value = route.params.inviteCode;
   }
+
+  auth.tryRefresh();
 });
 
 const handleSubmit = async () => {
