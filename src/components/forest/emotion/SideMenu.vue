@@ -83,6 +83,10 @@ const myInfoNicknameForm = ref({
   newNickname: ''
 })
 const showMyInfoWithdrawModal = ref(false)
+const showEmailVerificationModal = ref(false)
+const emailVerificationCode = ref('')
+const isEmailVerificationSent = ref(false)
+const emailVerificationError = ref('')
 
 
 
@@ -342,10 +346,74 @@ async function changeMyInfoNickname() {
   }
 }
 
+// 이메일 인증 요청
+async function requestEmailVerification() {
+  try {
+    emailVerificationError.value = '';
+    await api.post('mails/withdrawal');
+    isEmailVerificationSent.value = true;
+    alertStore.show('인증 이메일이 발송되었습니다. 이메일을 확인해주세요.');
+  } catch (error) {
+    console.error('이메일 인증 요청 실패:', error);
+    emailVerificationError.value = '이메일 발송에 실패했습니다. 다시 시도해주세요.';
+  }
+}
+
+// 이메일 인증 확인
+async function verifyEmailCode() {
+  if (!emailVerificationCode.value.trim()) {
+    emailVerificationError.value = '인증 코드를 입력해주세요.';
+    return;
+  }
+
+  try {
+    emailVerificationError.value = '';
+    await api.post('mails/verification', {
+      email: authStore.user?.email,
+      authNum: emailVerificationCode.value
+    });
+    
+    // 인증 성공 시 이메일 인증 모달 닫고 최종 탈퇴 확인 모달을 1초 후에 열기
+    showEmailVerificationModal.value = false;
+    alertStore.show('인증이 완료되었습니다.');
+    
+    // 1초 후에 탈퇴 확인 모달 열기
+    setTimeout(() => {
+      showMyInfoWithdrawModal.value = true;
+    }, 1000);
+    
+  } catch (error) {
+    console.error('이메일 인증 실패:', error);
+    if (error.response?.data?.message) {
+      emailVerificationError.value = error.response.data.message;
+    } else {
+      emailVerificationError.value = '인증 코드가 올바르지 않습니다. 다시 확인해주세요.';
+    }
+  }
+}
+
+// 이메일 인증 모달 닫기
+function closeEmailVerificationModal() {
+  showEmailVerificationModal.value = false;
+  emailVerificationCode.value = '';
+  emailVerificationError.value = '';
+  isEmailVerificationSent.value = false;
+}
+
 // 탈퇴 함수
 function handleMyInfoWithdraw() {
   closeMyInfoModal();
-  showMyInfoWithdrawModal.value = true;
+  showEmailVerificationModal.value = true;
+  requestEmailVerification();
+}
+
+// 탈퇴 확인 모달 닫기
+function closeWithdrawModal() {
+  showMyInfoWithdrawModal.value = false;
+  // 이메일 인증 관련 상태 초기화
+  emailVerificationCode.value = '';
+  emailVerificationError.value = '';
+  isEmailVerificationSent.value = false;
 }
 
 async function confirmMyInfoWithdraw() {
@@ -362,6 +430,10 @@ async function confirmMyInfoWithdraw() {
     alertStore.show("탈퇴에 실패했습니다. 다시 시도해주세요.");
   } finally {
     showMyInfoWithdrawModal.value = false;
+    // 탈퇴 확인 모달이 닫힐 때 이메일 인증 관련 상태도 초기화
+    emailVerificationCode.value = '';
+    emailVerificationError.value = '';
+    isEmailVerificationSent.value = false;
   }
 }
 
@@ -791,13 +863,56 @@ watch(
       </div>
     </div>
 
+    <!-- 이메일 인증 모달 -->
+    <div v-if="showEmailVerificationModal" class="fullscreen-modal" @click="closeEmailVerificationModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h2>이메일 인증</h2>
+          <button class="close-btn" @click="closeEmailVerificationModal">×</button>
+        </div>
+        <div class="form-section">
+          <div class="warning-message">
+            <p>🔐 계정 탈퇴를 위해 이메일 인증이 필요합니다.</p>
+            <p>등록된 이메일로 인증 코드가 발송되었습니다.</p>
+          </div>
+          <div class="form-group">
+            <label>인증 코드</label>
+            <input 
+              type="text" 
+              v-model="emailVerificationCode"
+              placeholder="6자리 인증 코드를 입력하세요"
+              maxlength="6"
+              @keyup.enter="verifyEmailCode"
+            />
+            <div v-if="emailVerificationError" class="error-message">
+              {{ emailVerificationError }}
+            </div>
+          </div>
+          <div class="modal-buttons">
+            <button class="cancel-btn" @click="closeEmailVerificationModal">
+              취소
+            </button>
+            <button class="submit-btn" @click="verifyEmailCode" :disabled="!emailVerificationCode.trim()">
+              인증 확인
+            </button>
+          </div>
+          <div class="resend-section">
+            <p>인증 코드를 받지 못하셨나요?</p>
+            <button class="resend-btn" @click="requestEmailVerification" :disabled="!isEmailVerificationSent">
+              인증 코드 재발송
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- 탈퇴 확인 모달 -->
-    <div v-if="showMyInfoWithdrawModal" class="modal-overlay" @click="showMyInfoWithdrawModal = false">
+    <div v-if="showMyInfoWithdrawModal" class="modal-overlay" @click="closeWithdrawModal">
       <div class="modal-content" @click.stop>
         <h3>정말로 탈퇴하시겠습니까?</h3>
         <p>계정 탈퇴 시 모든 데이터가 영구적으로 삭제되며, 복구할 수 없습니다.</p>
         <div class="modal-buttons">
-          <button class="cancel-btn" @click="showMyInfoWithdrawModal = false">
+          <button class="cancel-btn" @click="closeWithdrawModal">
             취소
           </button>
           <button class="danger-btn" @click="confirmMyInfoWithdraw">
@@ -1730,5 +1845,47 @@ watch(
 .fullscreen-modal .modal-buttons {
   gap: 14px !important;
   margin-top: 28px !important;
+}
+
+/* 이메일 인증 관련 스타일 */
+.fullscreen-modal .error-message {
+  color: #e74c3c;
+  font-size: 13px;
+  margin-top: 8px;
+  text-align: left;
+}
+
+.fullscreen-modal .resend-section {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+  text-align: center;
+}
+
+.fullscreen-modal .resend-section p {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.fullscreen-modal .resend-btn {
+  background: transparent;
+  border: 1px solid #3a5a40;
+  color: #3a5a40;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.fullscreen-modal .resend-btn:hover:not(:disabled) {
+  background: #3a5a40;
+  color: white;
+}
+
+.fullscreen-modal .resend-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

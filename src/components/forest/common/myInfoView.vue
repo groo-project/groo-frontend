@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useRouter } from 'vue-router'
-import api from '@/lib/api.js'
 import { useAuthStore } from '@/stores/auth.js'
 import { useAlertStore } from '@/stores/alert'
 
