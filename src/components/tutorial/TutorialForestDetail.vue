@@ -1,6 +1,5 @@
 <script setup>
 import { ref, onMounted, onUnmounted, getCurrentInstance, computed, watch } from "vue";
-import edit_icon from "@/icons/edit_icon.png"
 import is_public_icon from "@/icons/is_public_icon.png"
 import rearrange_icon from "@/icons/rearrange_icon.png"
 import { useRouter, useRoute } from 'vue-router';
@@ -67,7 +66,6 @@ const changedItems = ref(new Map());
 
 // 기타
 const showTooltip = ref(false);
-const showEditNameTooltip = ref(false);
 const showRearrangeTooltip = ref(false);
 const forestData = ref(null);
 const currentWeather = ref(null);
@@ -311,16 +309,6 @@ const decreaseZIndex = () => {
   }
 };
 
-const handleEditNameClick = () => {
-  alert.show("회원가입 후 만나요.")
-};
-
-const handleNameUpdate = (newName) => {
-  if (forestData.value && forestData.value.length) {
-    forestData.value[0].name = newName;
-  }
-};
-
 const goToHome = () => {
   if (user.value?.forestId) {
     // 회원의 forestId로 이동
@@ -344,19 +332,6 @@ const goToHome = () => {
         />
       </div>
       <div class="control-icons">
-        <div class="edit-name-container">
-          <img 
-            :src="edit_icon"
-            class="btn-img"
-            @click="handleEditNameClick"
-            @mouseenter="showEditNameTooltip = true"
-            @mouseleave="showEditNameTooltip = false"
-          />
-          <div v-if="showEditNameTooltip" class="name-tooltip">
-            숲 이름 변경하기
-          </div>
-        </div>
-        
         <div class="rearrange-container">
           <img 
             :src="rearrange_icon"
