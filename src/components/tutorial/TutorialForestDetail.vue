@@ -4,7 +4,6 @@ import edit_icon from "@/icons/edit_icon.png"
 import is_public_icon from "@/icons/is_public_icon.png"
 import rearrange_icon from "@/icons/rearrange_icon.png"
 import { useRouter, useRoute } from 'vue-router';
-import EditForestName from "@/components/forest/common/EidtNickname.vue";
 import ItemControlPanel from "@/components/forest/common/placement/ItemControlPanel.vue";
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from 'pinia';
@@ -73,7 +72,6 @@ const showRearrangeTooltip = ref(false);
 const forestData = ref(null);
 const currentWeather = ref(null);
 const forceUpdate = ref(0);
-const showEditName = ref(false);
 const { proxy } = getCurrentInstance();
 
 // 계산된 크기 값들
@@ -357,11 +355,6 @@ const goToHome = () => {
           <div v-if="showEditNameTooltip" class="name-tooltip">
             숲 이름 변경하기
           </div>
-          <EditForestName
-            v-if="showEditName"
-            :current-name="forestData?.[0]?.name || ''"
-            @update="handleNameUpdate"
-          />
         </div>
         
         <div class="rearrange-container">
