@@ -63,17 +63,25 @@
 import { ref, onMounted, watch } from 'vue'
 import api from '@/lib/api'
 import { useAlertStore } from '@/stores/alert'
+import { useAuthStore } from '@/stores/auth'
+import { useMateForestStore } from '@/stores/mateForest'
 
 const alert = useAlertStore()
+const auth = useAuthStore()
+const mateForest = useMateForestStore()
 
 const props = defineProps({
   isVisible: {
     type: Boolean,
     default: false
+  },
+  isMate: {
+    type: Boolean,
+    default: false
   }
 })
 
-const emit = defineEmits(['close', 'load-draft'])
+const emit = defineEmits(['close', 'load-draft', 'request-confirm'])
 
 const currentView = ref('list') // 'list' or 'detail'
 const drafts = ref([])
@@ -94,8 +102,18 @@ const formatDate = (dateStr) => {
 
 const fetchDrafts = async () => {
   loading.value = true
+
+  let url;
+  if (props.isMate) {
+    const mateForestId = mateForest.currentMateForestId;
+    url = `diaries/drafts?forestId=${mateForestId}`;
+  } else {
+    const forestId = auth.user.forestId;
+    url = `diaries/drafts?forestId=${forestId}`;
+  }
+
   try {
-    const response = await api.get('diaries/drafts')
+    const response = await api.get(url);
     drafts.value = response.data || []
   } catch (error) {
     console.error('임시저장 목록 불러오기 실패:', error)

@@ -31,12 +31,15 @@
           :key="date"
           class="calendar-day"
           :class="{
-            'has-diary': hasDiary(date),
             'disabled': !isDateSelectable(date),
-            'available': isDateSelectable(date) && !hasDiary(date)
+            'available': isDateSelectable(date),
+            'diary-my-only': getDiaryState(date) === 'my-only',
+            'diary-other-only': getDiaryState(date) === 'other-only',
+            'diary-shared': getDiaryState(date) === 'shared'
           }"
           @click="handleDateClick(date)"
           :style="{ cursor: isDateSelectable(date) ? 'pointer' : 'not-allowed' }"
+          :title="getDiaryTooltip(date)"
         >
           {{ date }}
         </div>
@@ -52,12 +55,14 @@ import api from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'  
 import { useDiaryWriteStore } from '@/stores/diaryWrite'
 import { useAlertStore } from '@/stores/alert'
+import { useMateForestStore } from '@/stores/mateForest'
 
 const alert = useAlertStore()
 
 const auth = useAuthStore()
+const mateforest = useMateForestStore();
 const diaryWriteStore = useDiaryWriteStore();
-const forestId = auth.user?.forestId || '';
+const forestId = mateforest.currentMateForestId || '';
 
 const emit = defineEmits(['close', 'new-diary-click'])
 
@@ -65,6 +70,7 @@ const today = new Date()
 const year = ref(today.getFullYear())
 const month = ref(today.getMonth() + 1)
 const diaryDates = ref([])
+const diaryData = ref([])
 
 const weekDays = ['일', '월', '화', '수', '목', '금', '토']
 const years = Array.from({length: today.getFullYear() - 2020 + 1}, (_, i) => 2020 + i)
@@ -76,13 +82,8 @@ const showMonthSelect = ref(false)
 const daysInMonth = computed(() => new Date(year.value, month.value, 0).getDate())
 const startBlank = computed(() => new Date(year.value, month.value - 1, 1).getDay())
 
-function hasDiary(date) {
-  const d = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`
-  return diaryDates.value.includes(d)
-}
-
 // 날짜가 선택 가능한지 확인 (오늘부터 2일 전까지)
-function isDateSelectable(date) {
+const isDateSelectable = (date) => {
   const currentDate = new Date(year.value, month.value - 1, date)
   const todayDate = new Date()
   const threeDaysAgo = new Date()
@@ -96,15 +97,15 @@ function isDateSelectable(date) {
   return currentDate >= threeDaysAgo && currentDate <= todayDate
 }
 
-function handleDateClick(date) {
+const handleDateClick = (date) => {
   // 선택 불가능한 날짜는 클릭 무시
   if (!isDateSelectable(date)) {
     return
   }
   
   // 일기가 있는 날을 클릭한 경우
-  if (hasDiary(date)) {
-    onExistingDiaryClick(date)
+  if (hasMyDiary(date)) {
+    onExistingDiaryClick()
   } 
   // 일기가 없는 날을 클릭한 경우
   else {
@@ -113,13 +114,13 @@ function handleDateClick(date) {
 }
 
 // 이미 일기가 작성된 날을 클릭했을 때 실행되는 함수
-async function onExistingDiaryClick(date) {
+const onExistingDiaryClick = async () => {
   alert.show("해당 날짜에 이미 일기가 작성되었어요!")
   return;
 }
 
 // 일기가 없는 날을 클릭했을 때 실행되는 함수
-function onNewDiaryClick(date) {
+const onNewDiaryClick = (date) => {
   const dateStr = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
   
   // 새 일기 작성용 emit
@@ -127,36 +128,42 @@ function onNewDiaryClick(date) {
   emit('new-diary-click');
 }
 
-function toggleYearSelect() {
+const toggleYearSelect = () => {
   showYearSelect.value = !showYearSelect.value
   showMonthSelect.value = false
 }
-function toggleMonthSelect() {
+const toggleMonthSelect = () => {
   showMonthSelect.value = !showMonthSelect.value
   showYearSelect.value = false
 }
-function selectYear(y) {
+const selectYear = (y) => {
   year.value = y
   showYearSelect.value = false
 }
-function selectMonth(m) {
+const selectMonth = (m) => {
   month.value = m
   showMonthSelect.value = false
 }
 
-async function fetchDiaries() {
-  const currentForestId = forestId || auth.user?.forestId;
+const fetchDiaries = async () => {
+  const currentForestId = forestId || mateforest.currentMateForestId;
   
   if (!currentForestId) {
     console.error('Forest ID not available');
     diaryDates.value = [];
+    diaryData.value = [];
     return;
   }
   
   try {
     const res = await api.get(
-      `diaries/personal?forestId=${currentForestId}&year=${year.value}&month=${month.value}`);
+      `diaries/shared?forestId=${currentForestId}&year=${year.value}&month=${month.value}`);
     diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0]);
+    diaryData.value = res.data.map(entry => ({
+        date: entry.createdAt.split('T')[0],
+        userId: entry.userId
+    }));
+
   } catch (e) {
     console.error('Failed to fetch diaries:', e);
     console.error('Error response:', e.response?.data);
@@ -164,8 +171,68 @@ async function fetchDiaries() {
   }
 }
 
+const hasMyDiary = (date) => {
+    const d = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    const myUserId = auth.$state.user.userId;
+    return diaryData.value.some(entry => entry.date === d && entry.userId === myUserId);
+}
+
+const hasOtherDiary = (date) => {
+    const d = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    const myUserId = auth.$state.user.userId;
+    return diaryData.value.some(entry => entry.date === d && entry.userId !== myUserId);
+}
+
+// 세 가지 상태를 구분하는 로직
+const getDiaryState = (date) => {
+    const isMyDiary = hasMyDiary(date);
+    const isOtherDiary = hasOtherDiary(date);
+    
+    if (!isMyDiary && !isOtherDiary) {
+        return 'none'; // 일기 없음
+    } else if (isMyDiary && isOtherDiary) {
+        return 'shared'; // 내 일기 + 상대 일기 모두 있음 (가장 강조)
+    } else if (isMyDiary) {
+        return 'my-only'; // 내 일기만 있음 (기존 스타일)
+    } else { // if (isOtherDiary)
+        return 'other-only'; // 상대 일기만 있음 (다른 스타일)
+    }
+}
+
+// 날짜 상태에 따른 툴팁 메시지 반환
+function getDiaryTooltip(date) {
+    if (!isDateSelectable(date)) {
+        const todayDate = new Date();
+        const currentDate = new Date(year.value, month.value - 1, date);
+        currentDate.setHours(0, 0, 0, 0);
+
+        if (currentDate > todayDate) {
+            return '미래의 일기는 작성할 수 없어요.';
+        } else {
+            return '일기는 2일 전까지만 작성 가능해요.';
+        }
+    }
+    
+    const state = getDiaryState(date);
+    
+    switch (state) {
+        case 'none':
+            return '일기를 작성할 수 있어요!';
+        case 'my-only':
+            return '이미 일기를 작성하셨어요.';
+        case 'other-only':
+            return '메이트가 일기를 작성했네요.';
+        case 'shared':
+            return '메이트도 일기를 작성했어요!';
+        default:
+            return '';
+    }
+}
+
 watch([year, month], fetchDiaries)
-onMounted(fetchDiaries)
+onMounted(() => {
+    fetchDiaries()
+})
 </script>
 
 <style scoped>
@@ -295,19 +362,51 @@ onMounted(fetchDiaries)
   color: #2d3a2d;
 }
 
-/* 이미 일기가 작성된 날짜 */
-.calendar-day.has-diary {
-  background: #ffffff8f;
+.calendar-day.diary-my-only {
+  background: #ffffff8f; /* 기존 has-diary 배경 */
   color: #3a5a40;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  opacity: 0.7;
+  opacity: 0.9; /* 약간 더 강조 */
   cursor: pointer;
 }
 
-.calendar-day.has-diary:hover {
+.calendar-day.diary-my-only:hover {
   background: #e8f5e8;
-  opacity: 0.8;
+  opacity: 1;
 }
+
+/* 상대 일기만 있는 날짜 */
+.calendar-day.diary-other-only {
+  /* 배경을 반투명 녹색으로 하여 나와 상대의 색상 대비 */
+  background: rgba(144, 182, 144, 0.7); /* 산뜻한 연두색 계열 */
+  color: #fff; /* 흰색 글자로 대비 강조 */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  opacity: 0.9;
+  cursor: pointer;
+}
+
+.calendar-day.diary-other-only:hover {
+  background: rgb(144, 182, 144);
+  opacity: 1;
+}
+
+/* 내 일기 + 상대 일기 모두 있는 날짜 (가장 강조) */
+.calendar-day.diary-shared {
+  /* 배경을 더 진하고 꽉 찬 색상으로 (예: 숲 테마에 맞는 진한 녹색 계열) */
+  background: #3a5a40;
+  color: #fff; /* 흰색 글자 */
+  /* 테두리를 추가하여 가장 눈에 띄게 */
+  border: 2px solid #b6d6b6; 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  opacity: 1;
+  cursor: pointer;
+}
+
+.calendar-day.diary-shared:hover {
+  background: #4a6a4a;
+}
+
+/**fdsfasdfasdf */
 
 /* 선택 불가능한 날짜 (3일 전 이전 또는 미래) */
 .calendar-day.disabled {

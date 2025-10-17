@@ -1,6 +1,6 @@
 <!--Main-->
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import SideMenu from "@/components/forest/emotion/SideMenu.vue";
 import MateSideMenu from "@/components/forest/mate/MateSideMenu.vue";
@@ -117,6 +117,7 @@ const handleConfirm = async () => {
         @openShare="openInviteLinkModal"
         @openForestList="openForestListModal"
         @openWithdraw="openWithdrawModal"
+        @request-confirm="openConfirmModal"
       />
       <SideMenu
         v-else

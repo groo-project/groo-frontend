@@ -56,6 +56,7 @@
     @load-draft="handleLoadDraft"
     @close="isDraftListModalOpen = false"
     @request-confirm="emit('request-confirm', $event)"
+    :is-mate="false"
   />
 </template>
 
@@ -152,12 +153,21 @@ const saveDraft = async () => {
     return;
   }
 
+  const forestId = auth.user?.forestId;
+
+  if (forestId === null || forestId === undefined) {
+      console.error('Invalid forestId:', forestId);
+      alert.show("숲 정보를 찾을 수 없습니다. 다시 로그인해주세요.")
+      return;
+    }
+
   const draft = await isDraftExist(diaryWriteStore.writeDate)
   if (draft.draftId === null) {
     try {
       const body = {
         date: diaryWriteStore.writeDate,
         content: diaryContent.value,
+        forestId: forestId
       }
 
       await api.post("/diaries/drafts", body);
@@ -181,7 +191,8 @@ const saveDraft = async () => {
  */
 const isDraftExist = async (date) => {
   try {
-    const response = await api.get(`/diaries/drafts/${date}`);
+    const forestId = auth.user?.forestId;
+    const response = await api.get(`/diaries/drafts/${date}?forestId=${forestId}`);
     
     return response.data;
   } catch (e) {

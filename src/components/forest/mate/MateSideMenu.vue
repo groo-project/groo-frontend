@@ -7,9 +7,9 @@ import buttonIcon_4 from "@/icons/invite_icon.png";
 import buttonIcon_5 from "@/icons/myitemview_icon.png";
 import logoutIcon from "@/icons/logout_icon.png";
 import previousIcon from "@/icons/previous_icon2.png";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
 import InviteLinkModal from "@/components/forest/mate/InviteLinkModal.vue";
-import ForestListModal from "@/components/forest/common/ForestListModal.vue";
+import MateDiaryCalendarForWrite from "./MateDiaryCalendarForWrite.vue";
 import DiaryCalendar from '@/components/forest/mate/DiaryCalendar.vue';
 import DiaryDetail from '@/components/forest/mate/DiaryDetail.vue';
 import MyItemView from '@/components/forest/common/MyItemView.vue';
@@ -43,18 +43,22 @@ const props = defineProps({
 });
 
 const { proxy } = getCurrentInstance();
-const route = useRoute();
+const router = useRouter();
+const emit = defineEmits(["openShare", "openForestList", "openWithdraw", "request-confirm"]);
+const authStore = useAuthStore();
+const { user } = authStore;
+const forestId = computed(() => user?.forestId ?? null);
+
+const activeView = ref('main');
 const isMenuOpen = ref(true);
-const showDiaryCalendar = ref(false);
+
 const selectedDiaries = ref(null);
 const currentDiaryIndex = ref(0);
-const showDiaryDetail = ref(false);
-const showMyItems = ref(false);
-const showCategorySelector = ref(false);
-const showWriteDiary = ref(false);
-const showAnalyzeResult = ref(false);
 const categoryLoading = ref(false);
 const selectedCategory = ref(null);
+const showInviteModal = ref(false);
+const inviteLink = ref("");
+const showLogoutModal = ref(false);
 
 const analysisResult = ref({
   emotions: [],
@@ -76,15 +80,21 @@ const emotionIcons = {
 
 const sidebarWidth = computed(() => {
   if (!isMenuOpen.value) return 60;
-  if (showDiaryCalendar.value || showMyItems.value || showCategorySelector.value || showWriteDiary.value || showAnalyzeResult.value) return 576;
-  return 360;
+  const expandedViews = [
+    'diaryCalendar',
+    'myItems',
+    'categorySelector',
+    'writeDiary',
+    'analyzeResult',
+    'diaryDetail',
+    'diaryCalendarForWrite'
+  ];
+  return expandedViews.includes(activeView.value) ? 576 : 360;
 });
 
-const showInviteModal = ref(false);
-const inviteLink = ref("");
-const router = useRouter();
-const showForestListModal = ref(false);
-const emit = defineEmits(["openShare", "openForestList", "openWithdraw"]);
+const handleMateDiaryCalendarForWrite = () => {
+  activeView.value = 'diaryCalendarForWrite';
+}
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
@@ -94,15 +104,9 @@ const handleShare = () => {
   emit("openShare");
 };
 
-const authStore = useAuthStore();
-const { user } = authStore;
-const forestId = computed(() => user?.forestId ?? null);
 const goBack = () => {
-  // router.back();
   router.push('/forest-detail/' + forestId.value);
 };
-
-const showLogoutModal = ref(false);
 
 const logout = () => {
   showLogoutModal.value = true;
@@ -127,20 +131,16 @@ const handleLogoutConfirm = async () => {
   }
 };
 
-const handleForestList = () => {
-  emit("openForestList");
-};
-
 const handleWithdraw = () => {
   emit("openWithdraw");
 };
 
 const openDiaryCalendar = () => {
-  showDiaryCalendar.value = true;
+  activeView.value = 'diaryCalendar';
 };
 
 const closeDiaryCalendar = () => {
-  showDiaryCalendar.value = false;
+  activeView.value = 'main';
   selectedDiaries.value = null;
 };
 
@@ -148,7 +148,7 @@ const handleDiaryClick = (data) => {
   selectedDiaries.value = data;
   if (data.diaries && data.diaries.length > 0) {
     currentDiaryIndex.value = 0;
-    showDiaryDetail.value = true;
+    activeView.value = 'diaryDetail';
   }
 };
 
@@ -165,36 +165,33 @@ const handleNextDiary = () => {
 };
 
 const closeDiaryDetail = () => {
-  showDiaryDetail.value = false;
+  activeView.value = 'diaryCalendar';
   currentDiaryIndex.value = 0;
 };
 
 const openMyItems = () => {
-  showMyItems.value = true;
+  activeView.value = 'myItems';
 };
 
 const closeMyItems = () => {
-  showMyItems.value = false;
+  activeView.value = 'main';
 };
 
 const toggleCategorySelector = () => {
-  if (showCategorySelector.value) {
-    showWriteDiary.value = false;
-    showCategorySelector.value = false;
-    showAnalyzeResult.value = false;
+  if (activeView.value === 'categorySelector') {
+    activeView.value = 'main';
+    selectedCategory.value = null;
+  } else if (activeView.value === 'writeDiary' || activeView.value === 'analyzeResult') {
+    activeView.value = 'categorySelector';
     selectedCategory.value = null;
   } else {
-    showCategorySelector.value = true;
-    showDiaryCalendar.value = false;
-    showDiaryDetail.value = false;
-    showMyItems.value = false;
+    activeView.value = 'categorySelector';
   }
 };
 
 const handleCategorySelect = (categoryId) => {
   selectedCategory.value = Number(categoryId);
-  showCategorySelector.value = false;
-  showWriteDiary.value = true;
+  activeView.value = 'writeDiary';
 };
 
 const handleDiarySave = async (result) => {
@@ -205,8 +202,6 @@ const handleDiarySave = async (result) => {
     alert.show("감정 분석에 실패했습니다. 다시 시도해주세요.");
     return;
   }
-
-  showWriteDiary.value = false;
 
   // 감정 레이블 매핑
   const emotionMapping = {
@@ -247,7 +242,7 @@ const handleDiarySave = async (result) => {
     analysisResult.value = analysisData;
     
     // 분석 결과 화면으로 전환
-    showAnalyzeResult.value = true;
+    activeView.value = 'analyzeResult';
   } catch (error) {
     console.error("분석 결과 처리 중 오류 발생:", error);
     alert.show("분석 결과 처리 중 오류가 발생했습니다. 다시 시도해주세요.");
@@ -256,7 +251,7 @@ const handleDiarySave = async (result) => {
 
 const handlePlace = (selectedPiece) => {
   
-  showAnalyzeResult.value = false;
+  activeView.value = 'main';
   if (proxy && proxy.emitter) {
     proxy.emitter.emit('place-item', selectedPiece);
     
@@ -266,12 +261,10 @@ const handlePlace = (selectedPiece) => {
 };
 
 const handleToStorage = (piece) => {
-  showAnalyzeResult.value = false;
-  // 보관소 저장 로직 추가
+  activeView.value = 'main';
 };
 
 const handlePlaceFromStorage = (item) => {
-  
   
   // 아이템 배치 이벤트 발생
   if (proxy && proxy.emitter) {
@@ -282,7 +275,7 @@ const handlePlaceFromStorage = (item) => {
   }
   
   // MyItemView 닫기
-  showMyItems.value = false;
+  activeView.value = 'main';
 };
 </script>
 
@@ -298,7 +291,7 @@ const handlePlaceFromStorage = (item) => {
       :style="{ width: sidebarWidth + 'px' }"
     >
       <div class="menu-content" v-if="isMenuOpen">
-        <div v-if="!showDiaryCalendar && !showMyItems && !showCategorySelector && !showWriteDiary && !showAnalyzeResult">
+        <div v-if="activeView === 'main'">
           <div class="top-bar">
             <span class="previous-icon" @click="goBack">
               <img :src="previousIcon" class="btn-img" />
@@ -312,7 +305,7 @@ const handlePlaceFromStorage = (item) => {
             <div>들어오신걸 환영해요!</div>
           </div>
           <div class="menu-buttons">
-            <button class="menu-btn" @click="toggleCategorySelector">
+            <button class="menu-btn" @click="handleMateDiaryCalendarForWrite">
               <span class="icon">
                 <img :src="buttonIcon_1" class="btn-img" />
               </span>
@@ -342,19 +335,9 @@ const handlePlaceFromStorage = (item) => {
               </span>
               우정의 숲 탈퇴하기
             </button>
-            <InviteLinkModal
-              v-if="showInviteModal"
-              :inviteLink="inviteLink"
-              @close="showInviteModal = false"
-            />
-            <ForestListModal
-              v-if="showForestListModal"
-              :isOpen="showForestListModal"
-              @close="showForestListModal = false"
-            />
           </div>
         </div>
-        <template v-else-if="showCategorySelector">
+        <template v-else-if="activeView === 'categorySelector'">
           <div class="top-bar">
             <button class="back-button" @click="toggleCategorySelector">
               ←
@@ -365,7 +348,7 @@ const handlePlaceFromStorage = (item) => {
             @loading="(val) => (categoryLoading = val)"
           />
         </template>
-        <template v-else-if="showWriteDiary">
+        <template v-else-if="activeView === 'writeDiary'">
           <div class="top-bar">
             <button class="back-button" @click="toggleCategorySelector">
               ←
@@ -377,27 +360,28 @@ const handlePlaceFromStorage = (item) => {
               :categoryId="selectedCategory"
               @save="handleDiarySave"
               @loading="(val) => (categoryLoading = val)"
+              @request-confirm="emit('request-confirm', $event)"
             />
             <div v-if="categoryLoading" class="loading-overlay">
               <LoadingAnimation />
             </div>
           </div>
         </template>
-        <template v-else-if="showAnalyzeResult">
+        <template v-else-if="activeView === 'analyzeResult'">
           <AnalyzeResult
             v-bind="analysisResult"
             @place="handlePlace"
             @to-storage="handleToStorage"
           />
         </template>
-        <div v-else-if="showDiaryCalendar && !showDiaryDetail" class="calendar-view">
+        <div v-else-if="activeView === 'diaryCalendar'" class="calendar-view">
           <DiaryCalendar
             :forestId="props.forestId"
             @close="closeDiaryCalendar"
             @diary-click="handleDiaryClick"
           />
         </div>
-        <div v-else-if="showDiaryDetail" class="diary-detail-view">
+        <div v-else-if="activeView === 'diaryDetail'" class="diary-detail-view">
           <DiaryDetail
             v-if="selectedDiaries && selectedDiaries.diaries[currentDiaryIndex]"
             :nickname="selectedDiaries.diaries[currentDiaryIndex].nickname"
@@ -413,15 +397,26 @@ const handlePlaceFromStorage = (item) => {
             @next="handleNextDiary"
           />
         </div>
-        <div v-else class="myitem-view">
+        <div v-else-if="activeView === 'myItems'" class="myitem-view">
           <MyItemView 
             :forestId="props.forestId" 
             @close="closeMyItems" 
             @placeFromStorage="handlePlaceFromStorage"
           />
         </div>
+        <div v-else-if="activeView === 'diaryCalendarForWrite'">
+          <MateDiaryCalendarForWrite 
+            @close="activeView = 'main'"
+            @new-diary-click="toggleCategorySelector"
+          />
+        </div>
       </div>
     </div>
+    <InviteLinkModal
+      v-if="showInviteModal"
+      :inviteLink="inviteLink"
+      @close="showInviteModal = false"
+    />
     <ConfirmModal
       :is-open="showLogoutModal"
       title="로그아웃"
