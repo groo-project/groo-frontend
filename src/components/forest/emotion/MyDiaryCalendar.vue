@@ -29,8 +29,8 @@
             v-for="date in daysInMonth"
             :key="date"
             class="calendar-day"
-            :class="{ 'has-diary': hasDiary(date) }"
-            @click="hasDiary(date) && onDiaryClick(date)"
+            :class="{ 'has-diary': getDiaryIdByDate(date) !== null }"
+            @click="getDiaryIdByDate(date) && onDiaryClick(date)"
             style="cursor: pointer"
           >
             {{ date }}
@@ -40,258 +40,234 @@
     </div>
   </template>
   
-  <script setup>
-  import { ref, computed, watch, onMounted } from 'vue'
-  import backIcon from '@/icons/back.png'
-  import api from '@/lib/api'
-  import { useAuthStore } from '@/stores/auth'  
+<script setup>
+import { ref, computed, watch, onMounted } from 'vue'
+import backIcon from '@/icons/back.png'
+import api from '@/lib/api'
+import { useAuthStore } from '@/stores/auth'  
 
-  const auth = useAuthStore()
-  const token = auth.accessToken || '';
-  const forestId = auth.user?.forestId || '';
-  
+const auth = useAuthStore()
+const forestId = auth.user?.forestId || '';
 
-  const emit = defineEmits(['close', 'diary-click'])
-  
-  const today = new Date()
-  const year = ref(today.getFullYear())
-  const month = ref(today.getMonth() + 1)
-  const diaryDates = ref([])
-  
-  const weekDays = ['일', '월', '화', '수', '목', '금', '토']
-  const years = Array.from({length: today.getFullYear() - 2020 + 1}, (_, i) => 2020 + i)
-  const months = Array.from({length: 12}, (_, i) => i + 1)
-  
-  const showYearSelect = ref(false)
-  const showMonthSelect = ref(false)
-  
-  const daysInMonth = computed(() => new Date(year.value, month.value, 0).getDate())
-  const startBlank = computed(() => new Date(year.value, month.value - 1, 1).getDay())
-  
-  function hasDiary(date) {
-    const d = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`
-    return diaryDates.value.includes(d)
-  }
-  
-  function toggleYearSelect() {
-    showYearSelect.value = !showYearSelect.value
-    showMonthSelect.value = false
-  }
-  function toggleMonthSelect() {
-    showMonthSelect.value = !showMonthSelect.value
-    showYearSelect.value = false
-  }
-  function selectYear(y) {
-    year.value = y
-    showYearSelect.value = false
-  }
-  function selectMonth(m) {
-    month.value = m
-    showMonthSelect.value = false
-  }
+const emit = defineEmits(['close', 'diary-click'])
 
-  function getUserIdFromToken() {
-    if (!token) return null;
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.userId;
-    } catch (e) {
-      return null;
-    }
-  }
-  
-  async function fetchDiaries() {
+const today = new Date()
+const year = ref(today.getFullYear())
+const month = ref(today.getMonth() + 1)
+const diaryDates = ref([])
 
-    
-    // forestId가 없으면 auth에서 다시 가져오기
-    const currentForestId = forestId || auth.user?.forestId;
-    
-    if (!currentForestId) {
-      console.error('Forest ID not available');
-      diaryDates.value = [];
-      return;
-    }
-    
-    try {
-      const res = await api.get(
-        `diary/${currentForestId}/month?year=${year.value}&month=${month.value}`);
-      diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0]);
+const weekDays = ['일', '월', '화', '수', '목', '금', '토']
+const years = Array.from({length: today.getFullYear() - 2020 + 1}, (_, i) => 2020 + i)
+const months = Array.from({length: 12}, (_, i) => i + 1)
 
-    } catch (e) {
-      console.error('Failed to fetch diaries:', e);
-      console.error('Error response:', e.response?.data);
-      diaryDates.value = [];
-    }
-  }
+const showYearSelect = ref(false)
+const showMonthSelect = ref(false)
 
-  // watch([year, month], fetchDiaries)
-  // onMounted(fetchDiaries)
-  //       }
-  //     );
-  //     diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0])
-  //   } catch (e) {
-  //     diaryDates.value = []
-  //   }
-  // }
-  
-  watch([year, month], fetchDiaries)
-  onMounted(fetchDiaries)
-  
-  async function onDiaryClick(date) {
-    const dateStr = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-    
-    // forestId가 없으면 auth에서 다시 가져오기
-    const currentForestId = forestId || auth.user?.forestId;
-    
-    if (!currentForestId) {
-      console.error('Forest ID not available');
-      return;
-    }
-    
-    try {
-      const res = await api.get(
-        `diary/${currentForestId}/date?date=${dateStr}`);
+const daysInMonth = computed(() => new Date(year.value, month.value, 0).getDate())
+const startBlank = computed(() => new Date(year.value, month.value - 1, 1).getDay())
 
-      emit('diary-click', {
-        diaries: res.data,
-        year: year.value,
-        month: month.value,
-        day: date
-      });
-    } catch (e) {
-      console.error('Failed to fetch diary detail:', e);
-      console.error('Error response:', e.response?.data);
-    }
+const diaryDateIdMap = ref(new Map())
+
+function toggleYearSelect() {
+  showYearSelect.value = !showYearSelect.value
+  showMonthSelect.value = false
+}
+function toggleMonthSelect() {
+  showMonthSelect.value = !showMonthSelect.value
+  showYearSelect.value = false
+}
+function selectYear(y) {
+  year.value = y
+  showYearSelect.value = false
+}
+function selectMonth(m) {
+  month.value = m
+  showMonthSelect.value = false
+}
+
+async function fetchDiaries() {
+  
+  // forestId가 없으면 auth에서 다시 가져오기
+  const currentForestId = forestId || auth.user?.forestId;
+  
+  if (!currentForestId) {
+    console.error('Forest ID not available');
+    diaryDates.value = [];
+    return;
   }
   
-  function getWeekday(y, m, d) {
-    const days = ['일', '월', '화', '수', '목', '금', '토'];
-    return days[new Date(y, m - 1, d).getDay()];
+  try {
+    const res = await api.get(
+      `diaries/personal?forestId=${currentForestId}&year=${year.value}&month=${month.value}`);
+    diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0]);
+
+    const map = new Map();
+    res.data.forEach(entry => {
+      const dateKey = entry.createdAt.split('T')[0];
+      map.set(dateKey, entry.diaryId);
+    });
+    diaryDateIdMap.value = map;
+
+  } catch (e) {
+    console.error('Failed to fetch diaries:', e);
+    console.error('Error response:', e.response?.data);
+    diaryDates.value = [];
   }
-  </script>
+}
+
+watch([year, month], fetchDiaries)
+onMounted(fetchDiaries)
+
+const getDiaryIdByDate = (date) => {
+  const d = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`
+  return diaryDateIdMap.value.get(d) || null
+}
+
+async function onDiaryClick(date) {
+
+const diaryId = getDiaryIdByDate(date);
   
-  <style scoped>
-  .calendar-bg {
-    width: 100%;
-    height: 100%;
-    min-width: 340px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    background: none;
+const currentForestId = forestId || auth.user?.forestId;
+  
+if (!diaryId || !currentForestId) return;
+  
+  try {
+    const res = await api.get(
+      `diaries/personal/detail?diaryId=${diaryId}`);
+
+    emit('diary-click', {
+      diaries: res.data,
+      year: year.value,
+      month: month.value,
+      day: date
+    });
+  } catch (e) {
+    alert.show("일기 상세 정보를 불러오지 못했어요! 잠시 후 다시 시도해 주세요.");
   }
-  .back-img {    /* 페이지 뒤로가기 버튼 */
-    position: absolute;
-    top: 32px;
-    left: 12px;
-    width: 36px;
-    height: 36px;
-    cursor: pointer;
-    z-index: 10;
-  }
-  .calendar-title {   /* 우리의 우정 일기 기록 */
-    margin-top: 0px;
-    margin-bottom: 0;
-    text-align: center;
-    font-size: 1.9rem;
-    font-weight: 600;
-    color: #fff;
-    letter-spacing: -1px;
-  }
-  .calendar-content-box {     /* 뒤에 흰색 배경 */
-    background: rgba(255,255,255,0.4);
-    border-radius: 30px;
-    padding: 8px 32px 24px 20px;
-    margin-top: 60px;
-    box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .calendar-controls {
-    width: 100%;
-    max-width: 420px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 8px;
-    margin-top: 120px;
-    margin-bottom: 170px;
-    color: #fff;
-    font-size: 1.2rem;
-    font-weight: 600;
-    position: relative;
-    margin-left: 0;
-  }
-  .year-toggle, .month-toggle {
-    cursor: pointer;
-    position: relative;
-    padding: 0 4px;
-    left: 10px;
-    bottom: 110px;
-  }
-  .dropdown {
-    position: absolute;
-    top: 120%;
-    left: 0;
-    background: #c2c2c2;
-    color: #3a5a40;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    z-index: 20;
-    min-width: 100px;
-  }
-  .year-dropdown div, .month-dropdown div {
-    padding: 8px 16px;
-    cursor: pointer;
-  }
-  .year-dropdown div:hover, .month-dropdown div:hover {
-    background: #b6d6b6;
-  }
-  .calendar-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 40px);
-    grid-auto-rows: 40px;
-    gap: 12px;
-    background: none;
-    margin-top: -250px;
-    margin-bottom: 0;
-  }
-  .calendar-header {
-    color: #474c47;
-    font-weight: 600;
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: none;
-  }
-  .calendar-day {
-    background: transparent;
-    color: #4a5a4a;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.1rem;
-    font-weight: 600;
-    box-shadow: none;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    width: 44px;
-    height: 44px;
-  }
-  .calendar-day.has-diary {
-    background: #ffffff8f;
-    color: #3a5a40;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    z-index: 1;
-  }
-  .calendar-day:hover {
-    background: #b6d6b6;
-    color: #2d3a2d;
-  }
-  </style>
-    
+}
+</script>
+
+<style scoped>
+.calendar-bg {
+  width: 100%;
+  height: 100%;
+  min-width: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: none;
+}
+.back-img {    /* 페이지 뒤로가기 버튼 */
+  position: absolute;
+  top: 32px;
+  left: 12px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  z-index: 10;
+}
+.calendar-title {   /* 우리의 우정 일기 기록 */
+  margin-top: 0px;
+  margin-bottom: 0;
+  text-align: center;
+  font-size: 1.9rem;
+  font-weight: 600;
+  color: #fff;
+  letter-spacing: -1px;
+}
+.calendar-content-box {     /* 뒤에 흰색 배경 */
+  background: rgba(255,255,255,0.4);
+  border-radius: 30px;
+  padding: 8px 32px 24px 20px;
+  margin-top: 60px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.calendar-controls {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-top: 120px;
+  margin-bottom: 170px;
+  color: #fff;
+  font-size: 1.2rem;
+  font-weight: 600;
+  position: relative;
+  margin-left: 0;
+}
+.year-toggle, .month-toggle {
+  cursor: pointer;
+  position: relative;
+  padding: 0 4px;
+  left: 10px;
+  bottom: 110px;
+}
+.dropdown {
+  position: absolute;
+  top: 120%;
+  left: 0;
+  background: #c2c2c2;
+  color: #3a5a40;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  z-index: 20;
+  min-width: 100px;
+}
+.year-dropdown div, .month-dropdown div {
+  padding: 8px 16px;
+  cursor: pointer;
+}
+.year-dropdown div:hover, .month-dropdown div:hover {
+  background: #b6d6b6;
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 40px);
+  grid-auto-rows: 40px;
+  gap: 12px;
+  background: none;
+  margin-top: -250px;
+  margin-bottom: 0;
+}
+.calendar-header {
+  color: #474c47;
+  font-weight: 600;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+}
+.calendar-day {
+  background: transparent;
+  color: #4a5a4a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 600;
+  box-shadow: none;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  width: 44px;
+  height: 44px;
+}
+.calendar-day.has-diary {
+  background: #ffffff8f;
+  color: #3a5a40;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  z-index: 1;
+}
+.calendar-day:hover {
+  background: #b6d6b6;
+  color: #2d3a2d;
+}
+</style>

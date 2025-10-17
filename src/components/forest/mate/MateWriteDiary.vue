@@ -14,20 +14,12 @@
           </div>
           <!-- 날짜 선택 -->
           <div class="date-selector">
-            <VueFlatPickr
-              v-model="selectedDate"
-              :config="flatpickrConfig"
-              class="date-input"
-            >
-              <button class="date-button">
-                {{ formattedDate }}
-              </button>
-            </VueFlatPickr>
+            {{ formattedDate }}
           </div>
         </div>
 
         <div class="button-group">
-          <button class="action-btn secondary" @click="loadDraft">
+          <button class="action-btn secondary" @click="openDraftListModal">
             불러오기
           </button>
           <button class="action-btn secondary" @click="saveDraft">
@@ -44,34 +36,44 @@
 
         <div class="char-counter">{{ charCount }}/1000</div>
 
+        <!-- 텍스트 길이에 따른 메시지 -->
+        <div v-if="lengthMessage" class="length-message">
+          {{ lengthMessage }}
+        </div>
+
         <button 
           class="save-btn"
           @click="saveDiary"
-          :disabled="!diaryContent.trim()"
+          :disabled="!canSave"
         >
           저장하기
         </button>
       </div>
     </div>
+    <DraftListModal
+    :is-visible="isDraftListModalOpen"
+    @load-draft="handleLoadDraft"
+    @close="isDraftListModalOpen = false"
+    @request-confirm="emit('request-confirm', $event)"
+    :isMate="true"
+  />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
-import VueFlatPickr from 'vue-flatpickr-component';
 import 'flatpickr/dist/flatpickr.css';
-import { Korean } from 'flatpickr/dist/l10n/ko.js';
 import api from '@/lib/api';
+import { useDiaryWriteStore } from '@/stores/diaryWrite';
+import DraftListModal from '../common/DraftListModal.vue';
 import { useAlertStore } from '@/stores/alert'
+import { useMateForestStore } from '@/stores/mateForest';
 
 const alert = useAlertStore()
+const diaryWriteStore = useDiaryWriteStore();
+const mateForest = useMateForestStore();
 
-// props로 forestId를 받아야함 (우정의 숲 ID)
 const props = defineProps({
-  forestId: {
-    type: [String, Number],
-    required: true
-  },
   categoryId: {
     type: Number,
     required: true,
@@ -83,87 +85,161 @@ const props = defineProps({
 
 const diaryContent = ref('');
 const charCount = ref(0);
-const selectedDate = ref(new Date());
-
-// Flatpickr 설정
-const flatpickrConfig = {
-  locale: Korean,
-  dateFormat: 'Y-m-d',
-  disableMobile: true,
-  static: true,
-  mode: 'single',
-  allowInput: false,
-  clickOpens: true,
-  position: 'below',
-  monthSelectorType: 'static',
-  defaultDate: selectedDate.value
-};
 
 // 날짜 포맷팅
 const formattedDate = computed(() => {
-  const date = new Date(selectedDate.value);
   const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
-  return `${date.getFullYear()}년 ${date.getMonth() + 1}월 ${date.getDate()}일 ${weekdays[date.getDay()]}요일`;
+  const dateStr = diaryWriteStore.writeDate;
+  const date = new Date(dateStr);
+  const dayOfWeek = weekdays[date.getDay()];
+  return `${dateStr} ${dayOfWeek}`;
+});
+
+// 텍스트 길이에 따른 메시지
+const lengthMessage = computed(() => {
+  const length = charCount.value;
+  
+  if (length > 1000) {
+    return "1000자 이상 넘어갈 수 없어요.";
+  } else if (length >= 100) {
+    return "분석하기 좋은 충분한 길이네요!";
+  } else if (length >= 50) {
+    return "좋아요! 조금 더 작성해 볼까요?";
+  } else if (length > 0 && length < 30) {
+    return "조금 더 자세히 적어주시면 분석이 더 정확해져요! (최소 30자가 필요해요.)";
+  }
+  
+  return "";
+});
+
+// 저장 버튼 활성화 조건
+const canSave = computed(() => {
+
+  // 배포 시 비활성화
+  return true;
+
+  // 배포 시 활성화
+  // const length = charCount.value;
+  // return length >= 30 && length <= 1000 && diaryContent.value.trim();
 });
 
 const updateCharCount = () => {
   charCount.value = diaryContent.value.length;
 };
 
-const saveDraft = () => {
-  localStorage.setItem('diaryDraft', JSON.stringify({
-    content: diaryContent.value,
-    date: selectedDate.value
-  }));
-  alert.show('임시저장되었습니다.')
+const truncate = (text, length = 15) => {
+  if (!text) return '';
+  return text.length > length ? text.slice(0, length) + '...' : text;
+}
+
+const overwriteDraft = async (draftId, content) => {
+  const body = {
+    diaryDraftId: draftId,
+    content: content,
+  }
+  try {
+    await api.put('/diaries/drafts', body);
+    alert.show("덮어쓰기가 완료되었습니다.")
+  } catch (e) {
+    console.error(e);
+    alert.show("덮어쓰기가 실패했어요. 잠시 후 다시 시도해 주세요.")
+  }
+}
+
+const saveDraft = async () => {
+  if (diaryContent.value.length === 0) {
+    alert.show("내용을 작성해 주세요!")
+    return;
+  }
+
+  const forestId = mateForest.currentMateForestId;
+
+  if (forestId === null || forestId === undefined) {
+      console.error('Invalid forestId:', forestId);
+      alert.show("숲 정보를 찾을 수 없습니다. 다시 로그인해주세요.")
+      return;
+    }
+
+  const draft = await isDraftExist(diaryWriteStore.writeDate)
+
+  if (draft.draftId === null) {
+    try {
+      const body = {
+        date: diaryWriteStore.writeDate,
+        content: diaryContent.value,
+        forestId: forestId
+      }
+
+      await api.post("/diaries/drafts", body);
+      alert.show("임시저장되었습니다.")
+    } catch (e) {
+      alert.show("임시 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.")
+    }
+  } else {
+    emit('request-confirm', {
+      title: "덮어쓰기",
+      message: `이미 임시 저장 정보가 있습니다. 덮어쓸까요?`,
+      subMessage: `${draft.diaryDate}: ${truncate(draft.content)}`,
+      callback: () => overwriteDraft(draft.draftId, diaryContent.value)
+    })
+  }
 };
 
-const loadDraft = () => {
-  // localStorage 대신 auth 스토어에서 필요한 정보 가져오기
-  // 임시저장 기능이 필요하다면 auth 스토어에 추가하거나 다른 방식으로 구현
-  alert.show('임시저장 기능은 현재 사용할 수 없습니다.')
+/**
+ * 임시 저장 존재 여부 반환
+ * @param date yyyy-MM-dd 형식
+ */
+const isDraftExist = async (date) => {
+  try {
+    const forestId = mateForest.currentMateForestId;
+    const response = await api.get(`/diaries/drafts/${date}?forestId=${forestId}`);
+    
+    return response.data;
+  } catch (e) {
+    alert.show("임시저장 여부를 불러오지 못했습니다. 나중에 다시 시도해 주세요.")
+  }
+}
+
+// DraftListModal 관련
+const isDraftListModalOpen = ref(false)
+
+const openDraftListModal = () => {
+  isDraftListModalOpen.value = true
 };
 
-const emit = defineEmits(['save', 'loading']);
+const handleLoadDraft = (content) => {
+  diaryContent.value = content;
+}
+
+const emit = defineEmits(['save', 'loading', 'request-confirm']);
 
 const saveDiary = async () => {
   try {
     if (!props.categoryId) {
-      alert.show('카테고리가 선택되지 않았습니다.')
-      return;
-    }
-
-    if (!diaryContent.value.trim()) {
-      alert.show('일기 내용을 입력해주세요.')
+      alert.show("카테고리가 선택되지 않았습니다.")
       return;
     }
 
     emit('loading', true);
 
-    // 날짜를 ISO 문자열로 변환
-    const date = new Date(selectedDate.value);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const createdAt = `${year}-${month}-${day}T00:00:00`;
-
-    // const forestId = auth.user?.forestId;
-
-    // forestId가 null이나 undefined가 아닌지 확인 (0도 유효한 값으로 처리)
-    if (props.forestId === null || props.forestId === undefined) {
-      console.error('Invalid forestId:', props.forestId);
-      alert.show('숲 정보를 찾을 수 없습니다. 다시 로그인해주세요.')
+    const createdAt = `${diaryWriteStore.writeDate}T00:00:00`;
+    
+    const forestId = mateForest.currentMateForestId;
+    
+    if (forestId === null || forestId === undefined) {
+      console.error('Invalid forestId:', forestId);
+      alert.show("숲 정보를 찾을 수 없습니다. 다시 로그인해주세요.")
       return;
     }
+
     const body = {
-      forestId: Number(props.forestId),
+      forestId: Number(forestId),
       content: diaryContent.value,
       categoryId: Number(props.categoryId),
       createdAt
     }
-
+    
     const response = await api.post('/diaries', body);
-
 
     if (!response) {
       throw new Error('API 응답이 없습니다.');
@@ -172,23 +248,19 @@ const saveDiary = async () => {
     emit('save', response.data);
   } catch (error) {
     console.error('일기 저장 실패:', error);
-    console.error('Error details:', error.response || error.message || error);
-    console.log('Request body:', {
-      forestId: props.forestId,
-      content: diaryContent.value,
-      categoryId: props.categoryId,
-      createdAt: createdAt
-    });
-
-    alert.show('일기 저장에 실패했습니다. 다시 시도해주세요.')
+    alert.show("일기 저장에 실패했습니다. 다시 시도해주세요.")
   } finally {
     emit('loading', false);
   }
 };
 
-// 컴포넌트 마운트 시 임시저장 데이터 불러오기
 onMounted(() => {
-  selectedDate.value = new Date();
+  const forestId = mateForest.currentMateForestId;
+  
+  if (forestId === null || forestId === undefined) {
+    console.warn('Warning: Invalid forestId on component mount:', forestId);
+  }
+
   updateCharCount();
 });
 </script>
@@ -331,7 +403,17 @@ onMounted(() => {
   color: rgba(255,255,255,0.7);
   font-size: 14px;
   text-align: right;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
+}
+
+.length-message {
+  color: rgba(255,255,255,0.8);
+  font-size: 12px;
+  text-align: center;
+  margin-bottom: 16px;
+  padding: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 8px;
 }
 
 .save-btn {

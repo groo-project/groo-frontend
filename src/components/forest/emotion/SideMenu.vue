@@ -7,8 +7,6 @@ import { useAuthStore } from '@/stores/auth.js'
 import { useAlertStore } from '@/stores/alert'
 import api from '@/lib/api.js'
 
-
-
 // Icons
 import CategorySelector from '@/components/forest/common/CategorySelector.vue'
 import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue'
@@ -88,8 +86,6 @@ const emailVerificationCode = ref('')
 const isEmailVerificationSent = ref(false)
 const emailVerificationError = ref('')
 
-
-
 const viewState = ref({
   currentView: 'main',
   data: {
@@ -121,7 +117,6 @@ const showMyDiaryCalendarForWrite = computed(() => viewState.value.currentView =
 const selectedCategory = computed(() => viewState.value.data.selectedCategory)
 const selectedGuestbookId = computed(() => viewState.value.data.selectedGuestbookId)
 const selectedDiaryData = computed(() => viewState.value.data.selectedDiaryData)
-const currentDiaryIndex = computed(() => viewState.value.data.currentDiaryIndex)
 const pieceToSave = computed(() => viewState.value.data.pieceToSave)
 
 const showSaveModal = computed(() => modalState.value.showSaveModal)
@@ -442,7 +437,6 @@ function checkMyInfoUpdates() {
   alertStore.show("현재 최신 버전을 사용하고 있습니다.");
 }
 
-
 function closeMyItemView() {
   switchView('main')
 }
@@ -467,18 +461,6 @@ const handleDiaryDetailClose = () => {
     selectedDiaryData: null,
     currentDiaryIndex: 0
   })
-};
-
-const handlePrevDiary = () => {
-  if (viewState.value.data.currentDiaryIndex > 0) {
-    viewState.value.data.currentDiaryIndex--;
-  }
-};
-
-const handleNextDiary = () => {
-  if (viewState.value.data.currentDiaryIndex < viewState.value.data.selectedDiaryData.diaries.length - 1) {
-    viewState.value.data.currentDiaryIndex++;
-  }
 };
 
 const handleDiarySave = (analysisResult) => {
@@ -547,17 +529,12 @@ watch(
         <template v-if="showMyDiaryDetail">
           <MyDiaryDetail
             v-if="selectedDiaryData"
-            :nickname="nickname"
             :year="selectedDiaryData.year"
             :month="selectedDiaryData.month"
             :day="selectedDiaryData.day"
-            :emotions="selectedDiaryData.diaries[currentDiaryIndex].emotions"
-            :content="selectedDiaryData.diaries[currentDiaryIndex].content"
-            :showPrev="currentDiaryIndex > 0"
-            :showNext="currentDiaryIndex < selectedDiaryData.diaries.length - 1"
+            :emotions="selectedDiaryData.diaries.emotions"
+            :content="selectedDiaryData.diaries.content"
             @close="handleDiaryDetailClose"
-            @prev="handlePrevDiary"
-            @next="handleNextDiary"
           />
         </template>
         <template v-else-if="showMyDiaryCalendarForWrite">
