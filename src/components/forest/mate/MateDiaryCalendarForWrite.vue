@@ -69,7 +69,6 @@ const emit = defineEmits(['close', 'new-diary-click'])
 const today = new Date()
 const year = ref(today.getFullYear())
 const month = ref(today.getMonth() + 1)
-const diaryDates = ref([])
 const diaryData = ref([])
 
 const weekDays = ['일', '월', '화', '수', '목', '금', '토']
@@ -105,7 +104,7 @@ const handleDateClick = (date) => {
   
   // 일기가 있는 날을 클릭한 경우
   if (hasMyDiary(date)) {
-    onExistingDiaryClick()
+    onExistingDiaryClick(date)
   } 
   // 일기가 없는 날을 클릭한 경우
   else {
@@ -114,7 +113,7 @@ const handleDateClick = (date) => {
 }
 
 // 이미 일기가 작성된 날을 클릭했을 때 실행되는 함수
-const onExistingDiaryClick = async () => {
+const onExistingDiaryClick = async (date) => {
   alert.show("해당 날짜에 이미 일기가 작성되었어요!")
 
   // 배포 시 제거
@@ -152,7 +151,6 @@ const fetchDiaries = async () => {
   
   if (!currentForestId) {
     console.error('Forest ID not available');
-    diaryDates.value = [];
     diaryData.value = [];
     return;
   }
@@ -160,7 +158,6 @@ const fetchDiaries = async () => {
   try {
     const res = await api.get(
       `diaries/shared?forestId=${currentForestId}&year=${year.value}&month=${month.value}`);
-    diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0]);
     diaryData.value = res.data.map(entry => ({
         date: entry.createdAt.split('T')[0],
         userId: entry.userId
@@ -169,7 +166,6 @@ const fetchDiaries = async () => {
   } catch (e) {
     console.error('Failed to fetch diaries:', e);
     console.error('Error response:', e.response?.data);
-    diaryDates.value = [];
   }
 }
 
@@ -407,8 +403,6 @@ onMounted(() => {
 .calendar-day.diary-shared:hover {
   background: #4a6a4a;
 }
-
-/**fdsfasdfasdf */
 
 /* 선택 불가능한 날짜 (3일 전 이전 또는 미래) */
 .calendar-day.disabled {

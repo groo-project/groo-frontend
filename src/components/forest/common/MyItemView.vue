@@ -29,6 +29,7 @@
       :forestId="props.forestId"
       @close="handleBackFromList"
       @placeFromStorage="handlePlaceFromStorage"
+      :is-mate="props.isMate"
     />
   </template>
   
@@ -44,6 +45,10 @@
     forestId: {
       type: [Number, String],
       required: true
+    },
+    isMate: {
+      type: Boolean,
+      default: false
     }
   })
   

@@ -402,6 +402,7 @@ const handlePlaceFromStorage = (item) => {
             :forestId="props.forestId" 
             @close="closeMyItems" 
             @placeFromStorage="handlePlaceFromStorage"
+            :is-mate="true"
           />
         </div>
         <div v-else-if="activeView === 'diaryCalendarForWrite'">
