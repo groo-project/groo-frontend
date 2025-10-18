@@ -30,12 +30,12 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, getCurrentInstance } from 'vue'
 import backIcon from '@/icons/back.png'
-import { useAuthStore } from '@/stores/auth'
 import api from '@/lib/api'
 
 const props = defineProps({
   categoryId: { type: Number, required: true },
-  forestId: { type: [Number, String], required: true }
+  forestId: { type: [Number, String], required: true },
+  isMate: { type: Boolean, default: false }
 })
 
 const emit = defineEmits(['close', 'placeFromStorage'])
@@ -48,7 +48,6 @@ const categoryTitles = {
 }
 
 const { proxy } = getCurrentInstance()
-const authStore = useAuthStore()
 
 const categoryTitle = computed(() => categoryTitles[props.categoryId])
 const forestId = computed(() => {
@@ -80,9 +79,16 @@ async function fetchItems() {
   if (!forestId.value) {
     return
   }
+  let apiUrl;
+
+  if (props.isMate) {
+    apiUrl = `mate/items/${props.categoryId}/${forestId.value}`;
+  } else {
+    apiUrl = `items/${props.categoryId}/${forestId.value}`;
+  }
   
   try {
-    const response = await api.get(`items/${props.categoryId}/${forestId.value}`)
+    const response = await api.get(apiUrl)
     items.value = response.data || []
   } catch (error) {
     if (error.response?.status === 404) {

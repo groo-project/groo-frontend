@@ -15,6 +15,7 @@
           class="emotion-tag"
           v-for="emotion in emotions"
           :key="emotion"
+          :style="{ backgroundColor: getEmotionColor(emotion) }"
         >{{ emotion }}</span>
       </div>
   
@@ -50,6 +51,20 @@
   <script setup>
   import backPageIcon from '@/icons/back.png'
   import forwardIcon from '@/icons/arrow_forward.png'
+
+  const getEmotionColor = (emotion) => {
+  const colorMap = {
+    슬픔: '#6B8EFF',     // 파란색
+    즐거움: '#FFD93D',   // 노란색
+    평온함: '#95D1CC',   // 민트색
+    짜증: '#FF6B6B',     // 빨간색
+    지침: '#A8A8A8',     // 회색
+    설렘: '#FF9ECD',     // 분홍색
+    우울함: '#7B7FEA',   // 보라색
+    불안함: '#98A8F8'    // 연한 보라색
+  };
+  return colorMap[emotion] || '#8fa6a6'; // 기본색
+};
   
   const props = defineProps({
     nickname: { type: String, required: true },

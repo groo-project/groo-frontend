@@ -554,6 +554,7 @@ watch(
             :forestId="user?.forestId"
             @close="closeMyItemView"
             @placeFromStorage="handlePlaceFromStorage"
+            :is-mate="false"
           />
         </template>
         <template v-else-if="showMyInfoView">

@@ -29,9 +29,13 @@
           v-for="date in daysInMonth"
           :key="date"
           class="calendar-day"
-          :class="{ 'has-diary': hasDiary(date) }"
-          @click="hasDiary(date) && onDiaryClick(date)"
-          style="cursor: pointer"
+          :class="{
+            'diary-my-only': getDiaryState(date) === 'my-only',
+            'diary-other-only': getDiaryState(date) === 'other-only',
+            'diary-shared': getDiaryState(date) === 'shared'
+          }"
+          @click="onDiaryClick(date)"
+          :title="getDiaryTooltip(date)"
         >
           {{ date }}
         </div>
@@ -46,9 +50,7 @@ import backIcon from '@/icons/back.png'
 import api from '@/lib/api'
 import { useAuthStore } from '@/stores/auth'
 
-const authStore = useAuthStore()
-const { user, accessToken } = authStore;
-const token = accessToken || '';
+const auth = useAuthStore()
 
 // props로 forestId를 받아야함 (우정의 숲 ID)
 const props = defineProps({
@@ -63,7 +65,7 @@ const emit = defineEmits(['close', 'diary-click'])
 const today = new Date()
 const year = ref(today.getFullYear())
 const month = ref(today.getMonth() + 1)
-const diaryDates = ref([])
+const diaryData = ref([])
 
 const weekDays = ['일', '월', '화', '수', '목', '금', '토']
 const years = Array.from({length: today.getFullYear() - 2020 + 1}, (_, i) => 2020 + i)
@@ -74,11 +76,6 @@ const showMonthSelect = ref(false)
 
 const daysInMonth = computed(() => new Date(year.value, month.value, 0).getDate())
 const startBlank = computed(() => new Date(year.value, month.value - 1, 1).getDay())
-
-function hasDiary(date) {
-  const d = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`
-  return diaryDates.value.includes(d)
-}
 
 function toggleYearSelect() {
   showYearSelect.value = !showYearSelect.value
@@ -97,52 +94,71 @@ function selectMonth(m) {
   showMonthSelect.value = false
 }
 
-function getUserIdFromToken() {
-  if (!token) {
-    return null;
-  }
-  
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
-    
-    // JWT에서 userId는 sub 필드에 있습니다
-    const userId = payload.sub || payload.userId;
-    
-    return userId;
-  } catch (e) {
-    console.error('Token 파싱 실패:', e);
-    return null;
-  }
-}
-
 async function fetchDiaries() {
-  
-  const userId = getUserIdFromToken();
-  
-  if (!userId) {
-    return;
-  }
-  
+
   if (!props.forestId) {
+    diaryData.value = [];
     return;
   }
   
   try {
-    const apiUrl = `mate/diary/${props.forestId}/month?year=${year.value}&month=${month.value}`;
-    
-    const res = await api.get(apiUrl);
-    
-    if (res.data && Array.isArray(res.data)) {
-      diaryDates.value = res.data.map(entry => entry.createdAt.split('T')[0]);
-    } else {
-      diaryDates.value = [];
-    }
+    const res = await api.get(
+      `diaries/shared?forestId=${props.forestId}&year=${year.value}&month=${month.value}`
+    );
+    diaryData.value = res.data.map(entry => ({
+        date: entry.createdAt.split('T')[0],
+        userId: entry.userId,
+        diaryId: entry.diaryId
+    }));
   } catch (e) {
     console.error('Failed to fetch diaries:', e);
     console.error('Error response:', e.response?.data);
     console.error('Error status:', e.response?.status);
-    diaryDates.value = [];
   }
+}
+
+const hasMyDiary = (date) => {
+    const d = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    const myUserId = auth.$state.user.userId;
+    return diaryData.value.some(entry => entry.date === d && entry.userId === myUserId);
+}
+
+const hasOtherDiary = (date) => {
+    const d = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+    const myUserId = auth.$state.user.userId;
+    return diaryData.value.some(entry => entry.date === d && entry.userId !== myUserId);
+}
+
+// 세 가지 상태를 구분하는 로직
+const getDiaryState = (date) => {
+    const isMyDiary = hasMyDiary(date);
+    const isOtherDiary = hasOtherDiary(date);
+    
+    if (!isMyDiary && !isOtherDiary) {
+        return 'none'; // 일기 없음
+    } else if (isMyDiary && isOtherDiary) {
+        return 'shared'; // 내 일기 + 상대 일기 모두 있음 (가장 강조)
+    } else if (isMyDiary) {
+        return 'my-only'; // 내 일기만 있음 (기존 스타일)
+    } else { // if (isOtherDiary)
+        return 'other-only'; // 상대 일기만 있음 (다른 스타일)
+    }
+}
+
+// 날짜 상태에 따른 툴팁 메시지 반환
+function getDiaryTooltip(date) {
+    const state = getDiaryState(date);
+    
+    switch (state) {
+        case 'my-only':
+            return '일기를 작성하셨어요.';
+        case 'other-only':
+            return '메이트가 일기를 작성했네요.';
+        case 'shared':
+            return '메이트도 일기를 작성했어요!';
+        default:
+            return '';
+    }
 }
 
 watch([year, month], fetchDiaries)
@@ -155,13 +171,35 @@ async function onDiaryClick(date) {
   
   const dateStr = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
   
+  const relevantDiaries = diaryData.value.filter(entry => entry.date === dateStr);
+
+  const diaryIds = relevantDiaries.map(entry => entry.diaryId);
+
+  if (diaryIds.length === 0) {
+    console.error(`No diaries found for ${dateStr}.`);
+    return;
+  }
+
+  const diaryIdsStr = diaryIds.join(',');
+  const apiUrl = `diaries/shared/detail?diaryIds=${diaryIdsStr}`;
+  
   try {
-    const apiUrl = `mate/diary/${props.forestId}/date?date=${dateStr}`;
     
     const res = await api.get(apiUrl);
+
+    const currentUserId = auth.$state.user.userId;
+
+    const sortedDiaries = res.data.sort((a, b) => {
+      const isAUser = a.userId === currentUserId;
+      const isBUser = b.userId === currentUserId;
+
+      if (isAUser && !isBUser) return -1;
+      else if (!isAUser && isBUser) return 1;
+      else return 0;
+    });
     
     emit('diary-click', {
-      diaries: res.data,
+      diaries: sortedDiaries,
       year: year.value,
       month: month.value,
       day: date
@@ -171,11 +209,6 @@ async function onDiaryClick(date) {
     console.error('Error response:', e.response?.data);
     console.error('Error status:', e.response?.status);
   }
-}
-
-function getWeekday(y, m, d) {
-  const days = ['일', '월', '화', '수', '목', '금', '토'];
-  return days[new Date(y, m - 1, d).getDay()];
 }
 </script>
 
@@ -292,14 +325,49 @@ function getWeekday(y, m, d) {
   width: 44px;
   height: 44px;
 }
-.calendar-day.has-diary {
-  background: #ffffff8f;
+
+.calendar-day.diary-my-only {
+  background: #ffffff8f; /* 기존 has-diary 배경 */
   color: #3a5a40;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  opacity: 0.9; /* 약간 더 강조 */
+  cursor: pointer;
 }
-.calendar-day:hover {
-  background: #b6d6b6;
-  color: #2d3a2d;
+
+.calendar-day.diary-my-only:hover {
+  background: #e8f5e8;
+  opacity: 1;
+}
+
+/* 상대 일기만 있는 날짜 */
+.calendar-day.diary-other-only {
+  /* 배경을 반투명 녹색으로 하여 나와 상대의 색상 대비 */
+  background: rgba(144, 182, 144, 0.7); /* 산뜻한 연두색 계열 */
+  color: #fff; /* 흰색 글자로 대비 강조 */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  opacity: 0.9;
+  cursor: pointer;
+}
+
+.calendar-day.diary-other-only:hover {
+  background: rgb(144, 182, 144);
+  opacity: 1;
+}
+
+/* 내 일기 + 상대 일기 모두 있는 날짜 (가장 강조) */
+.calendar-day.diary-shared {
+  /* 배경을 더 진하고 꽉 찬 색상으로 (예: 숲 테마에 맞는 진한 녹색 계열) */
+  background: #3a5a40;
+  color: #fff; /* 흰색 글자 */
+  /* 테두리를 추가하여 가장 눈에 띄게 */
+  border: 2px solid #b6d6b6; 
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  opacity: 1;
+  cursor: pointer;
+}
+
+.calendar-day.diary-shared:hover {
+  background: #4a6a4a;
 }
 </style>
   
