@@ -327,4 +327,9 @@ const handleKakaoLogin = () => {
 .social-icons img.kakao-btn:hover {
   filter: brightness(0.9);
 }
+
+.social-icons > .google-btn {
+  width: 40px;
+  height: 40px;
+}
 </style>
