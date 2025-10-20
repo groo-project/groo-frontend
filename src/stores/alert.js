@@ -4,6 +4,7 @@ export const useAlertStore = defineStore('alert', {
   state: () => ({
     message: '',
     duration: 1500,
+    key: 0
   }),
   actions: {
     show(message, duration = 1500) {
@@ -12,10 +13,12 @@ export const useAlertStore = defineStore('alert', {
         setTimeout(() => {
           this.message = message
           this.duration = duration
+          this.key++
         }, 10)
       } else {
         this.message = message
         this.duration = duration
+        this.key++
       }
     },
     clear() {

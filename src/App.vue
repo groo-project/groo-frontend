@@ -5,7 +5,8 @@
     <AlertModal
       v-if="alert.message" 
       :message="alert.message" 
-      :duration="alert.duration" 
+      :duration="alert.duration"
+      :key="alert.key"
       @close="alert.clear"
     />
   </main>

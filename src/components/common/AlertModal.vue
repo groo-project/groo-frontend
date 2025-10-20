@@ -10,7 +10,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watch, onUnmounted } from 'vue';
+import { useAlertStore } from '@/stores/alert';
+
+const alert = useAlertStore();
 
 const props = defineProps({
   message: {
@@ -26,13 +29,40 @@ const props = defineProps({
 const show = ref(true);
 const emit = defineEmits(['close']);
 
-onMounted(() => {
-  setTimeout(() => {
+let timer;
+const clearTimer = () => {
+  if (timer) {
+    clearTimeout(timer);
+    timer = null;
+  }
+}
+
+const setTimer = (duration) => {
+  clearTimer();
+
+  timer = setTimeout(() => {
     show.value = false;
+
     setTimeout(() => {
+      alert.clear();
       emit('close');
-    }, 700);  // 0.8초 동안 페이드아웃
-  }, props.duration);
+    }, 700);
+  }, duration)
+}
+
+onMounted(() => {
+  setTimer(props.duration);
+});
+
+watch(() => props.message,
+(newMessage, oldMessage) => {
+  if (newMessage !== oldMessage) {
+
+  }
+}, { immediate: true });
+
+onUnmounted(() => {
+  clearTimer();
 });
 </script>
 
