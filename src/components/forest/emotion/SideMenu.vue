@@ -74,6 +74,7 @@ const showLogoutModal = ref(false)
 const showMyInfoModal = ref(false)
 const myInfoActiveTab = ref('password')
 const myInfoPasswordForm = ref({
+  currentPassword: '',
   newPassword: '',
   confirmPassword: ''
 })
@@ -272,6 +273,7 @@ function closeMyInfoModal() {
   showMyInfoModal.value = false
   // 폼 데이터 초기화
   myInfoPasswordForm.value = {
+    currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   }
@@ -282,12 +284,20 @@ function closeMyInfoModal() {
 
 // 비밀번호 변경 함수
 async function changeMyInfoPassword() {
+  if (!myInfoPasswordForm.value.currentPassword) {
+    alertStore.show("현재 비밀번호를 입력해주세요.");
+    return;
+  }
   if (!myInfoPasswordForm.value.newPassword || !myInfoPasswordForm.value.confirmPassword) {
     alertStore.show("새 비밀번호와 확인 비밀번호를 입력해주세요.");
     return;
   }
   if (myInfoPasswordForm.value.newPassword !== myInfoPasswordForm.value.confirmPassword) {
     alertStore.show("새 비밀번호가 일치하지 않습니다.");
+    return;
+  }
+  if (myInfoPasswordForm.value.currentPassword === myInfoPasswordForm.value.newPassword) {
+    alertStore.show("현재 비밀번호와 새 비밀번호가 같습니다.");
     return;
   }
   if (myInfoPasswordForm.value.newPassword.length < 8) {
@@ -297,14 +307,19 @@ async function changeMyInfoPassword() {
 
   try {
     await api.patch('/user/me/password', {
-      password: myInfoPasswordForm.value.newPassword
+      currentPassword: myInfoPasswordForm.value.currentPassword,
+      newPassword: myInfoPasswordForm.value.newPassword
     });
 
     alertStore.show("비밀번호가 성공적으로 변경되었습니다.");
     closeMyInfoModal();
   } catch (error) {
     console.error('비밀번호 변경 실패:', error);
-    alertStore.show("비밀번호 변경에 실패했습니다. 다시 시도해주세요.");
+    if (error.response?.data?.message) {
+      alertStore.show(error.response.data.message);
+    } else {
+      alertStore.show("비밀번호 변경에 실패했습니다. 다시 시도해주세요.");
+    }
   }
 }
 
@@ -710,6 +725,14 @@ watch(
           <button class="close-btn" @click="closeMyInfoModal">×</button>
         </div>
         <div class="form-section">
+          <div class="form-group">
+            <label>현재 비밀번호</label>
+            <input 
+              type="password" 
+              v-model="myInfoPasswordForm.currentPassword"
+              placeholder="현재 비밀번호를 입력하세요"
+            />
+          </div>
           <div class="form-group">
             <label>새 비밀번호</label>
             <input 
