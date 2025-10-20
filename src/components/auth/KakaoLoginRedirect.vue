@@ -24,8 +24,14 @@ onMounted(async () => {
         router.push({ name: 'ForestDetail', params: { forestId: auth.user.forestId } });
     }
   } catch (err) {
+    if (err.response.data.code === 'U003') {
+      alert.show("이미 존재하는 이메일입니다! 이메일로 로그인을 진행해 주세요.")
+    } else if (err.response.data.code === 'U007') {
+      alert.show("유효한 이메일 입력이 아닙니다.")
+    } else {
+      alert.show("카카오 로그인 실패. 다시 시도해주세요.");
+    }
     console.error("카카오 로그인 실패:", err);
-    alert.show("카카오 로그인 실패. 다시 시도해주세요.");
     router.push("/login");
   }
 });
