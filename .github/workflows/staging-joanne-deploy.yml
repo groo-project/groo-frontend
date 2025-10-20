@@ -45,9 +45,26 @@ jobs:
       - run: aws s3 sync dist/ "s3://${{ secrets.J_S3_BUCKET_NAME }}" --delete --exact-timestamps --no-progress
 
 
-      # - name: Upload to S3
+      - name: Upload to S3
       #   run: |
       #     aws s3 sync dist/ s3://${{ secrets.J_S3_BUCKET_NAME }} --delete
+        run: |
+            BUCKET="${{ secrets.J_S3_BUCKET_NAME }}"
+  
+            aws s3 sync dist/ "s3://$BUCKET" \
+              --delete --exact-timestamps --no-progress \
+              --exclude "*" --include "*.js" \
+              --content-type "application/javascript" \
+              --metadata-directive REPLACE
+  
+            aws s3 sync dist/ "s3://$BUCKET" \
+              --exclude "*" --include "*.css" \
+              --content-type "text/css" \
+              --metadata-directive REPLACE
+  
+            aws s3 sync dist/ "s3://$BUCKET" \
+              --delete --exact-timestamps --no-progress \
+              --exclude "*.js" --exclude "*.css"
 
       - name: Invalidate CloudFront
         run: |
