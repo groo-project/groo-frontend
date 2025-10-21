@@ -149,7 +149,7 @@ const toggleMenu = () => {
 };
 
 const authStore = useAuthStore()
-const alertStore = useAlertStore()
+const alert = useAlertStore()
 const user = computed(() => authStore.user);
 const token = computed(() => authStore.accessToken || '');
 const forestId = computed(() => authStore.user?.forestId || '');
@@ -285,23 +285,23 @@ function closeMyInfoModal() {
 // 비밀번호 변경 함수
 async function changeMyInfoPassword() {
   if (!myInfoPasswordForm.value.currentPassword) {
-    alertStore.show("현재 비밀번호를 입력해주세요.");
+    alert.show("현재 비밀번호를 입력해주세요.");
     return;
   }
   if (!myInfoPasswordForm.value.newPassword || !myInfoPasswordForm.value.confirmPassword) {
-    alertStore.show("새 비밀번호와 확인 비밀번호를 입력해주세요.");
+    alert.show("새 비밀번호와 확인 비밀번호를 입력해주세요.");
     return;
   }
   if (myInfoPasswordForm.value.newPassword !== myInfoPasswordForm.value.confirmPassword) {
-    alertStore.show("새 비밀번호가 일치하지 않습니다.");
+    alert.show("새 비밀번호가 일치하지 않습니다.");
     return;
   }
   if (myInfoPasswordForm.value.currentPassword === myInfoPasswordForm.value.newPassword) {
-    alertStore.show("현재 비밀번호와 새 비밀번호가 같습니다.");
+    alert.show("현재 비밀번호와 새 비밀번호가 같습니다.");
     return;
   }
   if (myInfoPasswordForm.value.newPassword.length < 8) {
-    alertStore.show("새 비밀번호는 8자 이상이어야 합니다.");
+    alert.show("새 비밀번호는 8자 이상이어야 합니다.");
     return;
   }
 
@@ -311,14 +311,14 @@ async function changeMyInfoPassword() {
       newPassword: myInfoPasswordForm.value.newPassword
     });
 
-    alertStore.show("비밀번호가 성공적으로 변경되었습니다.");
+    alert.show("비밀번호가 성공적으로 변경되었습니다.");
     closeMyInfoModal();
   } catch (error) {
     console.error('비밀번호 변경 실패:', error);
     if (error.response?.data?.message) {
-      alertStore.show(error.response.data.message);
+      alert.show(error.response.data.message);
     } else {
-      alertStore.show("비밀번호 변경에 실패했습니다. 다시 시도해주세요.");
+      alert.show("비밀번호 변경에 실패했습니다. 다시 시도해주세요.");
     }
   }
 }
@@ -326,7 +326,7 @@ async function changeMyInfoPassword() {
 // 닉네임 변경 함수 (EidtNickname.vue 로직 적용)
 async function changeMyInfoNickname() {
   if (!myInfoNicknameForm.value.newNickname.trim() || myInfoNicknameForm.value.newNickname === authStore.user?.nickname) {
-    alertStore.show("닉네임이 그대로에요!");
+    alert.show("닉네임이 그대로에요!");
     return;
   }
 
@@ -339,19 +339,19 @@ async function changeMyInfoNickname() {
       // authStore 업데이트
       authStore.user.nickname = myInfoNicknameForm.value.newNickname;
       
-      alertStore.show("닉네임 변경이 완료되었습니다!");
+      alert.show("닉네임 변경이 완료되었습니다!");
       closeMyInfoModal();
     } else {
-      alertStore.show("닉네임 변경에 실패했습니다! 잠시 후 다시 시도해 주세요.");
+      alert.show("닉네임 변경에 실패했습니다! 잠시 후 다시 시도해 주세요.");
       throw new Error(`닉네임 변경 실패: ${response.status}`);
     }
   } catch (error) {
     myInfoNicknameForm.value.newNickname = "";
     
     if (error.response?.data?.code == "U004") {
-      alertStore.show(error.response.data.message);
+      alert.show(error.response.data.message);
     } else {
-      alertStore.show("닉네임 변경에 실패했습니다! 잠시 후 다시 시도해 주세요.");
+      alert.show("닉네임 변경에 실패했습니다! 잠시 후 다시 시도해 주세요.");
     }
   }
 }
@@ -362,7 +362,7 @@ async function requestEmailVerification() {
     emailVerificationError.value = '';
     await api.post('mails/withdrawal');
     isEmailVerificationSent.value = true;
-    alertStore.show('인증 이메일이 발송되었습니다. 이메일을 확인해주세요.');
+    alert.show('인증 이메일이 발송되었습니다. 이메일을 확인해주세요.');
   } catch (error) {
     console.error('이메일 인증 요청 실패:', error);
     emailVerificationError.value = '이메일 발송에 실패했습니다. 다시 시도해주세요.';
@@ -385,7 +385,7 @@ async function verifyEmailCode() {
     
     // 인증 성공 시 이메일 인증 모달 닫고 최종 탈퇴 확인 모달을 1초 후에 열기
     showEmailVerificationModal.value = false;
-    alertStore.show('인증이 완료되었습니다.');
+    alert.show('인증이 완료되었습니다.');
     
     // 1초 후에 탈퇴 확인 모달 열기
     setTimeout(() => {
@@ -437,7 +437,7 @@ async function confirmMyInfoWithdraw() {
     
   } catch (error) {
     console.error('탈퇴 실패:', error);
-    alertStore.show("탈퇴에 실패했습니다. 다시 시도해주세요.");
+    alert.show("탈퇴에 실패했습니다. 다시 시도해주세요.");
   } finally {
     showMyInfoWithdrawModal.value = false;
     // 탈퇴 확인 모달이 닫힐 때 이메일 인증 관련 상태도 초기화
@@ -449,7 +449,7 @@ async function confirmMyInfoWithdraw() {
 
 // 업데이트 확인 함수
 function checkMyInfoUpdates() {
-  alertStore.show("현재 최신 버전을 사용하고 있습니다.");
+  alert.show("현재 최신 버전을 사용하고 있습니다.");
 }
 
 function closeMyItemView() {

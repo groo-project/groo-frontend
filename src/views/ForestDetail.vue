@@ -1,3 +1,201 @@
+<template>
+  <div class="forest-detail">
+    <div class="header-icons">
+      <div class="home-icon-container">
+        <img 
+          src="/icon.png"
+          alt="Home"
+          class="home-icon"
+          @click="goToHome"
+        />
+      </div>
+      <div class="control-icons">
+        
+        <div class="rearrange-container">
+          <img 
+            :src="rearrange_icon"
+            class="btn-img rearrange-btn"
+            @click="toggleRearrangeMode"
+            @mouseenter="showRearrangeTooltip = true"
+            @mouseleave="showRearrangeTooltip = false"
+            :class="{ active: isRearrangeMode }"
+          />
+          <div v-if="showRearrangeTooltip" class="rearrange-tooltip">
+            아이템 재배치하기
+          </div>
+        </div>
+        
+        <div class="public-icon-container">
+          <img
+            :src="is_public_icon"
+            class="btn-img"
+            @mouseenter="showTooltip = true"
+            @mouseleave="showTooltip = false"
+            @click="togglePublic"
+            style="cursor:pointer;"
+          />
+          <div v-if="showTooltip" class="tooltip">
+            <div class="tooltip-title">공개 범위 설정</div>
+            <div class="tooltip-status"
+              :class="forestData && forestData[0].isPublic ? 'public' : 'private'">
+              {{ forestData && forestData[0].isPublic ? '공개 중' : '비공개 중' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ItemControlPanel
+      v-if="showControlPanel && selectedPiece && !isRearrangeMode"
+      :selected-piece="selectedPiece"
+      :item-scale="itemScale"
+      :item-z-index="itemZIndex"
+      :base-size="baseSize"
+      @complete-placement="handleCompletePlacement"
+      @increase-scale="increaseScale"
+      @decrease-scale="decreaseScale"
+      @increase-z-index="increaseZIndex"
+      @decrease-z-index="decreaseZIndex"
+    />
+
+    <ItemEditPanel
+      v-if="showEditPanel && selectedEditItem"
+      :selected-item="selectedEditItem"
+      :item-scale="editItemScale"
+      :item-z-index="editItemZIndex"
+      :base-size="baseSize"
+      @update-placement="handleUpdatePlacement"
+      @remove-item="handleRemoveItem"
+      @cancel-selection="handleCancelSelection"
+      @increase-scale="increaseEditScale"
+      @decrease-scale="decreaseEditScale"
+      @increase-z-index="increaseEditZIndex"
+      @decrease-z-index="decreaseEditZIndex"
+    />
+
+    <RearrangeCompletePanel
+      v-if="showCompletePanel && isRearrangeMode"
+      :changed-items-count="changedItemsCount"
+      :removed-items-count="removedItemsCount"
+      @complete-rearrange="handleCompleteRearrange"
+      @cancel-rearrange="handleCancelRearrange"
+    />
+
+    <StoredItemControlPanel
+      v-if="showStoredItemControlPanel && selectedStoredItem"
+      :selectedItem="selectedStoredItem"
+      :itemScale="storedItemScale"
+      :itemZIndex="storedItemZIndex"
+      :baseSize="ITEM_CONSTANTS.BASE_SIZE"
+      @confirm-placement="completeStoredItemPlacement"
+      @cancel-placement="cancelStoredItemPlacement"
+      @increase-scale="increaseStoredItemScale"
+      @decrease-scale="decreaseStoredItemScale"
+      @increase-z-index="increaseStoredItemZIndex"
+      @decrease-z-index="decreaseStoredItemZIndex"
+    />
+
+    <template v-if="showGuestBook">
+      <template v-if="showGuestBookDetail">
+        <GuestBookDetail 
+          :id="selectedGuestBookId"
+          @back="handleDetailBack"
+        />
+      </template>
+    </template>
+
+    <div ref="containerRef" class="placement-container">
+      <div class="placement-inner-container">
+        <img
+          v-if="forestData && forestData.length"
+          ref="bgRef"
+          class="background"
+          :src="forestData[0].backgroundImageUrl"
+          alt="Green Background"
+        />
+        
+        <!-- 재배치 모드 -->
+        <img
+          v-if="forestData && forestData.length"
+          v-for="item in sortedPlacementList"
+          :key="item.placementId"
+          class="item"
+          :class="{ 
+            'selectable': isRearrangeMode,
+            'selected': selectedEditItem?.placementId === item.placementId,
+            'dragging': isEditDragging && selectedEditItem?.placementId === item.placementId
+          }"
+          :src="item.itemImageUrl" 
+          :alt="item.itemName"
+          :style="{
+            left: selectedEditItem?.placementId === item.placementId ? `${editDragPos.x}%` : `${item.placementPositionX}%`,
+            top: selectedEditItem?.placementId === item.placementId ? `${editDragPos.y}%` : `${item.placementPositionY}%`,
+            width: selectedEditItem?.placementId === item.placementId ? `${editCalculatedWidth}px` : (item.placementWidth ? `${item.placementWidth}px` : `${ITEM_CONSTANTS.BASE_SIZE}px`),
+            height: selectedEditItem?.placementId === item.placementId ? `${editCalculatedHeight}px` : (item.placementHeight ? `${item.placementHeight}px` : `${ITEM_CONSTANTS.BASE_SIZE}px`),
+            zIndex: selectedEditItem?.placementId === item.placementId ? editItemZIndex : item.placementZIndex,
+            opacity: showYellowDust ? ITEM_CONSTANTS.YELLOW_DUST_OPACITY : 1,
+            cursor: isRearrangeMode ? 'pointer' : 'default'
+          }"
+          @click="selectItemForEdit(item)"
+          @mousedown="selectedEditItem?.placementId === item.placementId ? onEditMouseDown($event) : null"
+          @dragstart.prevent
+          draggable="false"
+        />
+        
+        <!-- 일기 작성 후 배치 -->
+        <img
+          v-if="selectedPiece && !isRearrangeMode"
+          class="item draggable"
+          :class="{ 'dragging': isDragging }"
+          :src="selectedPiece.icon"
+          :alt="selectedPiece.label"
+          :style="{
+            left: `${dragPos.x}%`,
+            top: `${dragPos.y}%`,
+            width: `${calculatedWidth}px`,
+            height: `${calculatedHeight}px`,
+            cursor: isDragging ? 'grabbing' : 'grab',
+            zIndex: itemZIndex,
+            opacity: showYellowDust ? ITEM_CONSTANTS.YELLOW_DUST_OPACITY : 1
+          }"
+          @mousedown="onMouseDown"
+          @dragstart.prevent
+          draggable="false"
+        />
+
+        <!-- 배치 중인 아이템 (보관소에서) -->
+        <img
+          v-if="selectedStoredItem && showStoredItemControlPanel"
+          class="item draggable stored-item"
+          :class="{ 'dragging': isStoredItemDragging }"
+          :src="selectedStoredItem.imageUrl"
+          :alt="selectedStoredItem.itemName"
+          :style="{
+            left: `${storedItemPosition.x}%`,
+            top: `${storedItemPosition.y}%`,
+            width: `${storedItemCalculatedWidth}px`,
+            height: `${storedItemCalculatedHeight}px`,
+            cursor: isStoredItemDragging ? 'grabbing' : 'grab',
+            zIndex: storedItemZIndex,
+            opacity: showYellowDust ? ITEM_CONSTANTS.YELLOW_DUST_OPACITY : 1
+          }"
+          @mousedown="onStoredItemMouseDown"
+          @dragstart.prevent
+          draggable="false"
+        />
+      </div>
+    </div>
+
+    <RainEffects v-if="showRain" />
+    <FlowerRainEffect v-if="showFlowerRain" />
+    <FogEffects v-if="showFog" />
+    <YellowDustEffects v-if="showYellowDust" />
+    <SnowEffects v-if="showSnow" />
+    <ThunderEffects v-if="showThunder" />
+    <CloudyEffects v-if="showCloudy" />
+  </div>
+</template>
+
 <script setup>
 import { ref, onMounted, onUnmounted, getCurrentInstance, computed, watch } from "vue";
 import is_public_icon from "@/icons/is_public_icon.png"
@@ -7,6 +205,7 @@ import { useRouter, useRoute } from 'vue-router';
 import ItemControlPanel from "@/components/forest/common/placement/ItemControlPanel.vue";
 import ItemEditPanel from "@/components/forest/common/placement/ItemEditPanel.vue";
 import RearrangeCompletePanel from "@/components/forest/common/placement/RearrangeCompletePanel.vue";
+import StoredItemControlPanel from "@/components/forest/common/placement/StoredItemControlPanel.vue";
 import api from "@/lib/api.js";
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from 'pinia';
@@ -19,7 +218,6 @@ import YellowDustEffects from "@/components/weather/YellowDustEffects.vue";
 import SnowEffects from "@/components/weather/SnowEffects.vue";
 import ThunderEffects from "@/components/weather/ThunderEffects.vue";
 import CloudyEffects from "@/components/weather/CloudyEffects.vue";
-import StoredItemControlPanel from "@/components/forest/common/placement/StoredItemControlPanel.vue";
 import { useAlertStore } from '@/stores/alert'
 
 const alert = useAlertStore()
@@ -238,7 +436,6 @@ onMounted(async () => {
     selectedPiece.value = piece;
     dragPos.value = { x: ITEM_CONSTANTS.DEFAULT_POSITION.x, y: ITEM_CONSTANTS.DEFAULT_POSITION.y };
     showControlPanel.value = true;
-
   });
   
   proxy.emitter.on('diary-saved', (response) => {
@@ -274,8 +471,6 @@ const togglePublic = async () => {
   try {
 
     const res = await api.patch(`emotion-forest/public/${forestData.value[0].forestId}`, {});
-    
-
     
     if (res.status >= 200 && res.status < 300) {
       // 성공 시 공개여부 토글
@@ -355,7 +550,8 @@ const enterRearrangeMode = () => {
   removedItems.value.clear();
 };
 
-const exitRearrangeMode = () => {
+const exitRearrangeMode = async () => {
+  await refreshForestData();
   isRearrangeMode.value = false;
   showCompletePanel.value = false;
   showEditPanel.value = false;
@@ -568,9 +764,6 @@ const handleCompleteRearrange = async () => {
     // 모든 요청이 성공했는지 확인 (Axios 방식)
     const allSuccess = results.every(response => response.status >= 200 && response.status < 300);
     
-    results.forEach((response, index) => {
-    });
-    
     if (allSuccess) {
       alert.show("재배치가 완료되었습니다!")
       await refreshForestData();
@@ -742,12 +935,13 @@ const completeStoredItemPlacement = async () => {
     const calculatedHeight = Math.round(ITEM_CONSTANTS.BASE_SIZE * storedItemScale.value);
     
     const requestBody = {
-      userItemId: selectedStoredItem.value.id,
+      forestItemId: selectedStoredItem.value.id,
       itemPositionX: storedItemPosition.value.x,
       itemPositionY: storedItemPosition.value.y,
       itemWidth: calculatedWidth,
       itemHeight: calculatedHeight,
-      itemZIndex: storedItemZIndex.value
+      itemZIndex: storedItemZIndex.value,
+      forestId: forestId.value
     };
     
     const response = await api.post('emotion-forest/placements/from-storage', requestBody);
@@ -808,8 +1002,6 @@ const onStoredItemMouseUp = () => {
   isStoredItemDragging.value = false;
   document.removeEventListener('mousemove', onStoredItemMouseMove);
   document.removeEventListener('mouseup', onStoredItemMouseUp);
-  
-  console.log('Stored item drop completed, final position:', storedItemPosition.value);
 };
 
 const increaseStoredItemScale = () => {
@@ -849,259 +1041,12 @@ const storedItemCalculatedWidth = computed(() => Math.round(ITEM_CONSTANTS.BASE_
 const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE_SIZE * storedItemScale.value));
 </script>
 
-<template>
-  <div class="forest-detail">
-    <div class="header-icons">
-      <div class="home-icon-container">
-        <img 
-          src="/icon.png"
-          alt="Home"
-          class="home-icon"
-          @click="goToHome"
-        />
-      </div>
-      <div class="control-icons">
-        
-        <div class="rearrange-container">
-          <img 
-            :src="rearrange_icon"
-            class="btn-img rearrange-btn"
-            @click="toggleRearrangeMode"
-            @mouseenter="showRearrangeTooltip = true"
-            @mouseleave="showRearrangeTooltip = false"
-            :class="{ active: isRearrangeMode }"
-          />
-          <div v-if="showRearrangeTooltip" class="rearrange-tooltip">
-            아이템 재배치하기
-          </div>
-        </div>
-        
-        <div class="public-icon-container">
-          <img
-            :src="is_public_icon"
-            class="btn-img"
-            @mouseenter="showTooltip = true"
-            @mouseleave="showTooltip = false"
-            @click="togglePublic"
-            style="cursor:pointer;"
-          />
-          <div v-if="showTooltip" class="tooltip">
-            <div class="tooltip-title">공개 범위 설정</div>
-            <div class="tooltip-status"
-              :class="forestData && forestData[0].isPublic ? 'public' : 'private'">
-              {{ forestData && forestData[0].isPublic ? '공개 중' : '비공개 중' }}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <ItemControlPanel
-      v-if="showControlPanel && selectedPiece && !isRearrangeMode"
-      :selected-piece="selectedPiece"
-      :item-scale="itemScale"
-      :item-z-index="itemZIndex"
-      :base-size="baseSize"
-      @complete-placement="handleCompletePlacement"
-      @increase-scale="increaseScale"
-      @decrease-scale="decreaseScale"
-      @increase-z-index="increaseZIndex"
-      @decrease-z-index="decreaseZIndex"
-    />
-
-    <ItemEditPanel
-      v-if="showEditPanel && selectedEditItem"
-      :selected-item="selectedEditItem"
-      :item-scale="editItemScale"
-      :item-z-index="editItemZIndex"
-      :base-size="baseSize"
-      @update-placement="handleUpdatePlacement"
-      @remove-item="handleRemoveItem"
-      @cancel-selection="handleCancelSelection"
-      @increase-scale="increaseEditScale"
-      @decrease-scale="decreaseEditScale"
-      @increase-z-index="increaseEditZIndex"
-      @decrease-z-index="decreaseEditZIndex"
-    />
-
-    <RearrangeCompletePanel
-      v-if="showCompletePanel && isRearrangeMode"
-      :changed-items-count="changedItemsCount"
-      :removed-items-count="removedItemsCount"
-      @complete-rearrange="handleCompleteRearrange"
-      @cancel-rearrange="handleCancelRearrange"
-    />
-
-    <StoredItemControlPanel
-      v-if="showStoredItemControlPanel && selectedStoredItem"
-      :selectedItem="selectedStoredItem"
-      :itemScale="storedItemScale"
-      :itemZIndex="storedItemZIndex"
-      :baseSize="ITEM_CONSTANTS.BASE_SIZE"
-      @confirm-placement="completeStoredItemPlacement"
-      @cancel-placement="cancelStoredItemPlacement"
-      @increase-scale="increaseStoredItemScale"
-      @decrease-scale="decreaseStoredItemScale"
-      @increase-z-index="increaseStoredItemZIndex"
-      @decrease-z-index="decreaseStoredItemZIndex"
-    />
-
-    <template v-if="showGuestBook">
-      <template v-if="showGuestBookDetail">
-        <GuestBookDetail 
-          :id="selectedGuestBookId"
-          @back="handleDetailBack"
-        />
-      </template>
-    </template>
-
-    <div ref="containerRef" class="placement-container">
-      <div class="placement-inner-container">
-        <img
-          v-if="forestData && forestData.length"
-          ref="bgRef"
-          class="background"
-          :src="forestData[0].backgroundImageUrl"
-          alt="Green Background"
-        />
-        
-        <img
-          v-if="forestData && forestData.length"
-          v-for="item in sortedPlacementList"
-          :key="item.placementId"
-          class="item"
-          :class="{ 
-            'selectable': isRearrangeMode,
-            'selected': selectedEditItem?.placementId === item.placementId,
-            'dragging': isEditDragging && selectedEditItem?.placementId === item.placementId
-          }"
-          :src="item.itemImageUrl" 
-          :alt="item.itemName"
-          :style="{
-            left: selectedEditItem?.placementId === item.placementId ? `${editDragPos.x}%` : `${item.placementPositionX}%`,
-            top: selectedEditItem?.placementId === item.placementId ? `${editDragPos.y}%` : `${item.placementPositionY}%`,
-            width: selectedEditItem?.placementId === item.placementId ? `${editCalculatedWidth}px` : (item.placementWidth ? `${item.placementWidth}px` : `${ITEM_CONSTANTS.BASE_SIZE}px`),
-            height: selectedEditItem?.placementId === item.placementId ? `${editCalculatedHeight}px` : (item.placementHeight ? `${item.placementHeight}px` : `${ITEM_CONSTANTS.BASE_SIZE}px`),
-            zIndex: selectedEditItem?.placementId === item.placementId ? editItemZIndex : item.placementZIndex,
-            opacity: showYellowDust ? ITEM_CONSTANTS.YELLOW_DUST_OPACITY : 1,
-            cursor: isRearrangeMode ? 'pointer' : 'default'
-          }"
-          @click="selectItemForEdit(item)"
-          @mousedown="selectedEditItem?.placementId === item.placementId ? onEditMouseDown($event) : null"
-          @dragstart.prevent
-          draggable="false"
-        />
-        
-        <img
-          v-if="selectedPiece && !isRearrangeMode"
-          class="item draggable"
-          :class="{ 'dragging': isDragging }"
-          :src="selectedPiece.icon"
-          :alt="selectedPiece.label"
-          :style="{
-            left: `${dragPos.x}%`,
-            top: `${dragPos.y}%`,
-            width: `${calculatedWidth}px`,
-            height: `${calculatedHeight}px`,
-            cursor: isDragging ? 'grabbing' : 'grab',
-            zIndex: itemZIndex,
-            opacity: showYellowDust ? ITEM_CONSTANTS.YELLOW_DUST_OPACITY : 1
-          }"
-          @mousedown="onMouseDown"
-          @dragstart.prevent
-          draggable="false"
-        />
-
-        <!-- 배치 중인 아이템 (보관소에서) -->
-        <img
-          v-if="selectedStoredItem && showStoredItemControlPanel"
-          class="item draggable stored-item"
-          :class="{ 'dragging': isStoredItemDragging }"
-          :src="selectedStoredItem.imageUrl"
-          :alt="selectedStoredItem.itemName"
-          :style="{
-            left: `${storedItemPosition.x}%`,
-            top: `${storedItemPosition.y}%`,
-            width: `${storedItemCalculatedWidth}px`,
-            height: `${storedItemCalculatedHeight}px`,
-            cursor: isStoredItemDragging ? 'grabbing' : 'grab',
-            zIndex: storedItemZIndex,
-            opacity: showYellowDust ? ITEM_CONSTANTS.YELLOW_DUST_OPACITY : 1
-          }"
-          @mousedown="onStoredItemMouseDown"
-          @dragstart.prevent
-          draggable="false"
-        />
-      </div>
-    </div>
-
-    <RainEffects v-if="showRain" />
-    <FlowerRainEffect v-if="showFlowerRain" />
-    <FogEffects v-if="showFog" />
-    <YellowDustEffects v-if="showYellowDust" />
-    <SnowEffects v-if="showSnow" />
-    <ThunderEffects v-if="showThunder" />
-    <CloudyEffects v-if="showCloudy" />
-  </div>
-</template>
-
 <style scoped>
-.placement-container {
+.forest-detail {
   position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   width: 100%;
-  height: 100%;
+  height: 100vh;
   overflow: hidden;
-}
-
-.placement-inner-container {
-  position: relative;
-  width: 800px;
-  height: auto;
-}
-
-.background {
-  width: 100%;
-  height: auto;
-  display: block;
-  user-select: none;
-  pointer-events: none;
-}
-
-.item {
-  position: absolute;
-  user-select: none;
-  transform: translate(-50%, -50%);
-  object-fit: contain;
-  transition: all 0.2s ease;
-}
-
-/* 드래그 중일 때는 transition 제거하여 부드러운 움직임 */
-.item.dragging {
-  transition: none;
-}
-
-.item.selectable {
-  border: 2px solid transparent;
-  border-radius: 8px;
-}
-
-.item.selectable:hover {
-  border-color: rgba(58, 90, 64, 0.6);
-  box-shadow: 0 0 12px rgba(58, 90, 64, 0.3);
-}
-
-.item.selected {
-  border-color: rgba(58, 90, 64, 1);
-  box-shadow: 0 0 16px rgba(58, 90, 64, 0.5);
-}
-
-.item.draggable {
-  user-select: none;
-  touch-action: none;
-  position: absolute;
 }
 
 /* 수직으로 배치된 헤더 아이콘 스타일 */
@@ -1119,6 +1064,8 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
 .home-icon-container {
   display: flex;
   align-items: center;
+  width: 120px;
+  height: 100px;
 }
 
 .home-icon {
@@ -1127,6 +1074,7 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
   cursor: pointer;
   object-fit: contain;
   transition: transform 0.2s ease;
+  display: block;
 }
 
 .home-icon:hover {
@@ -1140,18 +1088,11 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
   margin-left: 8px; /* 홈 아이콘과 약간의 들여쓰기 */
 }
 
-.edit-name-container, 
 .rearrange-container, 
 .public-icon-container {
   position: relative;
   display: flex;
   align-items: center;
-}
-
-.edit-name-container .forest-name-bubble {
-  position: absolute;
-  left:400%;
-  transform: translateX(-50%);
 }
 
 .btn-img {
@@ -1249,10 +1190,72 @@ const storedItemCalculatedHeight = computed(() => Math.round(ITEM_CONSTANTS.BASE
   background: rgba(255, 10, 38, 0.33);
 }
 
-.forest-detail {
+.placement-container {
   position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
+}
+
+.placement-inner-container {
+  position: relative;
+  width: 800px;
+  height: auto;
+}
+
+.background {
+  width: 100%;
+  height: auto;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+.item {
+  position: absolute;
+  user-select: none;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  transition: all 0.2s ease;
+}
+
+/* 드래그 중일 때는 transition 제거하여 부드러운 움직임 */
+.item.dragging {
+  transition: none;
+  box-shadow: 0 0 16px rgba(58, 90, 64, 0.5);
+}
+
+.item.selectable {
+  border: 2px solid transparent;
+  border-radius: 8px;
+}
+
+.item.selectable:hover {
+  border-color: rgba(58, 90, 64, 0.6);
+  box-shadow: 0 0 12px rgba(58, 90, 64, 0.3);
+}
+
+.item.selected {
+  border-color: rgba(58, 90, 64, 1);
+  box-shadow: 0 0 16px rgba(58, 90, 64, 0.5);
+}
+
+.item.draggable {
+  user-select: none;
+  touch-action: none;
+  position: absolute;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  border-color: rgba(58, 90, 64, 1);
+  box-shadow: 0 0 16px rgba(58, 90, 64, 0.5);
+}
+
+.item.draggable.stored-item:hover,
+.item.draggable:hover {
+  border-color: rgba(58, 90, 64, 0.6);
+  box-shadow: 0 0 12px rgba(58, 90, 64, 0.3);
 }
 </style>
