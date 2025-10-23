@@ -124,7 +124,7 @@ const fetchForestInfo = async () => {
     loading.value = true
     const response = await api.get(`mate/detail/${props.forestId}`)
     const data = response.data
-    console.log('API 응답 데이터:', data)
+
     
     // 멤버 정보를 nicknames 배열에서 members 배열로 변환
     const members = data.nicknames ? data.nicknames.map((nickname, index) => ({
