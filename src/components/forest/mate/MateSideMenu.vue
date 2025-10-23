@@ -5,6 +5,7 @@ import buttonIcon_2 from "@/icons/diaryview_icon.png";
 import buttonIcon_3 from "@/icons/forestmate_icon.png";
 import buttonIcon_4 from "@/icons/invite_icon.png";
 import buttonIcon_5 from "@/icons/myitemview_icon.png";
+import forestInfoIcon from "@/icons/forest_info_icon.png";
 import logoutIcon from "@/icons/logout_icon.png";
 import previousIcon from "@/icons/previous_icon2.png";
 import { useRouter } from "vue-router";
@@ -30,6 +31,7 @@ import melancholyIcon from '@/icons/melancholy_icon.png'
 import tiredIcon from '@/icons/tired_icon.png'
 import romanceIcon from '@/icons/romance_icon.png'
 import MateWriteDiary from "./MateWriteDiary.vue";
+import ForestInfo from "./ForestInfo.vue";
 import { useAlertStore } from '@/stores/alert'
 
 const alert = useAlertStore()
@@ -44,7 +46,7 @@ const props = defineProps({
 
 const { proxy } = getCurrentInstance();
 const router = useRouter();
-const emit = defineEmits(["openShare", "openForestList", "openWithdraw", "request-confirm"]);
+const emit = defineEmits(["openShare", "openForestList", "openWithdraw", "openChangeName", "request-confirm"]);
 const authStore = useAuthStore();
 const { user } = authStore;
 const forestId = computed(() => user?.forestId ?? null);
@@ -277,6 +279,29 @@ const handlePlaceFromStorage = (item) => {
   // MyItemView 닫기
   activeView.value = 'main';
 };
+
+const openForestInfo = () => {
+  activeView.value = 'forestInfo';
+};
+
+const closeForestInfo = () => {
+  activeView.value = 'main';
+};
+
+const handleForestInvite = () => {
+  emit("openShare");
+  activeView.value = 'main';
+};
+
+const handleForestWithdraw = () => {
+  emit("openWithdraw");
+  activeView.value = 'main';
+};
+
+const handleForestChangeName = () => {
+  emit("openChangeName");
+  activeView.value = 'main';
+};
 </script>
 
 <template>
@@ -317,23 +342,17 @@ const handlePlaceFromStorage = (item) => {
               </span>
               우정일기 다시보기
             </button>
-            <button class="menu-btn" @click="handleShare">
-              <span class="icon">
-                <img :src="buttonIcon_4" class="btn-img" />
-              </span>
-              우정의 숲 초대하기
-            </button>
             <button class="menu-btn" @click="openMyItems">
               <span class="icon">
                 <img :src="buttonIcon_5" class="btn-img" />
               </span>
               우리의 조각 보기
             </button>
-            <button class="menu-btn" @click="handleWithdraw">
+            <button class="menu-btn" @click="openForestInfo">
               <span class="icon">
-                <img :src="buttonIcon_3" class="btn-img" />
+                <img :src="forestInfoIcon" class="btn-img" />
               </span>
-              우정의 숲 탈퇴하기
+              숲 정보 보기
             </button>
           </div>
         </div>
@@ -409,6 +428,16 @@ const handlePlaceFromStorage = (item) => {
           <MateDiaryCalendarForWrite 
             @close="activeView = 'main'"
             @new-diary-click="toggleCategorySelector"
+          />
+        </div>
+        <div v-else-if="activeView === 'forestInfo'">
+          <ForestInfo 
+            :forestId="props.forestId"
+            :forestName="'우정의 숲'"
+            @close="closeForestInfo"
+            @invite="handleForestInvite"
+            @openWithdraw="handleForestWithdraw"
+            @openChangeName="handleForestChangeName"
           />
         </div>
       </div>

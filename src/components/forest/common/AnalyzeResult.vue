@@ -37,6 +37,7 @@
           <img :src="piece.icon" class="piece-icon" />
         </div>
       </div>
+      
 
       <transition name="fade">
         <div v-if="selected" class="result-actions">
@@ -44,6 +45,14 @@
           <button class="action-btn secondary" @click="onSaveClick(selectedPiece)">보관소에 저장하기</button>
         </div>
       </transition>
+      
+      <!-- 경고 메시지 -->
+      <div class="warning-message">
+        <div class="warning-text">
+          <strong>주의!</strong> 뒤로가기를 누르면 일기는 저장되지만<br />
+          기억의 조각을 받을 수 없습니다. 반드시 조각을 선택해주세요!
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -249,5 +258,26 @@ function onSaveClick(piece) {
 .fade-leave-to {
   opacity: 0;
   transform: translateY(10px);
+}
+
+/* 경고 메시지 스타일 */
+.warning-message {
+  /* background: rgba(255, 255, 255, 0.05); */
+  /* border: 1px solid rgba(255, 255, 255, 0.1); */
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-top: 40px;
+  text-align: center;
+}
+
+.warning-text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 400;
+}
+
+.warning-text strong {
+  font-weight: 500;
 }
 </style> 
