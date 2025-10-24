@@ -30,6 +30,7 @@ const handleLogin = async (e) => {
   if (loading.value) return;          // 가드
   loading.value = true;
   // e.preventDefault();
+  if (!password.value) return;
 
   try {
 
@@ -187,7 +188,7 @@ const handleKakaoLogin = () => {
           <label for="remember-me">로그인 유지</label>
         </div> -->
 
-        <button type="submit" class="login-button">로그인</button>
+        <button type="submit" class="login-button" :disabled="loading">{{ loading ? '로그인 중...' : '로그인' }}</button>
       </form>
 
       <div class="links">
@@ -331,5 +332,10 @@ const handleKakaoLogin = () => {
 .social-icons > .google-btn {
   width: 40px;
   height: 40px;
+}
+
+.login-button:disabled {
+  background: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
 }
 </style>
