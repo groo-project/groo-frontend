@@ -5,7 +5,8 @@
         <h2>우정의 숲 목록</h2>
         <button class="close-button" @click="$emit('close')">닫기</button>
       </div>
-      <div class="forest-grid">
+      <div class="forest-grid-container">
+        <div class="forest-grid">
         <div
           v-for="forest in forests"
           :key="forest.forestId"
@@ -34,6 +35,7 @@
           <div class="add-forest-content">
             <div class="add-forest-text">새로운 숲 만들기</div>
           </div>
+        </div>
         </div>
       </div>
     </div>
@@ -202,17 +204,11 @@ onMounted(() => {
   width: 80%;
   max-width: 800px;
   max-height: 80vh;
-  overflow-y: auto;
   box-shadow: 0 20px 60px rgba(58, 90, 64, 0.2);
   animation: floatIn 0.5s ease-out;
   border: 3px solid #a5c0a7;
-  /* 스크롤바 숨기기 */
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
-}
-
-.modal-content::-webkit-scrollbar {
-  display: none; /* WebKit */
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-header {
@@ -269,6 +265,18 @@ onMounted(() => {
 .close-button:hover {
   background: rgba(58, 90, 64, 0.15);
   transform: translateY(-1px);
+}
+
+.forest-grid-container {
+  flex: 1;
+  overflow-y: auto;
+  /* 스크롤바 숨기기 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.forest-grid-container::-webkit-scrollbar {
+  display: none; /* WebKit */
 }
 
 .forest-grid {
