@@ -102,9 +102,31 @@ const handleSubmit = async () => {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
     } catch (error) {
-      console.error("Error:", error.message);
+
       
-      alert.show("초대가 만료되었거나 이미 사용된 초대 코드입니다.")
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message || "";
+      const statusCode = error.response?.status;
+
+      // HTTP 상태 코드 기반으로 에러 메시지 결정
+      if (statusCode === 400 || statusCode === 409) {
+        // 정원이 가득 찬 경우나 이미 사용된 초대 코드의 경우
+        if (errorMessage.includes("full") || errorMessage.includes("capacity")) {
+          alert.show("이 우정의 숲은 정원이 가득 찼습니다. 다른 우정의 숲에 참여해주세요.");
+        } else if (errorMessage.includes("이미") || errorMessage.includes("already") || errorMessage.includes("중복") || errorMessage.includes("used")) {
+          alert.show("이미 이 우정의 숲에 참여하고 있습니다.");
+        } else if (errorMessage.includes("만료") || errorMessage.includes("expired") || errorMessage.includes("invalid")) {
+          alert.show("초대가 만료되었거나 유효하지 않은 초대 코드입니다.");
+        } else {
+          alert.show("초대 수락에 실패했습니다. 다시 시도해주세요.");
+        }
+      } else if (statusCode === 404) {
+        alert.show("유효하지 않은 초대 코드입니다. 다시 확인해주세요.");
+      } else if (statusCode === 410) {
+        alert.show("초대가 만료되었습니다. 새로운 초대 코드를 요청해주세요.");
+      } else {
+        // 기본 에러 메시지
+        alert.show("초대 수락에 실패했습니다. 다시 시도해주세요.");
+      }
     }
   } else {
     alert.show("초대 코드 8자리를 입력해주세요.")
