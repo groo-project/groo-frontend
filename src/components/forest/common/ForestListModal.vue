@@ -29,7 +29,7 @@
         </div>
         <div
           class="forest-card add-forest-card"
-          @click="showCreateForestModal = true"
+          @click="handleAddForestClick"
         >
           <div class="add-forest-content">
             <div class="add-forest-text">새로운 숲 만들기</div>
@@ -134,8 +134,26 @@ const createNewForest = async () => {
     await getForestList();
   } catch (error) {
     console.error("Error creating forest:", error);
-    alert.show("숲 생성에 실패했습니다. 다시 시도해주세요.")
+    
+    // 서버에서 반환된 에러 메시지 확인
+    const errorMessage = error.response?.data?.message || error.message;
+    
+    if (errorMessage.includes("한도") || errorMessage.includes("최대")) {
+      alert.show(errorMessage);
+    } else {
+      alert.show("숲 생성에 실패했습니다. 다시 시도해주세요.")
+    }
   }
+};
+
+const handleAddForestClick = () => {
+  // 숲 개수 제한 확인
+  if (forests.value.length >= 3) {
+    alert.show("최대 3개의 우정의 숲만 생성할 수 있습니다.")
+    return;
+  }
+  
+  showCreateForestModal.value = true;
 };
 
 const handleForestClick = (forestId) => {
@@ -337,6 +355,7 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 600;
 }
+
 
 .create-forest-modal {
   background: #fdfbf6;
