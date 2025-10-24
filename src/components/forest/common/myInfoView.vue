@@ -15,6 +15,16 @@ const user = computed(() => authStore.user);
 const token = computed(() => authStore.accessToken || '');
 const nickname = computed(() => authStore.user?.nickname || "여행자");
 
+// OAuth 사용자인지 확인
+const isOAuthUser = computed(() => {
+  // 방법 1: oauth.provider가 존재하는 경우 (가장 정확한 방법)
+  if (user.value?.oauth?.provider !== null && user.value?.oauth?.provider !== undefined) {
+    return true;
+  }
+  
+  return false;
+});
+
 // 탭 상태 관리
 const activeTab = ref('password');
 
@@ -43,7 +53,9 @@ const setActiveTab = (tab) => {
 
     <!-- 탭 네비게이션 -->
     <div class="tab-navigation">
+      <!-- 일반 회원가입 사용자만 비밀번호 변경 탭 표시 -->
       <button 
+        v-if="!isOAuthUser"
         class="tab-btn" 
         @click="setActiveTab('password')"
       >
