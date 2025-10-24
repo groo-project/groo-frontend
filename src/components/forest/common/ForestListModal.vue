@@ -188,6 +188,13 @@ onMounted(() => {
   box-shadow: 0 20px 60px rgba(58, 90, 64, 0.2);
   animation: floatIn 0.5s ease-out;
   border: 3px solid #a5c0a7;
+  /* 스크롤바 숨기기 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.modal-content::-webkit-scrollbar {
+  display: none; /* WebKit */
 }
 
 .modal-header {
