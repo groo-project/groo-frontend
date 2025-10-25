@@ -197,6 +197,7 @@ import api from "@/lib/api.js";
 import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from "pinia";
 import { useAlertStore } from '@/stores/alert'
+import { useDiaryWriteStore } from "@/stores/diaryWrite";
 
 import is_public_icon from "@/icons/is_public_icon.png"
 import rearrange_icon from "@/icons/rearrange_icon.png"
@@ -206,7 +207,8 @@ import ItemEditPanel from "@/components/forest/common/placement/ItemEditPanel.vu
 import RearrangeCompletePanel from "@/components/forest/common/placement/RearrangeCompletePanel.vue";
 import StoredItemControlPanel from "@/components/forest/common/placement/StoredItemControlPanel.vue";
 
-const alert = useAlertStore()
+const alert = useAlertStore();
+const diaryWrite = useDiaryWriteStore();
 
 const route = useRoute();
 const router = useRouter();
@@ -708,7 +710,8 @@ const handleCompletePlacement = async () => {
     itemId: selectedPiece.value.value,
     itemWidth: calculatedWidth.value,
     itemHeight: calculatedHeight.value,
-    itemZIndex: itemZIndex.value
+    itemZIndex: itemZIndex.value,
+    diaryId: diaryWrite.savedDiaryId
   };
   
   try {

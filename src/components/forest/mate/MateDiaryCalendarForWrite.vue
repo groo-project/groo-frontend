@@ -57,12 +57,20 @@ import { useDiaryWriteStore } from '@/stores/diaryWrite'
 import { useAlertStore } from '@/stores/alert'
 import { useMateForestStore } from '@/stores/mateForest'
 
+// props로 forestId를 받아야함 (우정의 숲 ID)
+const props = defineProps({
+  forestId: {
+    type: [String, Number],
+    required: true
+  }
+});
+
 const alert = useAlertStore()
 
 const auth = useAuthStore()
 const mateforest = useMateForestStore();
 const diaryWriteStore = useDiaryWriteStore();
-const forestId = mateforest.currentMateForestId || '';
+const forestId = mateforest.currentMateForestId || props.forestId;
 
 const emit = defineEmits(['close', 'new-diary-click'])
 

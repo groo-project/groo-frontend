@@ -208,6 +208,7 @@ import RearrangeCompletePanel from "@/components/forest/common/placement/Rearran
 import StoredItemControlPanel from "@/components/forest/common/placement/StoredItemControlPanel.vue";
 import api from "@/lib/api.js";
 import { useAuthStore } from "@/stores/auth.js";
+import { useDiaryWriteStore } from "@/stores/diaryWrite";
 import { storeToRefs } from 'pinia';
 
 // weather effects
@@ -220,7 +221,8 @@ import ThunderEffects from "@/components/weather/ThunderEffects.vue";
 import CloudyEffects from "@/components/weather/CloudyEffects.vue";
 import { useAlertStore } from '@/stores/alert'
 
-const alert = useAlertStore()
+const alert = useAlertStore();
+const diaryWrite = useDiaryWriteStore();
 
 const auth = useAuthStore();
 // 반응형으로 꺼내기
@@ -793,13 +795,14 @@ const handleCompletePlacement = async () => {
   }
   
   const body = {
-          forestId: Number(forestId.value),
+    forestId: Number(forestId.value),
     itemPositionX: dragPos.value.x,
     itemPositionY: dragPos.value.y,
     itemId: selectedPiece.value.value,
     itemWidth: calculatedWidth.value,
     itemHeight: calculatedHeight.value,
-    itemZIndex: itemZIndex.value
+    itemZIndex: itemZIndex.value,
+    diaryId: diaryWrite.savedDiaryId
   };
   
   try {

@@ -244,6 +244,8 @@ const saveDiary = async () => {
     if (!response) {
       throw new Error('API 응답이 없습니다.');
     }
+
+    diaryWriteStore.setSavedDiaryId(response.data.diaryId);
     
     emit('save', response.data);
   } catch (error) {

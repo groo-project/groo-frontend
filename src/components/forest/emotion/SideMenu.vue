@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed, onMounted, watch, getCurrentInstance } from "vue";
-import { useRouter, useRoute } from 'vue-router'
+import { ref, computed, onMounted, getCurrentInstance } from "vue";
+import { useRouter } from 'vue-router'
 import MyDiaryCalendar from '@/components/forest/emotion/MyDiaryCalendar.vue';
 import MyDiaryDetail from '@/components/forest/emotion/MyDiaryDetail.vue';
 import { useAuthStore } from '@/stores/auth.js'
 import { useAlertStore } from '@/stores/alert'
+import { useDiaryWriteStore } from "@/stores/diaryWrite";
 import api from '@/lib/api.js'
 
 // Icons
@@ -36,7 +37,6 @@ import tiredIcon from '@/icons/tired_icon.png'
 import romanceIcon from '@/icons/romance_icon.png'
 
 const router = useRouter();
-const route = useRoute();
 const emit = defineEmits(["openForestList", "request-confirm"]);
 const { proxy } = getCurrentInstance();
 
@@ -150,9 +150,7 @@ const toggleMenu = () => {
 
 const authStore = useAuthStore()
 const alert = useAlertStore()
-const user = computed(() => authStore.user);
-const token = computed(() => authStore.accessToken || '');
-const forestId = computed(() => authStore.user?.forestId || '');
+const diaryWrite = useDiaryWriteStore()
 const nickname = computed(() => authStore.user?.nickname || "여행자");
 
 onMounted(() => {
@@ -194,20 +192,20 @@ async function confirmSaveToStorage() {
     return
   }
   try {
-    const pieceId     = pieceToSave.value.value;
-    // URL · 헤더 · 쿼리 파라미터 수정
-    await api.post(
-      `item-storage?itemId=${pieceId}&forestId=${forestId.value}`,
-      {},  // 바디는 빈 객체
-      { headers: { Authorization: `Bearer ${token.value}` } }
-    );
-    closeSaveModal();
-    // 강제 새로고침 방식으로 이동
-    window.location.href = `/forest-detail/${forestId.value}`;
+    const body = {
+      diaryId: diaryWrite.savedDiaryId,
+      itemId: pieceToSave.value.value,
+      forestId: authStore.user.forestId
+    }
 
+    await api.post(`emotion-forest/items/storage`, body)
   } catch (e) {
     console.error(e);
     alert.show("보관소 저장에 실패했습니다. 다시 시도해주세요.")
+  } finally {
+    closeSaveModal();
+    switchView('main')
+    alert.show("아이템이 보관되었습니다.")
   }
 }
 
@@ -522,13 +520,6 @@ const handleDiarySave = (analysisResult) => {
   Object.assign(dummyAnalysisResult, analysisData);
   switchView('analyze')
 };
-
-watch(
-  () => route.params.forestId,
-  () => {
-    updateForestId();
-  }
-);
 </script>
 <template>
   <div class="side-wrapper">
@@ -566,7 +557,7 @@ watch(
         </template>
         <template v-else-if="showMyItemView">
           <MyItemView
-            :forestId="user?.forestId"
+            :forestId="authStore.user.forestId"
             @close="closeMyItemView"
             @placeFromStorage="handlePlaceFromStorage"
             :is-mate="false"

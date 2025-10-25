@@ -8,7 +8,7 @@ import buttonIcon_5 from "@/icons/myitemview_icon.png";
 import forestInfoIcon from "@/icons/forest_info_icon.png";
 import logoutIcon from "@/icons/logout_icon.png";
 import previousIcon from "@/icons/previous_icon2.png";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import InviteLinkModal from "@/components/forest/mate/InviteLinkModal.vue";
 import MateDiaryCalendarForWrite from "./MateDiaryCalendarForWrite.vue";
 import DiaryCalendar from '@/components/forest/mate/DiaryCalendar.vue';
@@ -19,6 +19,7 @@ import LoadingAnimation from '@/components/forest/common/LoadingAnimation.vue';
 import AnalyzeResult from '@/components/forest/common/AnalyzeResult.vue';
 import ConfirmModal from '@/components/forest/common/ConfirmModal.vue';
 import { useAuthStore } from "@/stores/auth";
+import { useDiaryWriteStore } from "@/stores/diaryWrite";
 import api from "@/lib/api";
 
 // Emotion Icons
@@ -35,6 +36,8 @@ import ForestInfo from "./ForestInfo.vue";
 import { useAlertStore } from '@/stores/alert'
 
 const alert = useAlertStore()
+const route = useRoute()
+const diaryWrite = useDiaryWriteStore()
 
 // props로 forestId를 받아야함 (우정의 숲 ID)
 const props = defineProps({
@@ -48,8 +51,7 @@ const { proxy } = getCurrentInstance();
 const router = useRouter();
 const emit = defineEmits(["openShare", "openForestList", "openWithdraw", "openChangeName", "request-confirm"]);
 const authStore = useAuthStore();
-const { user } = authStore;
-const forestId = computed(() => user?.forestId ?? null);
+const forestId = computed(() => props.forestId ?? route.params.forestId);
 
 const activeView = ref('main');
 const isMenuOpen = ref(true);
@@ -61,6 +63,7 @@ const selectedCategory = ref(null);
 const showInviteModal = ref(false);
 const inviteLink = ref("");
 const showLogoutModal = ref(false);
+const pieceToSave = ref(null);
 
 const analysisResult = ref({
   emotions: [],
@@ -102,9 +105,42 @@ const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
 };
 
-const handleShare = () => {
-  emit("openShare");
-};
+const modalState = ref({
+  showSaveModal: false,
+})
+const showSaveModal = computed(() => modalState.value.showSaveModal)
+
+const openSaveModal = (selectedPiece) => {
+  pieceToSave.value = selectedPiece;
+  modalState.value.showSaveModal = true;
+}
+
+const closeSaveModal = () => {
+  modalState.value.showSaveModal = false;
+}
+
+const confirmSaveToStorage = async () => {
+  if (!pieceToSave.value) {
+    alert.show("저장할 조각 정보가 없습니다.")
+    return;
+  }
+  try {
+    const body = {
+      diaryId: diaryWrite.savedDiaryId,
+      itemId: pieceToSave.value.value,
+      forestId: forestId.value
+    }
+
+    await api.post(`emotion-forest/items/storage`, body)
+  } catch (e) {
+    console.error(e);
+    alert.show("보관소 저장에 실패했습니다. 다시 시도해주세요.")
+  } finally {
+    closeSaveModal();
+    activeView.value = 'main';
+    alert.show("아이템이 보관되었습니다.")
+  }
+}
 
 const goBack = () => {
   router.push('/forest-detail/' + forestId.value);
@@ -262,10 +298,6 @@ const handlePlace = (selectedPiece) => {
   }
 };
 
-const handleToStorage = (piece) => {
-  activeView.value = 'main';
-};
-
 const handlePlaceFromStorage = (item) => {
   
   // 아이템 배치 이벤트 발생
@@ -375,7 +407,7 @@ const handleForestChangeName = () => {
           </div>
           <div class="relative-container">
             <MateWriteDiary
-              :forestId="props.forestId"
+              :forestId="forestId"
               :categoryId="selectedCategory"
               @save="handleDiarySave"
               @loading="(val) => (categoryLoading = val)"
@@ -390,12 +422,12 @@ const handleForestChangeName = () => {
           <AnalyzeResult
             v-bind="analysisResult"
             @place="handlePlace"
-            @to-storage="handleToStorage"
+            @to-storage="openSaveModal"
           />
         </template>
         <div v-else-if="activeView === 'diaryCalendar'" class="calendar-view">
           <DiaryCalendar
-            :forestId="props.forestId"
+            :forestId="forestId"
             @close="closeDiaryCalendar"
             @diary-click="handleDiaryClick"
           />
@@ -418,7 +450,7 @@ const handleForestChangeName = () => {
         </div>
         <div v-else-if="activeView === 'myItems'" class="myitem-view">
           <MyItemView 
-            :forestId="props.forestId" 
+            :forestId="forestId" 
             @close="closeMyItems" 
             @placeFromStorage="handlePlaceFromStorage"
             :is-mate="true"
@@ -428,11 +460,12 @@ const handleForestChangeName = () => {
           <MateDiaryCalendarForWrite 
             @close="activeView = 'main'"
             @new-diary-click="toggleCategorySelector"
+            :forestId="forestId"
           />
         </div>
         <div v-else-if="activeView === 'forestInfo'">
           <ForestInfo 
-            :forestId="props.forestId"
+            :forestId="forestId"
             :forestName="'우정의 숲'"
             @close="closeForestInfo"
             @invite="handleForestInvite"
@@ -455,6 +488,13 @@ const handleForestChangeName = () => {
       @cancel="showLogoutModal = false"
     />
   </div>
+  <ConfirmModal
+            :is-open="showSaveModal"
+            title="보관소에 저장"
+            message="정말로 이 조각을 보관소에 저장하시겠습니까?"
+            @confirm="confirmSaveToStorage"
+            @cancel="closeSaveModal"
+          />
 </template>
 
 <style scoped>
