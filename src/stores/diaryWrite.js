@@ -3,6 +3,7 @@ import { defineStore } from "pinia";
 export const useDiaryWriteStore = defineStore('diaryWrite', {
     state: () => ({
         writeDate: null,
+        savedDiaryId: null,
     }),
     actions: {
         setWriteDiaryDate(date) {
@@ -10,6 +11,12 @@ export const useDiaryWriteStore = defineStore('diaryWrite', {
         },
         clearWriteDiaryDate() {
             this.writeDate = null;
+        },
+        setSavedDiaryId(id) {
+            this.savedDiaryId = id;
+        },
+        clearSavedDiaryId() {
+            this.savedDiaryId = null;
         }
     }
 })

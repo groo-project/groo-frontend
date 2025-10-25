@@ -49,8 +49,8 @@
       <!-- 경고 메시지 -->
       <div class="warning-message">
         <div class="warning-text">
-          <strong>주의!</strong> 뒤로가기를 누르면 일기는 저장되지만<br />
-          기억의 조각을 받을 수 없습니다. 반드시 조각을 선택해주세요!
+          배치 혹은 저장 실패 시<br />
+          해당 날짜의 일기를 조회하면 다시 배치 혹은 저장이 가능합니다.
         </div>
       </div>
     </div>
