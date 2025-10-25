@@ -36,6 +36,13 @@
             @click="showNext && $emit('next')"
           />
         </div>
+        <button
+            v-if="!itemSelected"
+            class="select-item-btn"
+            @click="handleSelectItem"
+          >
+          아이템 선택하기
+        </button>
       </div>
       <div class="diary-detail-content-box">
         <div class="diary-detail-content-text">
@@ -51,6 +58,11 @@
   <script setup>
   import backPageIcon from '@/icons/back.png'
   import forwardIcon from '@/icons/arrow_forward.png'
+  import { useDiaryWriteStore } from '@/stores/diaryWrite';
+
+  const diaryWrite = useDiaryWriteStore();
+
+  const emit = defineEmits(['select-item'])
 
   const getEmotionColor = (emotion) => {
   const colorMap = {
@@ -75,8 +87,15 @@
     emotions: { type: Array, default: () => [] },
     content: { type: String, default: '' },
     showPrev: { type: Boolean, default: false },
-    showNext: { type: Boolean, default: false }
+    showNext: { type: Boolean, default: false },
+    itemSelected: { type: Boolean, default: true },
+    diaryId: { type: Number },
   })
+
+  const handleSelectItem = () => {
+  diaryWrite.setSavedDiaryId(props.diaryId);
+  emit('select-item');
+}
   </script>
   
   <style scoped>
@@ -195,5 +214,31 @@
   .arrow-btn:not(.invisible):hover {
     opacity: 1;
   }
+
+  .select-item-btn {
+  margin-left: 12px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.65);
+  color: #2d4c2d;
+  border: none;
+  border-radius: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  position: relative;
+}
+
+.select-item-btn:hover {
+  background: #b6d6b6;
+  color: #1e361e;
+  transform: translateY(-1px);
+}
   </style>
   

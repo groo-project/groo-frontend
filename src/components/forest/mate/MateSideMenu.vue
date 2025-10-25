@@ -34,6 +34,7 @@ import romanceIcon from '@/icons/romance_icon.png'
 import MateWriteDiary from "./MateWriteDiary.vue";
 import ForestInfo from "./ForestInfo.vue";
 import { useAlertStore } from '@/stores/alert'
+import ItemSelect from "../common/ItemSelect.vue";
 
 const alert = useAlertStore()
 const route = useRoute()
@@ -92,7 +93,8 @@ const sidebarWidth = computed(() => {
     'writeDiary',
     'analyzeResult',
     'diaryDetail',
-    'diaryCalendarForWrite'
+    'diaryCalendarForWrite',
+    'itemSelect'
   ];
   return expandedViews.includes(activeView.value) ? 576 : 360;
 });
@@ -143,7 +145,7 @@ const confirmSaveToStorage = async () => {
 }
 
 const goBack = () => {
-  router.push('/forest-detail/' + forestId.value);
+  router.push('/forest-detail/' + authStore.user.forestId);
 };
 
 const logout = () => {
@@ -181,6 +183,11 @@ const closeDiaryCalendar = () => {
   activeView.value = 'main';
   selectedDiaries.value = null;
 };
+
+const getItemSelected = (diary) => {
+  const currentUserId = authStore.$state.user.userId;
+  return diary.userId === currentUserId ? diary.itemSelected : true;
+}
 
 const handleDiaryClick = (data) => {
   selectedDiaries.value = data;
@@ -425,6 +432,13 @@ const handleForestChangeName = () => {
             @to-storage="openSaveModal"
           />
         </template>
+        <template v-else-if="activeView === 'itemSelect'">
+          <ItemSelect
+            @close="activeView = 'main'"
+            @place="handlePlace"
+            @to-storage="openSaveModal"
+          />
+        </template>
         <div v-else-if="activeView === 'diaryCalendar'" class="calendar-view">
           <DiaryCalendar
             :forestId="forestId"
@@ -443,6 +457,9 @@ const handleForestChangeName = () => {
             :content="selectedDiaries.diaries[currentDiaryIndex].content"
             :showPrev="currentDiaryIndex > 0"
             :showNext="currentDiaryIndex < selectedDiaries.diaries.length - 1"
+            :itemSelected="getItemSelected(selectedDiaries.diaries[currentDiaryIndex])"
+            :diaryId="selectedDiaries.diaries[currentDiaryIndex].diaryId"
+            @select-item="activeView = 'itemSelect'"
             @close="closeDiaryDetail"
             @prev="handlePrevDiary"
             @next="handleNextDiary"
