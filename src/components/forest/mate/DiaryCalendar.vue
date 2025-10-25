@@ -32,7 +32,8 @@
           :class="{
             'diary-my-only': getDiaryState(date) === 'my-only',
             'diary-other-only': getDiaryState(date) === 'other-only',
-            'diary-shared': getDiaryState(date) === 'shared'
+            'diary-shared': getDiaryState(date) === 'shared',
+            'needs-item-selection': needsItemSelection(date)
           }"
           @click="onDiaryClick(date)"
           :title="getDiaryTooltip(date)"
@@ -108,7 +109,8 @@ async function fetchDiaries() {
     diaryData.value = res.data.map(entry => ({
         date: entry.createdAt.split('T')[0],
         userId: entry.userId,
-        diaryId: entry.diaryId
+        diaryId: entry.diaryId,
+        itemSelected: entry.itemSelected
     }));
   } catch (e) {
     console.error('Failed to fetch diaries:', e);
@@ -143,6 +145,12 @@ const getDiaryState = (date) => {
     } else { // if (isOtherDiary)
         return 'other-only'; // 상대 일기만 있음 (다른 스타일)
     }
+}
+
+const needsItemSelection = (date) => {
+  const d = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+  const myUserId = auth.$state.user.userId;
+  return diaryData.value.some(entry => entry.date === d && entry.userId === myUserId && !entry.itemSelected)
 }
 
 // 날짜 상태에 따른 툴팁 메시지 반환
@@ -364,6 +372,16 @@ async function onDiaryClick(date) {
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
   opacity: 1;
   cursor: pointer;
+}
+
+.calendar-day.needs-item-selection {
+  position: relative;
+  animation: blink 1.5s infinite;
+}
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
 }
 
 .calendar-day.diary-shared:hover {

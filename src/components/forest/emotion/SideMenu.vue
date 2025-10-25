@@ -35,6 +35,7 @@ import anxiousIcon from '@/icons/anxious_icon.png'
 import melancholyIcon from '@/icons/melancholy_icon.png'
 import tiredIcon from '@/icons/tired_icon.png'
 import romanceIcon from '@/icons/romance_icon.png'
+import ItemSelect from "../common/ItemSelect.vue";
 
 const router = useRouter();
 const emit = defineEmits(["openForestList", "request-confirm"]);
@@ -114,6 +115,7 @@ const showMyInfoView = computed(() => viewState.value.currentView === 'myInfoVie
 const showMyDiaryCalendar = computed(() => viewState.value.currentView === 'myDiaryCalendar')
 const showMyDiaryDetail = computed(() => viewState.value.currentView === 'myDiaryDetail')
 const showMyDiaryCalendarForWrite = computed(() => viewState.value.currentView === 'myDiaryCalendarForWrite')
+const showItemSelect = computed(() => viewState.value.currentView === 'itemSelect')
 
 const selectedCategory = computed(() => viewState.value.data.selectedCategory)
 const selectedGuestbookId = computed(() => viewState.value.data.selectedGuestbookId)
@@ -125,7 +127,7 @@ const showForestListModal = computed(() => modalState.value.showForestListModal)
 
 const sidebarWidth = computed(() => {
   if (!isMenuOpen.value) return 60;
-  const expandedViews = ['category', 'analyze', 'writeDiary', 'guestbookList', 'guestbookDetail', 'myItemView', 'myDiaryCalendar', 'myDiaryDetail', 'myDiaryCalendarForWrite']
+  const expandedViews = ['category', 'analyze', 'writeDiary', 'guestbookList', 'guestbookDetail', 'myItemView', 'myDiaryCalendar', 'myDiaryDetail', 'myDiaryCalendarForWrite', 'itemSelect']
   return expandedViews.includes(viewState.value.currentView) ? 576 : 360
 })
 
@@ -540,6 +542,9 @@ const handleDiarySave = (analysisResult) => {
             :day="selectedDiaryData.day"
             :emotions="selectedDiaryData.diaries.emotions"
             :content="selectedDiaryData.diaries.content"
+            :itemSelected="selectedDiaryData.diaries.itemSelected"
+            :diaryId="selectedDiaryData.diaries.diaryId"
+            @select-item="switchView('itemSelect')"
             @close="handleDiaryDetailClose"
           />
         </template>
@@ -617,6 +622,13 @@ const handleDiarySave = (analysisResult) => {
         <template v-else-if="showAnalyzeResult">
           <AnalyzeResult
             v-bind="dummyAnalysisResult"
+            @place="handlePlace"
+            @to-storage="openSaveModal"
+          />
+        </template>
+        <template v-else-if="showItemSelect">
+          <ItemSelect
+            @close="switchView('main')"
             @place="handlePlace"
             @to-storage="openSaveModal"
           />
