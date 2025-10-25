@@ -109,8 +109,8 @@ const handleSubmit = async () => {
 
       // HTTP 상태 코드 기반으로 에러 메시지 결정
       if (statusCode === 400 || statusCode === 409) {
-        // 정원이 가득 찬 경우나 이미 사용된 초대 코드의 경우
-        if (errorMessage.includes("full") || errorMessage.includes("capacity")) {
+        // 정원이 가득 찬 경우를 최우선으로 체크
+        if (errorMessage.includes("full") || errorMessage.includes("capacity") || errorMessage.includes("정원")) {
           alert.show("이 우정의 숲은 정원이 가득 찼습니다. 다른 우정의 숲에 참여해주세요.");
         } else if (errorMessage.includes("이미") || errorMessage.includes("already") || errorMessage.includes("중복") || errorMessage.includes("used")) {
           alert.show("이미 이 우정의 숲에 참여하고 있습니다.");
