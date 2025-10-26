@@ -29,8 +29,11 @@
             v-for="date in daysInMonth"
             :key="date"
             class="calendar-day"
-            :class="{ 'has-diary': getDiaryIdByDate(date) !== null }"
-            @click="getDiaryIdByDate(date) && onDiaryClick(date)"
+            :class="{
+              'has-diary': getDiaryDataByDate(date) !== null,
+              'needs-item-selection': getDiaryDataByDate(date)?.itemSelected === false
+              }"
+            @click="getDiaryDataByDate(date) && onDiaryClick(date)"
             style="cursor: pointer"
           >
             {{ date }}
@@ -104,7 +107,10 @@ async function fetchDiaries() {
     const map = new Map();
     res.data.forEach(entry => {
       const dateKey = entry.createdAt.split('T')[0];
-      map.set(dateKey, entry.diaryId);
+      map.set(dateKey, {
+        diaryId: entry.diaryId,
+        itemSelected: entry.itemSelected
+      });
     });
     diaryDateIdMap.value = map;
 
@@ -118,14 +124,14 @@ async function fetchDiaries() {
 watch([year, month], fetchDiaries)
 onMounted(fetchDiaries)
 
-const getDiaryIdByDate = (date) => {
+const getDiaryDataByDate = (date) => {
   const d = `${year.value}-${String(month.value).padStart(2, '0')}-${String(date).padStart(2, '0')}`
   return diaryDateIdMap.value.get(d) || null
 }
 
 async function onDiaryClick(date) {
 
-const diaryId = getDiaryIdByDate(date);
+const diaryId = getDiaryDataByDate(date).diaryId;
   
 const currentForestId = forestId || auth.user?.forestId;
   
@@ -265,6 +271,15 @@ if (!diaryId || !currentForestId) return;
   color: #3a5a40;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
   z-index: 1;
+}
+.calendar-day.needs-item-selection {
+  position: relative;
+  animation: blink 1.5s infinite;
+}
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
 }
 .calendar-day:hover {
   background: #b6d6b6;
