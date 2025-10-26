@@ -806,8 +806,16 @@ const fetchForestData = async () => {
 
     forestData.value = data;
   } catch (err) {
-    console.error("Error:", err);
-    error.value = err.message;
+    // 404 에러는 탈퇴 등의 경우 발생할 수 있으므로 조용히 처리
+    if (err.response?.status === 404) {
+      // 페이지 이동 중이거나 이미 탈퇴한 경우
+      if (router.currentRoute.value.path !== route.path) {
+        return; // 페이지 이동 중이면 에러 무시
+      }
+    } else {
+      console.error("Error:", err);
+      error.value = err.message;
+    }
   } finally {
     isLoading.value = false;
   }
@@ -1108,11 +1116,15 @@ const handleUserLeft = async (data) => {
   const { userId } = payload;
   if (!userId) return;
   
-  // 데이터 새로고침
-  await fetchForestData();
+  // 탈퇴한 사용자가 자신인지 확인
+  const isCurrentUser = userId === auth.$state.user.userId;
   
-  // 성공 메시지 표시
-  if (userId !== auth.$state.user.userId) alert.show(`멤버가 우정의 숲을 떠났습니다.`)
+  // 자신이 탈퇴한 경우에는 fetchForestData 호출 안함 (이미 페이지 이동 중이거나 404 발생)
+  if (!isCurrentUser) {
+    // 다른 사용자가 탈퇴한 경우에만 데이터 새로고침
+    await fetchForestData();
+    alert.show(`멤버가 우정의 숲을 떠났습니다.`)
+  }
 };
 
 // ITEM_PLACED 핸들러 (아이템 배치)

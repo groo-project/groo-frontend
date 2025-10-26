@@ -138,19 +138,7 @@ export const useAuthStore = defineStore('auth', {
         this.isRefreshing = true;
         
         try {
-            
-            // 임시: JWT 토큰 내용 확인
-            const refreshToken = document.cookie.split('; ').find(row => row.startsWith('refreshToken='))?.split('=')[1];
-            if (refreshToken) {
-                try {
-                    // const payload = JSON.parse(atob(refreshToken.split('.')[1]));
-                } catch (e) {
-                }
-            } else {
-            }
-            
             const response = await api.post('auth/refresh');
-            
             
             if (response.data && response.data.accessToken) {
                 this.accessToken = response.data.accessToken;
@@ -200,30 +188,27 @@ export const useAuthStore = defineStore('auth', {
                         });
                     }
                 } catch (e) {
-                    console.error('Failed to fetch user info from server:', e);
+                    // 사용자 정보 가져오기 실패는 조용히 처리
                 }
             }
             
             return true;
         } catch (error) {
-            console.error('Refresh token failed:', error);
-            
-            // 401 에러인 경우 refresh token이 만료되었거나 유효하지 않음
-            if (error.response && error.response.status === 401) {
-                console.log('Refresh token expired or invalid - user needs to login again');
-                
-                // 서버에서 보낸 구체적인 에러 메시지 확인
-                if (error.response.data && error.response.data.error) {
-                    console.log('Server error message:', error.response.data.error);
-                }
+            // 401이나 404 에러는 로그인 안 된 상태이므로 조용히 처리
+            if (error.response && (error.response.status === 401 || error.response.status === 404)) {
+                // 에러 발생 시 상태 초기화
+                this.accessToken = '';
+                this.user = null;
+                this.roles = [];
+                return false;
+            } else {
+                console.error('Refresh error:', error);
+                // 에러 발생 시 상태 초기화
+                this.accessToken = '';
+                this.user = null;
+                this.roles = [];
+                throw error;
             }
-            
-            // 에러 발생 시 상태 초기화
-            this.accessToken = '';
-            this.user = null;
-            this.roles = [];
-            
-            throw error;
         } finally {
             this.isRefreshing = false;
         }
