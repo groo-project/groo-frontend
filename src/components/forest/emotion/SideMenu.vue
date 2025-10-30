@@ -325,19 +325,25 @@ async function changeMyInfoPassword() {
 
 // 닉네임 변경 함수 (EidtNickname.vue 로직 적용)
 async function changeMyInfoNickname() {
-  if (!myInfoNicknameForm.value.newNickname.trim() || myInfoNicknameForm.value.newNickname === authStore.user?.nickname) {
+  const newName = myInfoNicknameForm.value.newNickname.trim();
+  if (!newName || newName === authStore.user?.nickname) {
     alert.show("닉네임이 그대로에요!");
+    return;
+  }
+  // 제출 시 5자 초과 차단 (유니코드 코드 포인트 기준)
+  if ([...newName].length > 5) {
+    alert.show("닉네임은 최대 5자까지 가능해요.");
     return;
   }
 
   try {
     const response = await api.patch('/user/nickname', {
-      nickname: myInfoNicknameForm.value.newNickname,
+      nickname: newName,
     });
 
     if (response.status >= 200 && response.status < 300) {
       // authStore 업데이트
-      authStore.user.nickname = myInfoNicknameForm.value.newNickname;
+      authStore.user.nickname = newName;
       
       alert.show("닉네임 변경이 완료되었습니다!");
       closeMyInfoModal();
@@ -786,7 +792,7 @@ const handleDiarySave = (analysisResult) => {
             <input 
               type="text" 
               v-model="myInfoNicknameForm.newNickname"
-              placeholder="새 닉네임을 입력하세요 (최대 10자)"
+              placeholder="새 닉네임을 입력하세요 (최대 5자)"
               maxlength="10"
             />
           </div>

@@ -17,14 +17,14 @@
         <div class="stats-row">
           <div class="stat-item">
             <div class="stat-label">숲 멤버</div>
-            <div class="stat-value member-names">
-              <span v-for="(member, index) in forestData.members" :key="member.id">
-                {{ member.nickname }}<span v-if="index < forestData.members.length - 1">, </span>
-              </span>
-              <span v-if="!forestData.members || forestData.members.length === 0">멤버 없음</span>
+            <div class="member-grid" :class="{ 'single-member': forestData.members && forestData.members.length === 1 }" v-if="forestData.members && forestData.members.length">
+              <div class="member-chip" v-for="member in forestData.members" :key="member.id">
+                {{ member.nickname }}
+              </div>
             </div>
+            <div class="stat-value member-names" v-else>멤버 없음</div>
           </div>
-          <div class="stat-item">
+          <div class="stat-item diary-stat">
             <div class="stat-label">작성된 일기</div>
             <div class="stat-value">{{ forestData.diaryCount || 0 }}개</div>
           </div>
@@ -261,11 +261,12 @@ onMounted(() => {
   display: flex;
   gap: 16px;
   justify-content: center;
+  align-items: flex-start; /* 각 칼럼 상단 정렬 */
 }
 
 .stat-item {
   border-radius: 12px;
-  padding: 16px;
+  padding: 12px;
   text-align: center;
 }
 
@@ -273,6 +274,7 @@ onMounted(() => {
   color: rgba(255, 255, 255, 0.7);
   font-size: 14px;
   margin-bottom: 8px;
+  white-space: nowrap; /* 라벨은 한 줄 유지 */
 }
 
 .stat-value {
@@ -287,6 +289,39 @@ onMounted(() => {
   word-wrap: break-word;
 }
 
+/* 두 명씩 한 줄 레이아웃 */
+.member-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 8px; /* row gap, column gap 줄여서 더 촘촘하게 */
+  align-items: center;
+}
+
+.member-grid.single-member .member-chip:first-child {
+  grid-column: 1 / -1; /* 두 칼럼 모두 차지 */
+  justify-self: center; /* 가운데 정렬 */
+}
+
+.member-chip {
+  max-width: 100%;
+  padding: 4px 8px; /* 간격 축소 */
+  border-radius: 10px;
+
+  color: #fff;
+  font-size: 16px; /* 살짝 작게 */
+  line-height: 1.2;
+  /* 닉네임이 잘리지 않도록 처리 */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  word-break: keep-all; /* 한글 단어 단위 유지 */
+}
+
+/* 작성된 일기 값 살짝 아래로 보정 */
+.diary-stat .stat-value {
+  display: inline-block;
+  margin-top: 6px;
+}
 
 .forest-actions {
   width: 100%;

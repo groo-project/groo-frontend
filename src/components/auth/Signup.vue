@@ -70,10 +70,15 @@ const handleSignUp = async (e) => {
   e.preventDefault()
 
   try {
+    const trimmedNickname = nickname.value.trim()
+    if ([...trimmedNickname].length > 5) {
+      alert.show('닉네임은 최대 5자까지 가능해요.')
+      return
+    }
     const response = await api.post('auth/signup', {
       email: email.value,
       password: password.value,
-      nickname: nickname.value,
+      nickname: trimmedNickname,
     })
 
     if (response.status >= 200 && response.status < 300) {
@@ -84,10 +89,26 @@ const handleSignUp = async (e) => {
       throw new Error('회원가입 실패')
     }
   } catch (error) {
-    if (error.response.data.code == 'U003') {
-      alert.show("이미 존재하는 닉네임이에요!");
+    const res = error?.response;
+    const code = res?.data?.code;
+    const message = res?.data?.message;
+    const isConflict = res?.status === 409;
+    const isDuplicateNickname =
+      code === 'U003' ||
+      code === 'NICKNAME_DUPLICATED' ||
+      (typeof message === 'string' && (
+        message.includes('닉네임') && (message.includes('중복') || message.includes('이미')) ||
+        message.toLowerCase().includes('nickname') && message.toLowerCase().includes('duplicate')
+      ));
+
+    if (isConflict && isDuplicateNickname) {
+      alert.show(message || '이미 존재하는 닉네임이에요!');
+    } else if (isDuplicateNickname) {
+      alert.show(message || '이미 존재하는 닉네임이에요!');
+    } else if (message) {
+      alert.show(message);
     } else {
-      alert.show('회원가입 실패')
+      alert.show('회원가입 실패');
     }
   }
 }
@@ -158,7 +179,7 @@ const canSignUp = computed(() => {
         </div>
 
         <label for="nickname">닉네임</label>
-        <input type="text" id="nickname" v-model="nickname" placeholder="닉네임을 입력해 주세요" />
+        <input type="text" id="nickname" v-model="nickname" placeholder="닉네임을 입력해 주세요 (최대 5자)" maxlength="10" />
 
         <button type="submit" class="signup-button" :disabled="!canSignUp">가입</button>
       </form>
