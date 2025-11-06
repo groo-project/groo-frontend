@@ -41,11 +41,44 @@ import { useAuthStore } from "@/stores/auth.js";
 import { storeToRefs } from "pinia";
 import api from "@/lib/api.js";
 import { useAlertStore } from '@/stores/alert'
+import { useMeta } from 'vue-meta';
+
+const route = useRoute();
+const baseUrl = import.meta.env.VITE_APP_BASE_URL;
+
+useMeta({
+  title: 'GROO 초대장 | 공유 숲 입장하기',
+  meta: [
+    {
+      name: 'description',
+      content: '공유 숲을 함께 꾸며보세요.'
+    },
+    { 
+      property: 'og:title', 
+      content: 'GROO 초대장 | 공유 숲 입장하기' 
+    },
+    { 
+      property: 'og:image', 
+      content: `${baseUrl}/icon.png` 
+    },
+    { 
+        rel: 'canonical', 
+        href: `${baseUrl}${route.fullPath}` 
+    },
+    { 
+        property: 'og:url', 
+        content: `${baseUrl}${route.fullPath}` 
+    },
+    {
+        property: 'og:type',
+        content: 'website'
+    }
+  ]
+})
 
 const alert = useAlertStore()
 
 const router = useRouter();
-const route = useRoute();
 const inviteCode = ref("");
 const { proxy } = getCurrentInstance();
 

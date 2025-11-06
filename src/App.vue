@@ -1,6 +1,7 @@
 <template>
   <div class="app">
   <main>
+    <metainfo></metainfo>
     <router-view />
     <AlertModal
       v-if="alert.message" 
