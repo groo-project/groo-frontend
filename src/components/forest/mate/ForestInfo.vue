@@ -1,11 +1,12 @@
 <template>
-  <div class="forest-info-container">
-    <div class="top-bar">
+  <div class="top-bar">
       <button class="back-button" @click="$emit('close')">
-        ←
+        <img :src="backIcon" alt="뒤로가기" class="back-img" />
       </button>
       <h2 class="title">우정의 숲 정보</h2>
     </div>
+  <div class="forest-info-container">
+    
     
     <div class="forest-info-content" v-if="forestData">
       <div class="forest-header">
@@ -102,6 +103,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '@/lib/api'
+import backIcon from '@/icons/back.png'
 
 const props = defineProps({
   forestId: {
@@ -191,11 +193,12 @@ onMounted(() => {
 
 <style scoped>
 .forest-info-container {
+
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  padding: 40px 20px 20px 20px;
   box-sizing: border-box;
   overflow-y: auto;
 }
@@ -209,11 +212,19 @@ onMounted(() => {
 .back-button {
   background: none;
   border: none;
-  color: #fff;
-  font-size: 24px;
   cursor: pointer;
   padding: 8px;
-  margin-right: 16px;
+  margin-right: 10px;
+  margin-top: -8px;
+}
+
+.back-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  margin-left: 4px;
+  margin-right: 10px;
+  vertical-align: middle;
 }
 
 .title {
@@ -329,7 +340,7 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 18px;
-  margin-top: auto;
+  /* margin-top: auto; */
 }
 
 .action-btn {

@@ -355,7 +355,7 @@ const handleForestChangeName = () => {
       :style="{ width: sidebarWidth + 'px' }"
     >
       <div class="menu-content" v-if="isMenuOpen">
-        <div v-if="activeView === 'main'">
+        <div v-if="activeView === 'main'" class="main-view">
           <div class="top-bar">
             <span class="previous-icon" @click="goBack">
               <img :src="previousIcon" class="btn-img" />
@@ -364,35 +364,37 @@ const handleForestChangeName = () => {
               <img :src="logoutIcon" class="btn-img" />
             </span>
           </div>
-          <div class="greeting">
-            <div>우정의 숲에</div>
-            <div>들어오신걸 환영해요!</div>
-          </div>
-          <div class="menu-buttons">
-            <button class="menu-btn" @click="handleMateDiaryCalendarForWrite">
-              <span class="icon">
-                <img :src="buttonIcon_1" class="btn-img" />
-              </span>
-              우정일기 작성하기
-            </button>
-            <button class="menu-btn" @click="openDiaryCalendar">
-              <span class="icon">
-                <img :src="buttonIcon_2" class="btn-img" />
-              </span>
-              우정일기 다시보기
-            </button>
-            <button class="menu-btn" @click="openMyItems">
-              <span class="icon">
-                <img :src="buttonIcon_5" class="btn-img" />
-              </span>
-              우리의 조각 보기
-            </button>
-            <button class="menu-btn" @click="openForestInfo">
-              <span class="icon">
-                <img :src="forestInfoIcon" class="btn-img" />
-              </span>
-              숲 정보 보기
-            </button>
+          <div class="welcome-block">
+            <div class="greeting">
+              <div>우정의 숲에</div>
+              <div>들어오신걸 환영해요!</div>
+            </div>
+            <div class="menu-buttons">
+              <button class="menu-btn" @click="handleMateDiaryCalendarForWrite">
+                <span class="icon">
+                  <img :src="buttonIcon_1" class="btn-img" />
+                </span>
+                우정일기 작성하기
+              </button>
+              <button class="menu-btn" @click="openDiaryCalendar">
+                <span class="icon">
+                  <img :src="buttonIcon_2" class="btn-img" />
+                </span>
+                우정일기 다시보기
+              </button>
+              <button class="menu-btn" @click="openMyItems">
+                <span class="icon">
+                  <img :src="buttonIcon_5" class="btn-img" />
+                </span>
+                우리의 조각 보기
+              </button>
+              <button class="menu-btn" @click="openForestInfo">
+                <span class="icon">
+                  <img :src="forestInfoIcon" class="btn-img" />
+                </span>
+                숲 정보 보기
+              </button>
+            </div>
           </div>
         </div>
         <template v-else-if="activeView === 'categorySelector'">
@@ -580,8 +582,21 @@ const handleForestChangeName = () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 24px;
-  margin-bottom: 32px;
+  padding: 0 12px;
+  margin-bottom: 120px;
+  margin-top: -24px;
+}
+
+.main-view {
+  margin-top: 24px;
+}
+
+.welcome-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  margin-top: -50px;
 }
 
 .greeting {
@@ -589,8 +604,8 @@ const handleForestChangeName = () => {
   font-size: 22px;
   font-weight: 500;
   text-align: center;
-  margin-bottom: 36px;
   line-height: 1.5;
+  /* margin-bottom: 0; */
 }
 
 .menu-buttons {
@@ -635,6 +650,11 @@ const handleForestChangeName = () => {
   object-fit: contain;
   margin-right: 8px;
   vertical-align: middle;
+}
+
+.previous-icon .btn-img {
+  width: 30px;
+  height: 30px;
 }
 
 .back-button {

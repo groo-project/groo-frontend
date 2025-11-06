@@ -645,9 +645,11 @@ const handleDiarySave = (analysisResult) => {
               <img :src="logoutIcon" class="btn-img" />
             </span>
           </div>
-          <div class="greeting">
-            <div>안녕하세요 {{ nickname }}님,</div>
-            <div>오늘 하루는 어떠셨나요?</div>
+          <div class="welcome-block">
+            <div class="greeting">
+              <div>안녕하세요 {{ nickname }}님,</div>
+              <div>오늘 하루는 어떠셨나요?</div>
+            </div>
           </div>
           <div class="menu-buttons">
             <button class="menu-btn" @click="handleMyDiaryCalendarForWrite">
@@ -936,6 +938,14 @@ const handleDiarySave = (analysisResult) => {
 </template>
 
 <style scoped>
+.welcome-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  margin-top: -50px;
+}
+
 .toggle-button {
   width: 40px;
   height: 60px;
@@ -1000,14 +1010,16 @@ const handleDiarySave = (analysisResult) => {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 20px 24px;
-  margin-bottom: 12px;
+  padding: 20px 12px;
+  margin-bottom: 11px;
 }
 
 .logout-icon {
   font-size: 28px;
   color: #fff;
   cursor: pointer;
+  margin-top: -2.3px;
+  /* right: 12px; */
 }
 
 .greeting {
@@ -1017,6 +1029,8 @@ const handleDiarySave = (analysisResult) => {
   text-align: center;
   margin-bottom: 36px;
   line-height: 1.5;
+  margin-top: 80px;
+  margin-bottom: 40px;
 }
 
 .menu-buttons {
@@ -1025,6 +1039,7 @@ const handleDiarySave = (analysisResult) => {
   flex-direction: column;
   align-items: center;
   gap: 18px;
+  
 }
 
 .menu-btn {

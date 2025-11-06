@@ -7,7 +7,7 @@
         @click="$emit('close')"
       />
       <div class="diary-detail-username">
-        {{ nickname }} 님이 작성한,
+        <span class="nickname">{{ nickname }}</span> 님이 작성한,
       </div>
       <div class="diary-detail-title">
         {{ year }}년 {{ month }}월 {{ day }}일의 우정 일기
@@ -110,32 +110,41 @@
     position: relative;
     background: none;
     padding: 0 0 0 40px;
+    padding-top: 80px;
   }
-  .back-img {
+.back-img {
     position: absolute;
-    top: -10px;
-    left: -10px;
-    width: 32px;
-    height: 32px;
+    top: -8px;
+    left: -8px;
+    width: 36px;
+    height: 36px;
     cursor: pointer;
     z-index: 10;
   }
-  .diary-detail-username {
+.diary-detail-username {
     color: #fff;
     font-size: 1.3rem;
     font-weight: 400;
-    margin-top: 40px;
-    margin-bottom: 0px;
-    margin-left: -10px;
+    margin-left: 8px;
     letter-spacing: -0.5px;
   }
-  .diary-detail-title {
+.diary-detail-username .nickname {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    margin-right: 6px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+    font-weight: 600;
+  }
+.diary-detail-title {
     font-size: 1.3rem;
     font-weight: 600;
     color: #fff;
     margin-bottom: 30px;
-    margin-top: 10px;
-    margin-left: -10px;
+    margin-top: 0px;
+    margin-left: 8px;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -149,7 +158,7 @@
     font-size: 1rem;
     margin-left: 10px;
   }
-  .diary-detail-content-title {
+.diary-detail-content-title {
     font-size: 1.7rem;
     font-weight: 500;
     color: #fff;
@@ -157,7 +166,7 @@
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-left: -10px;
+    margin-left: 8px;
     position: relative;
   }
   .emoji {

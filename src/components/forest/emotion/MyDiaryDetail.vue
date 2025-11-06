@@ -88,11 +88,12 @@ const handleSelectItem = () => {
   position: relative;
   background: none;
   padding: 0 0 0 40px;
+  padding-top: 30px;
 }
 .back-img {
   position: absolute;
   top: 32px;
-  left: 32px;
+  left: 12px;
   width: 36px;
   height: 36px;
   cursor: pointer;

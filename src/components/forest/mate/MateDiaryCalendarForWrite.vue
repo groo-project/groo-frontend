@@ -6,7 +6,7 @@
       class="back-img"
       @click="emit('close')"
     />
-    <div class="calendar-title">감정일기 작성하기</div><br>
+    <div class="calendar-title">우정일기 작성하기</div><br>
     <div class="calendar-sub">일기 작성은 2일 전까지만 가능해요</div>
     <div class="calendar-content-box">
       <div class="calendar-controls">
@@ -249,13 +249,17 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   position: relative;
   background: none;
+  padding-top: 146px;
+  padding-left: 1px;
+  padding-bottom: 60px;
+  box-sizing: border-box;
 }
 .back-img {
   position: absolute;
-  top: 32px;
+  top: 12px;
   left: 12px;
   width: 36px;
   height: 36px;

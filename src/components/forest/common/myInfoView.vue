@@ -3,6 +3,7 @@ import { ref, computed } from "vue";
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth.js'
 import { useAlertStore } from '@/stores/alert'
+import backIcon from '@/icons/back.png'
 
 const emit = defineEmits(["close", "openModal"]);
 
@@ -42,7 +43,7 @@ const setActiveTab = (tab) => {
   <div class="my-info-view">
     <div class="top-bar">
       <button class="back-button" @click="emit('close')">
-        ←
+        <img :src="backIcon" alt="뒤로가기" class="back-img" />
       </button>
     </div>
     
@@ -110,7 +111,7 @@ const setActiveTab = (tab) => {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  padding: 20px 24px;
+  padding: 20px 0px;
   margin-bottom: 12px;
 }
 
@@ -121,7 +122,15 @@ const setActiveTab = (tab) => {
   font-size: 24px;
   cursor: pointer;
   padding: 8px;
-  margin-right: auto;
+  margin-right: 16px;
+  margin-top: -8px;
+}
+
+.back-img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  margin-left: 4px;
 }
 
 .greeting {
@@ -130,6 +139,7 @@ const setActiveTab = (tab) => {
   font-weight: 500;
   text-align: center;
   margin-bottom: 36px;
+  margin-top: 40px;
   line-height: 1.5;
 }
 

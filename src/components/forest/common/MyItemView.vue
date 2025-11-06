@@ -95,7 +95,7 @@
   .back-img {
     position: absolute;
     top: 32px;
-    left: 32px;
+    left: 12px;
     width: 36px;
     height: 36px;
     cursor: pointer;

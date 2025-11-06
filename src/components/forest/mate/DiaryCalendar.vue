@@ -231,13 +231,14 @@ async function onDiaryClick(date) {
   justify-content: center;
   position: relative;
   background: none;
+  padding-bottom: 112px;
 }
 .back-img {    /* 페이지 뒤로가기 버튼 */
   position: absolute;
-  top: -10px;
-  left: -10px;
-  width: 32px;
-  height: 32px;
+  top: -8px;
+  left: -8px;
+  width: 36px;
+  height: 36px;
   cursor: pointer;
   z-index: 10;
 }
