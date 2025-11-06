@@ -1,26 +1,17 @@
-import SitemapPlugin from 'sitemap-webpack-plugin';
+const SitemapPlugin = require('sitemap-webpack-plugin').default;
 
-// 정적 경로
-const staticPaths = [
-  '/landing',
-  '/login',
-  '/signup',
-  '/tutorial',
+// Example of simple string paths
+const paths = [
+  '/landing/',
+  '/login/',
+  '/signup/',
+  '/tutorial/'
 ];
 
-const allPaths = [...staticPaths];
-
-export const configureWebpack = {
-    plugins: [
-        new SitemapPlugin({
-            base: 'https://groogarden.com',
-            paths: allPaths,
-            options: {
-                filename: 'sitemap.xml',
-                lastmod: true,
-                changefreq: 'weekly',
-                priority: '0.8'
-            },
-        }),
-    ],
+// Example webpack configuration -- input/output/etc. omitted for brevity.
+export default {
+  // Basic usage (output defaults to sitemap.xml)
+  plugins: [
+    new SitemapPlugin({ base: 'https://groogarden.com', paths })
+  ]
 };
