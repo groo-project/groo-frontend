@@ -451,7 +451,7 @@ const handleForestChangeName = () => {
         <div v-else-if="activeView === 'diaryDetail'" class="diary-detail-view">
           <DiaryDetail
             v-if="selectedDiaries && selectedDiaries.diaries[currentDiaryIndex]"
-            :nickname="selectedDiaries.diaries[currentDiaryIndex].nickname"
+            :nickname="selectedDiaries.diaries[currentDiaryIndex].nickname || ''"
             :year="selectedDiaries.year"
             :month="selectedDiaries.month"
             :day="selectedDiaries.day"
@@ -539,6 +539,7 @@ const handleForestChangeName = () => {
   overflow-y: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  overflow-x: hidden;
 }
 
 .toggle-button {

@@ -7,6 +7,44 @@
   
   <script setup>
   import { useRouter } from 'vue-router'
+  import { useMeta } from 'vue-meta';
+
+  const baseUrl = import.meta.env.VITE_APP_BASE_URL;
+
+  useMeta({
+    title: 'GROO | 감성 다이어리 서비스, 그루',
+    
+    meta: [
+      {
+        name: 'description',
+        content: '감성 다이어리 서비스 그루에서 일상과 감정을 기록하고 숲을 꾸며보세요.',
+      },
+      { 
+        rel: 'canonical',
+        href: `${baseUrl}/landing`
+      },
+      { 
+        property: 'og:title',
+        content: '감성 다이어리 서비스 그루'
+      },
+      { 
+        property: 'og:description', 
+        content: '일상의 감정을 아름답게 기록하고 숲을 꾸며보세요.'
+      },
+      { 
+        property: 'og:image', 
+        content: `${baseUrl}/icon.png`
+      },
+      { 
+        property: 'og:url', 
+        content: `${baseUrl}/landing`
+      },
+      {
+        property: 'og:type',
+        content: 'website'
+      }
+    ],
+  });
   const router = useRouter()
   function goLogin() {
     router.push('/login')

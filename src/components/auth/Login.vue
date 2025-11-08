@@ -5,6 +5,22 @@ import api from "@/lib/api"; // API 호출을 위한 axios 인스턴스
 import { useAuthStore } from "@/stores/auth"; // Pinia 스토어 가져오기
 import { useAlertStore } from '@/stores/alert'
 import { useGoogleSignIn } from "@/composables/useGoogleSignIn";
+import { useMeta } from 'vue-meta';
+
+useMeta({
+  title: 'GRRO 로그인 | 감성 다이어리 서비스 그루 시작하기',
+
+  meta: [
+    {
+      name: 'description',
+      content: '감성 다이어리 서비스 그루에 로그인하여 개인 숲 혹은 공유 숲을 꾸며보세요.'
+    },
+    {
+      name: 'robots',
+      content: 'noindex, follow'
+    }
+  ]
+})
 
 const email = ref("");
 const password = ref("");

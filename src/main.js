@@ -7,13 +7,16 @@ import { DotLottieVue } from '@lottiefiles/dotlottie-vue'
 import mitt from 'mitt'
 import { useAuthStore } from '@/stores/auth'
 import { attachAuthHooks } from '@/lib/api'
+import { createMetaManager } from 'vue-meta';
 
 async function init() {
   const emitter = mitt()
   const app = createApp(App)
   const pinia = createPinia()
+  const metaManager = createMetaManager();
 
   app.use(pinia)
+  app.use(metaManager)
 
   // ✅ Pinia 활성화 후 스토어 생성
   const auth = useAuthStore(pinia)

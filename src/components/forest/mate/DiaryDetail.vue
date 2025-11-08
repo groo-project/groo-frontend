@@ -62,7 +62,7 @@
 
   const diaryWrite = useDiaryWriteStore();
 
-  const emit = defineEmits(['select-item'])
+  const emit = defineEmits(['select-item', 'close', 'prev', 'next'])
 
   const getEmotionColor = (emotion) => {
   const colorMap = {

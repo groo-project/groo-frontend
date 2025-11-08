@@ -3,6 +3,22 @@ import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/lib/api.js'
 import { useAlertStore } from '@/stores/alert'
+import { useMeta } from 'vue-meta';
+
+useMeta({
+  title: 'GROO 회원가입 | 감성 다이어리 서비스 그루 시작하기',
+
+  meta: [
+    {
+      name: 'description',
+      content: '감성 다이어리 서비스 그루에 가입하여 개인 숲 혹은 공유 숲을 꾸며보세요.'
+    },
+    {
+      name: 'robots',
+      content: 'noindex, follow'
+    }
+  ]
+})
 
 const router = useRouter()
 
