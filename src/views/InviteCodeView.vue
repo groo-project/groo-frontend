@@ -42,6 +42,7 @@ import { storeToRefs } from "pinia";
 import api from "@/lib/api.js";
 import { useAlertStore } from '@/stores/alert'
 import { useMeta } from 'vue-meta';
+import { useMateForestStore } from "@/stores/mateForest";
 
 const route = useRoute();
 const baseUrl = import.meta.env.VITE_APP_BASE_URL;
@@ -81,6 +82,7 @@ const alert = useAlertStore()
 const router = useRouter();
 const inviteCode = ref("");
 const { proxy } = getCurrentInstance();
+const mateForest = useMateForestStore();
 
 
 const auth = useAuthStore();
@@ -126,6 +128,8 @@ const handleSubmit = async () => {
               timestamp: new Date().toISOString()
             });
           }
+
+          mateForest.setCurrentMateForestId(mateForestId);
           
           router.push(`/forestmate/${mateForestId}`);
         } else {

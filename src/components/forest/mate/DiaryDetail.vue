@@ -7,7 +7,7 @@
         @click="$emit('close')"
       />
       <div class="diary-detail-username">
-        {{ nickname }} 님이 작성한,
+        {{ nickname || '여행자' }} 님이 작성한,
       </div>
       <div class="diary-detail-title">
         {{ year }}년 {{ month }}월 {{ day }}일의 우정 일기
@@ -62,7 +62,7 @@
 
   const diaryWrite = useDiaryWriteStore();
 
-  const emit = defineEmits(['select-item'])
+  const emit = defineEmits(['select-item', 'close', 'prev', 'next'])
 
   const getEmotionColor = (emotion) => {
   const colorMap = {
