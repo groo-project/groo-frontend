@@ -156,7 +156,7 @@ if (!diaryId || !currentForestId) return;
 <style scoped>
 .calendar-bg {
   width: 100%;
-  height: 100%;
+  height: 70%;
   min-width: 340px;
   display: flex;
   flex-direction: column;

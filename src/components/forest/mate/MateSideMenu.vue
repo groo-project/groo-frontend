@@ -355,7 +355,7 @@ const handleForestChangeName = () => {
       :style="{ width: sidebarWidth + 'px' }"
     >
       <div class="menu-content" v-if="isMenuOpen">
-        <div v-if="activeView === 'main'" class="main-view">
+        <div v-if="activeView === 'main'">
           <div class="top-bar">
             <span class="previous-icon" @click="goBack">
               <img :src="previousIcon" class="btn-img" />
@@ -575,21 +575,15 @@ const handleForestChangeName = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding-top: 20px;
 }
 
 .top-bar {
   width: 100%;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  padding: 0 12px;
-  margin-bottom: 120px;
-  margin-top: -24px;
-}
-
-.main-view {
-  margin-top: 24px;
+  padding: 20px 12px;
+  margin-bottom: 11px;
 }
 
 .welcome-block {
@@ -597,7 +591,6 @@ const handleForestChangeName = () => {
   flex-direction: column;
   align-items: center;
   gap: 28px;
-  margin-top: -50px;
 }
 
 .greeting {
@@ -688,18 +681,6 @@ const handleForestChangeName = () => {
   justify-content: center;
   align-items: center;
   z-index: 1000;
-}
-
-.calendar-view,
-.diary-detail-view,
-.myitem-view {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  padding: 20px;
-  box-sizing: border-box;
 }
 
 .logout-icon {

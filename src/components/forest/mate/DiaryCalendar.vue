@@ -223,7 +223,7 @@ async function onDiaryClick(date) {
 <style scoped>
 .calendar-bg {
   width: 100%;
-  height: 100%;
+  height: 115%;
   min-width: 340px;
   display: flex;
   flex-direction: column;
@@ -231,12 +231,11 @@ async function onDiaryClick(date) {
   justify-content: center;
   position: relative;
   background: none;
-  padding-bottom: 112px;
 }
 .back-img {    /* 페이지 뒤로가기 버튼 */
   position: absolute;
-  top: -8px;
-  left: -8px;
+  top: 32px;
+  left: 12px;
   width: 36px;
   height: 36px;
   cursor: pointer;

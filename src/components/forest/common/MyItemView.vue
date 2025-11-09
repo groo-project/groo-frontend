@@ -89,7 +89,6 @@
     justify-content: flex-start;
     position: relative;
     background: none;
-    padding: 20px;
   }
   
   .back-img {

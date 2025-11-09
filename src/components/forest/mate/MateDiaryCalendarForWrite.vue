@@ -244,18 +244,15 @@ onMounted(() => {
 <style scoped>
 .calendar-bg {
   width: 100%;
-  height: 100%;
+  height: 145%;
   min-width: 340px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   position: relative;
   background: none;
-  padding-top: 146px;
-  padding-left: 1px;
-  padding-bottom: 60px;
-  box-sizing: border-box;
+  margin-top: 15px;
 }
 .back-img {
   position: absolute;
