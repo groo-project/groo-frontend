@@ -98,30 +98,7 @@ const router = createRouter({
   ],
 });
 
-// 라우터 가드 추가
-// router.beforeEach(async (to) => {
-//   // Pinia 스토어를 가져오기 위해 createPinia()로 생성한 pinia 인스턴스를 사용
-//   const auth = useAuthStore(pinia);
 
-//   // 1) 게스트 전용 라우트: 로그인 상태면 홈으로
-//   if (to.matched.some(r => r.meta.guestOnly)) {
-//     if (auth.isAuthenticated) return { name: "BackgroundImage" };
-//     return true;
-//   }
-
-//   // 2) 보호 라우트: 인증 필요하면 체크
-//   if (to.matched.some(r => r.meta.requiresAuth)) {
-//     if (auth.isAuthenticated) return true;
-//     const ok = await auth.tryRefresh();                // RT 쿠키로 1회 복구 시도
-//     if (ok) return true;
-//     return { name: "Login", query: { redirect: to.fullPath } };
-//   }
-
-
-//   // 3) 공개 라우트는 통과
-//   // 인증된 경우 요청한 페이지로 이동
-//   return true;
-// })
 
 
 
@@ -132,17 +109,24 @@ export function installGuards(pinia) {
   router.beforeEach(async (to) => {
     const auth = useAuthStore(pinia);   
 
-
     // 1) 게스트 전용 라우트: 로그인 상태면 홈으로
     if (to.matched.some(r => r.meta.guestOnly)) {
       // 탈퇴 후 이동하는 특수 케이스는 예외 처리
       if (to.query.withdrawn === "true") {
         return true;
       }
-      if (auth.isAuthenticated) {
-        return { name: "ForestDetail" };
+
+      if (!auth.isAuthenticated) {
+        const refreshed = await auth.tryRefresh().catch(() => false);
+        if (!refreshed) return true;     // 여전히 비로그인 → 그대로 랜딩
       }
-      return true;
+
+      if (auth.isAuthenticated && auth.user?.forestId) {
+        return { name: "ForestDetail", params: { forestId: String(auth.user.forestId) } };
+      }
+      if (auth.isAuthenticated) return { name: "ForestView" };
+      return true;                        // 최종적으로 비로그인이면 guest 화면 유지
+
     }
 
     // 2) 보호 라우트: 인증 필요하면 체크
