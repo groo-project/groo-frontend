@@ -21,7 +21,7 @@ async function init() {
   app.use(pinia)
   app.use(metaManager)
 
-  // 가드 설치
+  //가드 설치
   installGuards(pinia)
 
   // Pinia 활성화 후 스토어 생성
@@ -48,10 +48,15 @@ async function init() {
 
   const firstRoute = router.currentRoute.value
 
-  // guestOnly 라우트(/login, /signup, /landing 등)에서는 refresh 생략
-  if (!firstRoute.matched.some(r => r.meta?.guestOnly)) {
-    await auth.tryRefresh().catch(() => {})
-  }
+  // guestOnly 라우트(/login, /signup, /forgot-password 등)에서는 refresh 생략
+  // 게스트 전용이 아니거나, 토큰이 없고 랜딩이 아닐 경우 → refresh 시도
+if (
+  !firstRoute.matched.some(r => r.meta?.guestOnly) ||
+  (!auth.accessToken && firstRoute.name !== "LandingPage")
+) {
+  await auth.tryRefresh().catch(() => {})
+}
+  
 
   app.mount('#app')
 }
