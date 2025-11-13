@@ -1,58 +1,58 @@
 <template>
-    <div class="diary-detail-bg">
-      <img
-        :src="backPageIcon"
-        alt="뒤로가기"
-        class="back-img"
-        @click="$emit('close')"
-      />
-      <div class="diary-detail-username">
-        <span class="nickname">{{ nickname }}</span> 님이 작성한,
+  <div class="diary-detail-bg">
+    <img
+      :src="backPageIcon"
+      alt="뒤로가기"
+      class="back-img"
+      @click="$emit('close')"
+    />
+    <div class="author-badge">
+        {{ nickname }} 님이 작성한,
       </div>
-      <div class="diary-detail-title">
-        {{ year }}년 {{ month }}월 {{ day }}일의 우정 일기
-        <span
-          class="emotion-tag"
-          v-for="emotion in emotions"
-          :key="emotion"
-          :style="{ backgroundColor: getEmotionColor(emotion) }"
-        >{{ emotion }}</span>
-      </div>
-  
-      <div class="diary-detail-content-title">
-        우정 일기 <span class="emoji">🌳</span>
-        <div class="diary-detail-arrows">
-          <img
-            :src="forwardIcon"
-            class="arrow-btn"
-            :class="{ 'invisible': !showPrev }"
-            @click="showPrev && $emit('prev')"
-            style="transform: rotate(180deg);"
-          />
-          <img
-            :src="forwardIcon"
-            class="arrow-btn"
-            :class="{ 'invisible': !showNext }"
-            @click="showNext && $emit('next')"
-          />
-        </div>
-        <button
-            v-if="!itemSelected"
-            class="select-item-btn"
-            @click="handleSelectItem"
-          >
-          아이템 선택하기
-        </button>
-      </div>
-      <div class="diary-detail-content-box">
-        <div class="diary-detail-content-text">
-          {{ content }}
-        </div>
-        <div class="diary-detail-content-count">
-          {{ content.length }}/1000
-        </div>
+    <div class="diary-detail-title">
+      {{ year }}년 {{ month }}월 {{ day }}일의 우정 일기
+      <span
+        class="emotion-tag"
+        v-for="emotion in emotions"
+        :key="emotion"
+        :style="{ backgroundColor: getEmotionColor(emotion) }"
+      >{{ emotion }}</span>
+    </div>
+
+    <div class="diary-detail-content-title">
+      우정 일기 <span class="emoji">🌳</span>
+      <button
+        v-if="!itemSelected"
+        class="select-item-btn"
+        @click="handleSelectItem"
+      >
+        아이템 선택하기
+      </button>
+      <div class="diary-detail-arrows">
+        <img
+          :src="forwardIcon"
+          class="arrow-btn"
+          :class="{ 'invisible': !showPrev }"
+          @click="showPrev && $emit('prev')"
+          style="transform: rotate(180deg);"
+        />
+        <img
+          :src="forwardIcon"
+          class="arrow-btn"
+          :class="{ 'invisible': !showNext }"
+          @click="showNext && $emit('next')"
+        />
       </div>
     </div>
+    <div class="diary-detail-content-box">
+      <div class="diary-detail-content-text">
+        {{ content }}
+      </div>
+      <div class="diary-detail-content-count">
+        {{ content.length }}/1000
+      </div>
+    </div>
+  </div>
   </template>
   
   <script setup>
@@ -110,12 +110,12 @@
     position: relative;
     background: none;
     padding: 0 0 0 40px;
-    padding-top: 80px;
+    padding-top: 70px;
   }
 .back-img {
     position: absolute;
-    top: -8px;
-    left: -8px;
+    top: 27px;
+    left: 12px;
     width: 36px;
     height: 36px;
     cursor: pointer;
@@ -149,6 +149,8 @@
     align-items: center;
     gap: 12px;
     width: 100%;
+    position: relative;
+    top: 28px;
   }
   .emotion-tag {
     background: #8fa6a6;
@@ -159,16 +161,31 @@
     margin-left: 10px;
   }
 .diary-detail-content-title {
-    font-size: 1.7rem;
-    font-weight: 500;
-    color: #fff;
-    margin-bottom: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-left: 8px;
-    position: relative;
-  }
+  font-size: 1.7rem;
+  font-weight: 500;
+  color: #fff;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  position: relative;
+  top: 28px;
+}
+.author-badge {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+  margin-left: 8px;
+  position: relative;
+  top: 28px;
+}
+
+.author-badge.nickname {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #fff;
+}
   .emoji {
     font-size: 1.7rem;
   }
@@ -180,18 +197,19 @@
     min-width: 230px;
     min-height: 460px;
     margin-top: 0;
-    margin-left: -20px;
+    margin-left: 0px;
     box-shadow: 0 2px 12px 0 rgba(0,0,0,0.04);
     display: flex;
     flex-direction: column;
     position: relative;
+    top: 28px;
   }
   .diary-detail-content-text {
     color: #222;
     font-size: 1.05rem;
     line-height: 1.7;
     margin-bottom: 24px;
-    margin-left: -20px;
+    margin-left: -15px;
     word-break: keep-all;
   }
   .diary-detail-content-count {
@@ -206,7 +224,7 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-left: 24px;
+    margin-left: auto;
   }
   .arrow-btn {
     width: 28px;

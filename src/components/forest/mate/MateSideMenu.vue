@@ -591,6 +591,8 @@ const handleForestChangeName = () => {
   flex-direction: column;
   align-items: center;
   gap: 28px;
+  top: 60px;
+  position: relative;
 }
 
 .greeting {
@@ -684,7 +686,7 @@ const handleForestChangeName = () => {
 }
 
 .logout-icon {
-  margin-left: auto;
+  margin-left: 250px;
   cursor: pointer;
 }
 

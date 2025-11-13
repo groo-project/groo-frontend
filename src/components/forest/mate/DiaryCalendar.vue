@@ -234,7 +234,7 @@ async function onDiaryClick(date) {
 }
 .back-img {    /* 페이지 뒤로가기 버튼 */
   position: absolute;
-  top: 32px;
+  top: 27px;
   left: 12px;
   width: 36px;
   height: 36px;

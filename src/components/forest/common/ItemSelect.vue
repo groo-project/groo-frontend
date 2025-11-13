@@ -106,8 +106,8 @@ const fetchDraftedItems = async () => {
 
 .back-img {
   position: absolute;
-  top: 32px;
-  left: 12px;
+  top: 27px;
+  left: 32px;
   width: 36px;
   height: 36px;
   cursor: pointer;
@@ -118,6 +118,8 @@ const fetchDraftedItems = async () => {
   display: flex;
   flex-direction: column;
   flex: 1;
+  position: relative;
+  top: 120px;
 }
 
 .result-title {

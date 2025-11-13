@@ -943,7 +943,8 @@ const handleDiarySave = (analysisResult) => {
   flex-direction: column;
   align-items: center;
   gap: 28px;
-  margin-top: -50px;
+  bottom: 20px;
+  position: relative;
 }
 
 .toggle-button {
@@ -1039,6 +1040,8 @@ const handleDiarySave = (analysisResult) => {
   flex-direction: column;
   align-items: center;
   gap: 18px;
+  bottom: 20px;
+  position: relative;
   
 }
 
