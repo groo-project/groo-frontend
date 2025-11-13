@@ -26,6 +26,7 @@ export const useAuthStore = defineStore('auth', {
               email: p.email || profile.email || 'unknown',
               nickname: p.nickname || profile.nickname || '여행자',
               ...(this.user || {}),
+              provider: p.oAuthProvider || null
             };
           } catch {
             // 토큰 디코드 실패 시에도 최소한 객체는 보장
@@ -37,7 +38,7 @@ export const useAuthStore = defineStore('auth', {
     async login(credentials) {
         // 이미 갱신 중이면 대기
         if (this.isRefreshing) {
-            console.log('Token refresh already in progress, waiting...');
+            // console.log('Token refresh already in progress, waiting...');
             // 진행 중인 갱신 요청이 완료될 때까지 대기
             while (this.isRefreshing) {
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -68,7 +69,8 @@ export const useAuthStore = defineStore('auth', {
                 state.user = {
                     userId: parseInt(payload.sub),
                     email: payload.email || 'unknown',
-                    nickname: payload.nickname || '여행자' // JWT에서 nickname 추출 시도
+                    nickname: payload.nickname || '여행자', // JWT에서 nickname 추출 시도
+                    provider: payload.oAuthProvider || null
                 };
             });
             
@@ -106,6 +108,7 @@ export const useAuthStore = defineStore('auth', {
             nickname: payload.nickname || '여행자',
             email: payload.email || null,
             forestId: null,
+            provider: payload.oAuthProvider || null
           };
         });
 
@@ -127,7 +130,7 @@ export const useAuthStore = defineStore('auth', {
     async tryRefresh() {
         // 중복 요청 방지
         if (this.isRefreshing) {
-            console.log('Token refresh already in progress, waiting...');
+            // console.log('Token refresh already in progress, waiting...');
             // 진행 중인 갱신 요청이 완료될 때까지 대기
             while (this.isRefreshing) {
                 await new Promise(resolve => setTimeout(resolve, 100));
@@ -146,8 +149,8 @@ export const useAuthStore = defineStore('auth', {
                 throw new Error('No access token received from refresh');
             }
 
+            const payload = jwtDecode(this.accessToken)
             try {
-                const payload = jwtDecode(this.accessToken)
                 
                 // Pinia 상태를 직접 업데이트
                 this.$patch((state) => {
@@ -155,7 +158,8 @@ export const useAuthStore = defineStore('auth', {
                         userId: parseInt(payload.sub),
                         email: payload.email || 'unknown',
                         forestId: payload.forestId || null, // JWT에서 forestId 추출 시도
-                        nickname: payload.nickname || '여행자' // JWT에서 nickname 추출 시도
+                        nickname: payload.nickname || '여행자', // JWT에서 nickname 추출 시도
+                        provider: payload.oAuthProvider || null
                     };
                 });
                 
@@ -165,7 +169,8 @@ export const useAuthStore = defineStore('auth', {
                         userId: parseInt(payload.sub),
                         email: payload.email || 'unknown',
                         forestId: payload.forestId || null,
-                        nickname: payload.nickname || '여행자'
+                        nickname: payload.nickname || '여행자',
+                        provider: payload.oAuthProvider || null
                     };
                 }
             } catch (e) {
@@ -183,7 +188,8 @@ export const useAuthStore = defineStore('auth', {
                                 userId: this.user?.userId || parseInt(payload?.sub),
                                 email: this.user?.email || 'unknown',
                                 forestId: userInfo.id || this.user?.forestId,
-                                nickname: userInfo.nickname || this.user?.nickname || '여행자'
+                                nickname: userInfo.nickname || this.user?.nickname || '여행자',
+                                provider: payload.oAuthProvider || null
                             };
                         });
                     }
