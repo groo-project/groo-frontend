@@ -116,6 +116,14 @@ export function installGuards(pinia) {
         return true;
       }
 
+      // 초대 링크는 로그인 상태와 무관하게 진입 허용
+      if (to.name === "InviteCode") {
+        if (!auth.isAuthenticated) {
+          await auth.tryRefresh().catch(() => false);
+        }
+        return true;
+      }
+
       if (!auth.isAuthenticated) {
         const refreshed = await auth.tryRefresh().catch(() => false);
         if (!refreshed) return true;     // 여전히 비로그인 → 그대로 랜딩
