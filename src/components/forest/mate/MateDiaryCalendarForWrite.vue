@@ -271,6 +271,8 @@ onMounted(() => {
   font-weight: 600;
   color: #fff;
   letter-spacing: -1px;
+  bottom: 34px;
+  position: relative;
 }
 .calendar-content-box {
   background: rgba(255,255,255,0.4);
@@ -281,6 +283,12 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
+  bottom: 34px;
+  position: relative;
+}
+.calendar-sub {
+  bottom: 34px;
+  position: relative;
 }
 .calendar-controls {
   width: 100%;

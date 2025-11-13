@@ -52,7 +52,7 @@ async function init() {
   // 게스트 전용이 아니거나, 토큰이 없고 랜딩이 아닐 경우 → refresh 시도
 if (
   !firstRoute.matched.some(r => r.meta?.guestOnly) ||
-  (!auth.accessToken && firstRoute.name !== "LandingPage")
+  (!auth.accessToken && firstRoute.name == "LandingPage")
 ) {
   await auth.tryRefresh().catch(() => {})
 }

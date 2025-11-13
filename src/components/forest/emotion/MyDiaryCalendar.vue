@@ -182,6 +182,8 @@ if (!diaryId || !currentForestId) return;
   font-weight: 600;
   color: #fff;
   letter-spacing: -1px;
+  top: 123px;
+  position: relative;
 }
 .calendar-content-box {     /* 뒤에 흰색 배경 */
   background: rgba(255,255,255,0.4);
@@ -192,6 +194,8 @@ if (!diaryId || !currentForestId) return;
   display: flex;
   flex-direction: column;
   align-items: center;
+  top: 123px;
+  position: relative;
 }
 .calendar-controls {
   width: 100%;

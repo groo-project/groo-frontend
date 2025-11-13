@@ -173,7 +173,7 @@ onMounted(fetchDiaries)
 <style scoped>
 .calendar-bg {
   width: 100%;
-  height: 70%;
+  height: 145%;
   min-width: 340px;
   display: flex;
   flex-direction: column;
@@ -181,10 +181,11 @@ onMounted(fetchDiaries)
   justify-content: center;
   position: relative;
   background: none;
+  margin-top: 15px;
 }
 .back-img {
   position: absolute;
-  top: 32px;
+  top: 12px;
   left: 12px;
   width: 36px;
   height: 36px;
