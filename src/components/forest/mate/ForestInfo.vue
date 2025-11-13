@@ -207,6 +207,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   margin-bottom: 24px;
+  margin-top: 20px;
 }
 
 .back-button {
