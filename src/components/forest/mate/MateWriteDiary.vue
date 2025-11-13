@@ -114,13 +114,8 @@ const lengthMessage = computed(() => {
 
 // 저장 버튼 활성화 조건
 const canSave = computed(() => {
-
-  // 배포 시 비활성화
-  return true;
-
-  // 배포 시 활성화
-  // const length = charCount.value;
-  // return length >= 30 && length <= 1000 && diaryContent.value.trim();
+  const length = charCount.value;
+  return length >= 30 && length <= 1000 && diaryContent.value.trim();
 });
 
 const updateCharCount = () => {

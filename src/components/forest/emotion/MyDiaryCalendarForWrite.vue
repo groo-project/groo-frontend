@@ -117,7 +117,7 @@ async function onExistingDiaryClick(date) {
   alert.show("해당 날짜에 이미 일기가 작성되었어요!")
 
   // 배포 시 제거
-  onNewDiaryClick(date);
+  // onNewDiaryClick(date);
 }
 
 // 일기가 없는 날을 클릭했을 때 실행되는 함수
