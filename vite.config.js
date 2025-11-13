@@ -19,7 +19,10 @@ export default defineConfig({
     sitemap({
       hostname: 'https://groogarden.com',
       dynamicRoutes: paths,
-      outDir: 'dist'
+      outDir: 'dist',
+      exclude: [
+        '/api/**'
+      ]
     })
   ],
   resolve: {
