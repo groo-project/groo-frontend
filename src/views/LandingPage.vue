@@ -15,7 +15,7 @@
         
         <div class="features-intro">
           <h2 class="main-title">Groo의 특별한 기능들</h2>
-          <p class="subtitle" style="margin-left: 46px;">감정 기록부터 숲 꾸미기까지, 모든 순간이 특별해집니다</p>
+          <p class="subtitle">감정 기록부터 숲 꾸미기까지, 모든 순간이 특별해집니다</p>
         </div>
 
         <div class="features-section">
@@ -73,21 +73,51 @@
         </div>
 
         <!-- 최종 CTA 섹션 -->
-        <div class="cta-section">
+        <div class="cta-section" ref="ctaSection">
           <h2 class="cta-title">지금 바로 시작해보세요</h2>
           <p class="cta-subtitle">감정을 기록하고 나만의 숲을 만들어보세요</p>
-          <button class="cta-btn" @click="goLogin">GROO 시작하기</button>
+          <button v-if="!isButtonFixed"
+            class="start-btn"
+            :class="{'static-btn': !isButtonFixed}"
+            @click="goLogin"
+          >GROO 시작하기
+          </button>
         </div>
-        
-        <button class="start-btn" @click="goLogin">GROO 시작하기</button>
+        <button v-if="isButtonFixed"
+          class="start-btn"
+          :class="{'fixed-btn' : isButtonFixed}"
+          @click="goLogin"
+        >GROO 시작하기
+        </button>
       </div>
     </div>
   </template>
   
   <script setup>
-  import { ref } from 'vue'
+  import { ref, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
   import { useMeta } from 'vue-meta';
+
+  const isButtonFixed = ref(true); // 버튼이 고정 상태인지 여부
+  const ctaSection = ref(null);    // CTA 섹션 요소를 참조할 ref
+  onMounted(() => {
+  if (ctaSection.value) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          // CTA 섹션이 뷰포트(브라우저 화면)에 진입하면
+          // 버튼을 고정 상태(fixed)에서 해제합니다.
+          isButtonFixed.value = entry.isIntersecting ? false : true;
+        });
+      },
+      {
+        rootMargin: '0px 0px -50px 0px', // CTA 섹션이 바닥에서 50px 위까지 올라왔을 때 감지
+        threshold: 0.1 // 10%가 보이면 감지
+      }
+    );
+    observer.observe(ctaSection.value);
+  }
+});
 
   const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 
@@ -230,6 +260,7 @@
   }
   .features-intro {
     margin-bottom: 80px;
+    text-align: center;
   }
 
   .features-section {
@@ -327,30 +358,41 @@
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.15);
   }
 
-  .start-btn {
-    position: fixed;
-    bottom: 30px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 18px 48px;
-    font-size: 1.5rem;
-    font-weight: bold;
-    color: #fff;
-    background: rgba(180, 190, 195, 0.65);
-    border: none;
-    border-radius: 22px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s, font-weight 0.2s, transform 0.2s;
-    z-index: 100;
-    backdrop-filter: blur(10px);
-  }
+.start-btn {
+  /* 기본 스타일: CTA 섹션 내부에 위치할 때의 스타일 */
+  padding: 18px 48px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+  background: rgba(180, 190, 195, 0.65);
+  border: none;
+  border-radius: 22px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 100;
+  backdrop-filter: blur(10px);
+
+  /* 기본 위치 설정 (Static 상태) */
+  position: relative; /* CTA 섹션 내부에서 중앙 정렬을 위해 */
+  margin: 32px auto 0 auto; /* 상위 요소의 text-align: center 또는 flex 정렬 이용 */
+  display: block; /* margin: auto가 작동하도록 block 설정 */
+  transform: none; /* fixed 상태의 transform 제거 */
+}
+
+/* 고정 상태일 때의 스타일 */
+.fixed-btn {
+  position: fixed; /* 👈 고정 */
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%); /* 👈 뷰포트 중앙 */
+  margin: 0; /* static 상태의 margin 무시 */
+}
 
   .start-btn:hover {
     background: rgba(220, 230, 235, 0.85);
     color: #fff;
     font-weight: bold;
-    transform: translateX(-50%) scale(1.03);
   }
 
   /* FAQ 섹션 */
@@ -474,27 +516,6 @@
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
   }
 
-  .cta-btn {
-    padding: 18px 48px;
-    font-size: 1.4rem;
-    font-weight: 600;
-    color: #fff;
-    background: linear-gradient(135deg, rgba(255, 218, 185, 0.9) 0%, rgba(255, 228, 181, 0.9) 100%);
-    border: 2px solid rgba(255, 248, 220, 0.5);
-    border-radius: 28px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
-  }
-
-  .cta-btn:hover {
-    background: linear-gradient(135deg, rgba(255, 228, 181, 0.95) 0%, rgba(255, 239, 213, 0.95) 100%);
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
-    border-color: rgba(255, 248, 220, 0.7);
-  }
-
   @media (max-width: 768px) {
     .landing-bg {
       padding: 30px 15px 40px;
@@ -569,11 +590,6 @@
 
     .cta-subtitle {
       font-size: 1.1rem;
-    }
-
-    .cta-btn {
-      font-size: 1.2rem;
-      padding: 16px 40px;
     }
   }
   </style> 
