@@ -19,7 +19,11 @@
         </div>
 
         <div class="features-section">
-          <div class="feature-card feature-card-portrait">
+          <div 
+            class="feature-card feature-card-portrait"
+            :class="{ 'visible': visibleCards.has(0) }"
+            data-index="0"
+          >
             <div class="feature-gif feature-gif-portrait">
               <video autoplay loop muted playsinline>
                 <source src="@/assets/gifs/diary.mp4" type="video/mp4" />
@@ -29,7 +33,11 @@
             <div class="feature-title">감정일기</div>
             <div class="feature-desc">하루의 감정을 기록하고<br />AI가 분석해드려요</div>
           </div>
-          <div class="feature-card feature-card-landscape">
+          <div 
+            class="feature-card feature-card-landscape"
+            :class="{ 'visible': visibleCards.has(1) }"
+            data-index="1"
+          >
             <div class="feature-gif feature-gif-landscape">
               <video autoplay loop muted playsinline>
                 <source src="@/assets/gifs/mate.mp4" type="video/mp4" />
@@ -39,7 +47,11 @@
             <div class="feature-title">우정일기</div>
             <div class="feature-desc">친구와 함께 일기를 쓰고<br />추억을 공유해보세요</div>
           </div>
-          <div class="feature-card feature-card-landscape">
+          <div 
+            class="feature-card feature-card-landscape"
+            :class="{ 'visible': visibleCards.has(2) }"
+            data-index="2"
+          >
             <div class="feature-gif feature-gif-landscape">
               <video autoplay loop muted playsinline>
                 <source src="@/assets/gifs/forest.mp4" type="video/mp4" />
@@ -94,7 +106,9 @@
   </template>
   
   <script setup>
-  import { ref, onMounted } from 'vue'
+
+  import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+
   import { useRouter } from 'vue-router'
   import { useMeta } from 'vue-meta';
 
@@ -182,6 +196,44 @@
   function toggleFaq(index) {
     openFaqIndex.value = openFaqIndex.value === index ? null : index
   }
+
+  // 스크롤 애니메이션을 위한 ref
+  const visibleCards = ref(new Set())
+  let observer = null
+
+  onMounted(() => {
+    nextTick(() => {
+      const observerOptions = {
+        root: null,
+        rootMargin: '0px',
+        threshold: 0.3
+      }
+
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = parseInt(entry.target.dataset.index)
+            setTimeout(() => {
+              visibleCards.value.add(index)
+            }, index * 200) // 순차적으로 나타나도록
+            observer.unobserve(entry.target)
+          }
+        })
+      }, observerOptions)
+
+      // 카드 요소들을 관찰
+      const cardElements = document.querySelectorAll('.feature-card')
+      cardElements.forEach((card) => {
+        observer.observe(card)
+      })
+    })
+  })
+
+  onUnmounted(() => {
+    if (observer) {
+      observer.disconnect()
+    }
+  })
   </script>
   
   <style scoped>
@@ -254,7 +306,7 @@
     width: 700px;
     max-width: 70vw;
     z-index: 1;
-    margin: 20px 0 100px 0;
+    margin: 20px 0 20px 0;
     animation: float 3s ease-in-out infinite;
     flex-shrink: 0;
   }
@@ -265,9 +317,9 @@
 
   .features-section {
     display: flex;
-    gap: 32px;
+    gap: 100px;
     width: 100%;
-    max-width: 1200px;
+    max-width: 1400px;
     justify-content: center;
     flex-wrap: wrap;
     z-index: 10;
@@ -280,15 +332,22 @@
     background: rgba(255, 255, 255, 0.25);
     backdrop-filter: blur(10px);
     border-radius: 20px;
-    padding: 28px 24px;
+    padding: 32px 28px;
     text-align: center;
-    min-width: 280px;
-    flex: 1;
-    max-width: 360px;
+    min-width: 340px;
+    flex: 0 0 auto;
+    max-width: 440px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     z-index: 10;
+    opacity: 0;
+    transform: translateX(-100px);
+  }
+
+  .feature-card.visible {
+    opacity: 1;
+    transform: translateX(0);
   }
 
   .feature-card:hover {
@@ -310,13 +369,13 @@
 
   /* 세로형 비디오 (첫 번째 카드) */
   .feature-gif-portrait {
-    height: 400px;
+    height: 480px;
     overflow: hidden;
   }
 
   /* 가로형 비디오 (두 번째, 세 번째 카드) */
   .feature-gif-landscape {
-    height: 400px;
+    height: 480px;
   }
 
   .feature-gif video {
@@ -327,14 +386,22 @@
 
   /* 세로형 카드 (첫 번째) */
   .feature-card-portrait {
-    max-width: 360px;
-    min-width: 280px;
+    max-width: 440px;
+    min-width: 440px;
+    flex: 0 0 auto;
   }
 
   /* 가로형 카드 (두 번째, 세 번째) */
   .feature-card-landscape {
     max-width: 420px;
-    min-width: 320px;
+    min-width: 420px;
+    flex: 0 0 auto;
+  }
+
+  .feature-card-landscape2 {
+    max-width: 1020px;
+    min-width: 1020px;
+    flex: 0 0 auto;
   }
 
   .feature-icon {
@@ -548,11 +615,11 @@
       margin-bottom: 30px;
     }
 
-    .feature-card {
+    /* .feature-card {
       max-width: 100%;
       width: 100%;
       min-width: auto;
-    }
+    } */
 
     .start-btn {
       font-size: 1.2rem;
