@@ -265,9 +265,7 @@
     align-items: center;
     gap: 0;
     margin-top: 20px;
-    margin-bottom: 100px;
     position: relative;
-    padding-bottom: 100px;
   }
 
   .intro-section {
